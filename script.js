@@ -705,8 +705,8 @@ document.addEventListener('DOMContentLoaded', function() {
     showEmptyState();
     
     // Mensaje de confirmación
-    console.log('✓ Event listeners registrados correctamente');
-    console.log('✓ Aplicación lista para usar');
+    console.log('Event listeners registrados correctamente');
+    console.log('Aplicación lista para usar');
 });
 
 // 10. PREGUNTAS DE REFLEXIÓN (RESPUESTAS)
