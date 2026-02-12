@@ -329,8 +329,12 @@ function createTaskRow(task, index) {
     
     // ----- PASO 5: CREAR Y LLENAR LA CELDA DE ESTADO -----
     const statusCell = document.createElement('td');
-    // Insertamos el estado formateado (convertido a texto legible)
-    statusCell.textContent = formatTaskStatus(task.status);
+    // Creamos un span con clase de badge para el estado
+    const statusBadge = document.createElement('span');
+    statusBadge.classList.add('status-badge'); // clase base del badge
+    statusBadge.classList.add(`status-${task.status}`); // clase específica: status-pendiente, status-en_progreso, status-completada
+    statusBadge.textContent = formatTaskStatus(task.status); // texto formateado
+    statusCell.appendChild(statusBadge); // insertamos el badge en la celda
     
     // ----- PASO 6: CREAR Y LLENAR LA CELDA DE USUARIO -----
     const userCell = document.createElement('td');
@@ -708,43 +712,3 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Event listeners registrados correctamente');
     console.log('Aplicación lista para usar');
 });
-
-// 10. PREGUNTAS DE REFLEXIÓN (RESPUESTAS)
-
-// PREGUNTAS DE REFLEXIÓN:
-// 
-// 1. ¿Qué elemento del DOM estás seleccionando?
-//    R: Estoy seleccionando múltiples elementos del DOM usando getElementById():
-//       - Formularios: searchUserForm, taskForm
-//       - Inputs: userDocumentInput, taskTitleInput, taskDescriptionInput
-//       - Selects: taskStatusSelect
-//       - Secciones: userDataSection, taskFormSection, tasksSection
-//       - Spans para errores y datos de usuario
-//       - Elementos de tabla: tasksTableBody
-// 
-// 2. ¿Qué evento provoca el cambio en la página?
-//    R: Los principales eventos son:
-//       - 'submit' en los formularios: cuando el usuario envía datos
-//       - 'input' en los campos: cuando el usuario escribe
-//       - 'change' en el select: cuando el usuario selecciona una opción
-// 
-// 3. ¿Qué nuevo elemento se crea?
-//    R: Se crean dinámicamente:
-//       - Elementos TR (filas de tabla) para cada tarea
-//       - Elementos TD (celdas) dentro de cada fila
-//       Estos elementos se crean con createElement() y se insertan con appendChild()
-// 
-// 4. ¿Dónde se inserta ese elemento dentro del DOM?
-//    R: Los elementos TR se insertan dentro del elemento TBODY de la tabla,
-//       que tiene el ID 'tasksTableBody'. Se insertan al final usando appendChild(),
-//       de manera que cada nueva tarea aparece debajo de la anterior.
-// 
-// 5. ¿Qué ocurre en la página cada vez que repites la acción?
-//    R: Cada vez que se registra una nueva tarea:
-//       - Se crea una nueva fila en la tabla
-//       - Se incrementa el contador de tareas
-//       - Se actualiza el texto del contador
-//       - La tabla se expande para mostrar la nueva tarea
-//       - El estado vacío permanece oculto
-//       - El formulario se limpia para permitir registrar otra tarea
-//       Todo esto ocurre sin recargar la página gracias al DOM
