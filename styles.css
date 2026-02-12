@@ -1,487 +1,521 @@
-/* SISTEMA DE DISEÑO - VARIABLES CSS */
+/* VARIABLES CSS
+   :root = selector especial que representa la raíz del HTML.
+   Las variables se definen aquí para usarlas en todo el archivo
+   con var(--nombre). Cambiar el valor aquí lo cambia en todos lados. */
 
 :root {
-    /* Paleta de colores principal */
-    --color-primary: #4f46e5;
-    --color-primary-dark: #4338ca;
-    --color-primary-light: #6366f1;
-    --color-primary-lighter: #eef2ff;
-    
-    /* Colores de estado */
-    --color-success: #10b981;
-    --color-error: #ef4444;
-    --color-warning: #f59e0b;
-    --color-info: #3b82f6;
-    
-    /* Escala de grises */
-    --color-gray-50: #f9fafb;
-    --color-gray-100: #f3f4f6;
-    --color-gray-200: #e5e7eb;
-    --color-gray-300: #d1d5db;
-    --color-gray-400: #9ca3af;
-    --color-gray-500: #6b7280;
-    --color-gray-600: #4b5563;
-    --color-gray-700: #374151;
-    --color-gray-800: #1f2937;
-    --color-gray-900: #111827;
-    
-    /* Colores de fondo */
-    --color-background: #ffffff;
-    --color-background-secondary: var(--color-gray-50);
-    --color-surface: #ffffff;
-    
+    /* Colores principales */
+    --color-primario:        #c762e3; /* morado base: botones, bordes, títulos */
+    --color-primario-oscuro: #be5cc3; /* morado más oscuro: hover del botón */
+    --color-primario-suave:  #faf5ff; /* morado muy claro: fondo del focus */
+
+    /* Colores de estado: usados por JavaScript al crear badges en la tabla */
+    --color-pendiente:  #fbbf24; /* amarillo para "pendiente" */
+    --color-progreso:   #60a5fa; /* azul para "en progreso" */
+    --color-completada: #34d399; /* verde para "completada" */
+    --color-error:      #ef4444; /* rojo para errores de formulario */
+
     /* Colores de texto */
-    --color-text-primary: var(--color-gray-900);
-    --color-text-secondary: var(--color-gray-600);
-    --color-text-tertiary: var(--color-gray-400);
-    
-    /* Tipografía */
-    --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-    --font-family-mono: 'Courier New', Courier, monospace;
-    
-    /* Tamaños de fuente */
-    --font-size-xs: 0.75rem;    /* 12px */
-    --font-size-sm: 0.875rem;   /* 14px */
-    --font-size-base: 1rem;     /* 16px */
-    --font-size-lg: 1.125rem;   /* 18px */
-    --font-size-xl: 1.25rem;    /* 20px */
-    --font-size-2xl: 1.5rem;    /* 24px */
-    --font-size-3xl: 1.875rem;  /* 30px */
-    --font-size-4xl: 2.25rem;   /* 36px */
-    
-    /* Pesos de fuente */
-    --font-weight-normal: 400;
-    --font-weight-medium: 500;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
-    
-    /* Espaciado */
-    --spacing-xs: 0.25rem;   /* 4px */
-    --spacing-sm: 0.5rem;    /* 8px */
-    --spacing-md: 1rem;      /* 16px */
-    --spacing-lg: 1.5rem;    /* 24px */
-    --spacing-xl: 2rem;      /* 32px */
-    --spacing-2xl: 3rem;     /* 48px */
-    --spacing-3xl: 4rem;     /* 64px */
-    
-    /* Border radius */
-    --radius-sm: 0.375rem;   /* 6px */
-    --radius-md: 0.5rem;     /* 8px */
-    --radius-lg: 0.75rem;    /* 12px */
-    --radius-xl: 1rem;       /* 16px */
-    --radius-full: 9999px;
-    
-    /* Sombras */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    
-    /* Transiciones */
-    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    
-    /* Z-index */
-    --z-index-dropdown: 1000;
-    --z-index-modal: 1050;
-    --z-index-tooltip: 1100;
+    --texto-oscuro: #111827; /* casi negro: títulos y etiquetas */
+    --texto-medio:  #4b5563; /* gris: texto de contenido */
+    --texto-claro:  #9ca3af; /* gris claro: placeholders y subtextos */
+
+    /* Colores de fondo y bordes */
+    --fondo-gris:  #f9fafb; /* gris muy suave: fondo de celdas y encabezados */
+    --borde-suave: #e5e7eb; /* gris claro: líneas divisoras */
+
+    /* Tipografía: el navegador usa la primera fuente disponible en el sistema */
+    --fuente: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+
+    /* Tamaños de texto. rem = relativo al html (1rem = 16px por defecto) */
+    --texto-sm:  0.875rem; /* 14px */
+    --texto-md:  1rem;     /* 16px: tamaño base */
+    --texto-lg:  1.125rem; /* 18px */
+    --texto-xl:  1.25rem;  /* 20px */
+    --texto-2xl: 1.5rem;   /* 24px */
+    --texto-3xl: 1.875rem; /* 30px */
+
+    /* Espaciados usados en padding y margin */
+    --espacio-xs:  0.25rem; /* 4px */
+    --espacio-sm:  0.5rem;  /* 8px */
+    --espacio-md:  1rem;    /* 16px */
+    --espacio-lg:  1.5rem;  /* 24px */
+    --espacio-xl:  2rem;    /* 32px */
+    --espacio-2xl: 3rem;    /* 48px */
+
+    /* Border-radius: controla qué tan redondeadas son las esquinas */
+    --radio-sm:   0.375rem; /* 6px: ligeramente redondeado */
+    --radio-md:   0.5rem;   /* 8px */
+    --radio-lg:   0.75rem;  /* 12px */
+    --radio-xl:   1rem;     /* 16px: muy redondeado */
+    --radio-full: 9999px;   /* completamente redondo (forma de pastilla) */
+
+    /* Box-shadow (sombras). Valores: eje-X eje-Y desenfoque color */
+    --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.08);  /* sombra sutil */
+    --sombra-md: 0 4px 10px rgba(0, 0, 0, 0.10); /* sombra media */
+    --sombra-lg: 0 8px 20px rgba(0, 0, 0, 0.10); /* sombra pronunciada */
+
+    /* Transición: velocidad y suavidad de los efectos hover */
+    --transicion: 200ms ease; /* 200 milisegundos con curva suave */
 }
 
-/* RESET Y ESTILOS BASE */
 
+/* RESET BÁSICO
+   Los navegadores añaden márgenes y paddings por defecto.
+   Esto los elimina para partir desde cero. */
+
+/* El asterisco (*) selecciona absolutamente todos los elementos */
 *, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+    box-sizing: border-box; /* el padding y border se incluyen dentro del ancho declarado */
+    margin: 0;              /* elimina márgenes por defecto */
+    padding: 0;             /* elimina paddings por defecto */
 }
 
 html {
-    font-size: 16px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    font-size: 16px; /* define la base para los valores rem */
 }
 
 body {
-    font-family: var(--font-family-base);
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-normal);
-    line-height: 1.5;
-    color: var(--color-text-primary);
-    background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-gray-50) 100%);
-    min-height: 100vh;
-    padding: var(--spacing-lg);
+    font-family: var(--fuente);   /* fuente general de toda la página */
+    font-size: var(--texto-md);   /* tamaño de texto base */
+    color: var(--texto-medio);    /* color de texto general */
+    line-height: 1.6;             /* altura de línea (espacio entre renglones) */
+    background-color: #f8edf5;    /* fondo rosado suave y profesional */
+    min-height: 100vh;            /* el fondo cubre como mínimo toda la pantalla (vh = viewport height) */
+    padding: var(--espacio-lg);   /* espacio entre el borde de la pantalla y el contenido */
 }
 
-/* LAYOUT PRINCIPAL */
+
+/* CONTENEDOR PRINCIPAL
+   Centra y limita el ancho de todo el contenido.
+   Conecta con: <div class="container"> */
 
 .container {
-    max-width: 800px;
-    margin: 0 auto;
+    max-width: 800px;        /* el contenido no se expande más de 800px */
+    margin: 0 auto;          /* 0 = sin margen arriba/abajo | auto = centra horizontalmente */
+    display: flex;           /* activa flexbox para organizar los hijos */
+    flex-direction: column;  /* apila los hijos en columna (uno debajo del otro) */
+    gap: var(--espacio-2xl); /* espacio uniforme entre cada sección */
 }
 
-/* ============================================
-   HEADER
-   ============================================ */
+
+/* ENCABEZADO
+   Conecta con: <header class="header"> */
 
 .header {
-    text-align: center;
-    margin-bottom: var(--spacing-2xl);
-    padding: var(--spacing-xl) var(--spacing-md);
-    background: var(--color-surface);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
+    text-align: center;                           /* centra el texto */
+    padding: var(--espacio-xl) var(--espacio-lg); /* espacio interno: arriba/abajo | lados */
+    background: white;                            /* fondo blanco */
+    border-radius: var(--radio-xl);               /* esquinas muy redondeadas */
+    box-shadow: var(--sombra-md);                 /* sombra para efecto de tarjeta */
+    border-top: 4px solid var(--color-primario);  /* línea decorativa de color arriba */
 }
 
+/* <h1 class="header__title"> */
 .header__title {
-    font-size: var(--font-size-3xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--color-primary);
-    margin-bottom: var(--spacing-sm);
-    letter-spacing: -0.02em;
+    font-size: var(--texto-3xl);      /* tamaño grande para el título principal */
+    font-weight: 700;                 /* negrita */
+    color: var(--color-primario);     /* morado */
+    margin-bottom: var(--espacio-sm); /* espacio debajo del título */
 }
 
+/* <p class="header__subtitle"> */
 .header__subtitle {
-    font-size: var(--font-size-lg);
-    color: var(--color-text-secondary);
-    font-weight: var(--font-weight-normal);
+    font-size: var(--texto-md); /* tamaño normal */
+    color: var(--texto-claro);  /* gris claro: indica que es texto secundario */
 }
 
-/* CARD COMPONENT */
+
+/* TARJETA (CARD)
+   Contenedor blanco con sombra. Usada en formularios y datos del usuario.
+   Conecta con: <div class="card"> */
 
 .card {
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-xl);
-    box-shadow: var(--shadow-lg);
-    border: 1px solid var(--color-gray-100);
+    background: white;                    /* fondo blanco */
+    border-radius: var(--radio-lg);       /* esquinas redondeadas */
+    padding: var(--espacio-xl);           /* espacio interno */
+    box-shadow: var(--sombra-lg);         /* sombra para efecto de tarjeta flotante */
+    border: 1px solid var(--borde-suave); /* borde muy sutil para definir el contorno */
 }
 
+/* <h2 class="card__title"> */
 .card__title {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
-    margin-bottom: var(--spacing-lg);
+    font-size: var(--texto-xl);                   /* tamaño del título de sección */
+    font-weight: 600;                             /* semi-negrita */
+    color: var(--texto-oscuro);                   /* texto casi negro */
+    margin-bottom: var(--espacio-lg);             /* espacio debajo del título */
+    padding-left: var(--espacio-md);              /* sangría para que la línea no tape el texto */
+    border-left: 3px solid var(--color-primario); /* línea de color decorativa a la izquierda */
 }
 
-/* FORMULARIO */
 
-.form-section {
-    margin-bottom: var(--spacing-2xl);
-}
+/* FORMULARIOS
+   Conecta con: <div class="form__group">, <label>,
+   <input>, <textarea>, <select>, <span class="form__error"> */
 
+/* Agrupa label + input + error. Aporta el espacio entre campos. */
 .form__group {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--espacio-lg); /* espacio entre cada campo del formulario */
 }
 
+/* <label class="form__label"> */
 .form__label {
-    display: block;
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-primary);
-    margin-bottom: var(--spacing-sm);
+    display: block;                   /* ocupa su propia línea */
+    font-size: var(--texto-sm);       /* un poco más pequeño que el texto base */
+    font-weight: 500;                 /* peso medio */
+    color: var(--texto-oscuro);       /* texto oscuro para buena legibilidad */
+    margin-bottom: var(--espacio-sm); /* espacio entre el label y el input */
 }
 
+/* Estilos compartidos por <input>, <textarea> y <select>
+   (los tres tienen class="form__input" en el HTML) */
 .form__input {
-    width: 100%;
-    padding: var(--spacing-md);
-    font-size: var(--font-size-base);
-    font-family: var(--font-family-base);
-    color: var(--color-text-primary);
-    background-color: var(--color-surface);
-    border: 2px solid var(--color-gray-200);
-    border-radius: var(--radius-md);
-    transition: all var(--transition-base);
-    outline: none;
+    width: 100%;                          /* ocupa todo el ancho disponible */
+    padding: var(--espacio-md);           /* espacio interno */
+    font-size: var(--texto-md);           /* mismo tamaño que el texto base */
+    font-family: var(--fuente);           /* textarea y select no heredan la fuente automáticamente */
+    color: var(--texto-oscuro);           /* color del texto que el usuario escribe */
+    background: white;                    /* fondo blanco */
+    border: 2px solid var(--borde-suave); /* borde gris suave por defecto */
+    border-radius: var(--radio-md);       /* esquinas levemente redondeadas */
+    transition: border-color var(--transicion), box-shadow var(--transicion); /* solo anima borde y sombra */
+    outline: none;                        /* elimina el borde azul del navegador al hacer foco */
 }
 
+/* Estado al hacer clic en el campo (foco activo) */
 .form__input:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-primary-lighter);
+    border-color: var(--color-primario);               /* borde cambia a morado */
+    box-shadow: 0 0 0 3px var(--color-primario-suave); /* anillo de color alrededor (no afecta el layout) */
 }
 
+/* Texto del placeholder (sugerencia que aparece dentro del campo vacío) */
 .form__input::placeholder {
-    color: var(--color-gray-400);
+    color: var(--texto-claro); /* más claro que el texto real para distinguirse */
 }
 
+/* <textarea class="form__input form__textarea"> */
 .form__textarea {
-    resize: vertical;
-    min-height: 100px;
+    resize: vertical;  /* el usuario solo puede redimensionar hacia arriba/abajo */
+    min-height: 100px; /* altura mínima del textarea */
 }
 
+/* Cuando JavaScript agrega la clase "error" al input (validación fallida) */
 .form__input.error {
-    border-color: var(--color-error);
+    border-color: var(--color-error); /* borde rojo */
+    background: #fff5f5;              /* fondo levemente rosado */
 }
 
+/* Anillo rojo cuando el campo con error tiene foco */
 .form__input.error:focus {
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12); /* rojo al 12% de opacidad */
 }
 
+/* Texto de error debajo del input. JavaScript escribe el mensaje aquí.
+   Conecta con: <span class="form__error" id="...Error"> */
 .form__error {
-    display: block;
-    font-size: var(--font-size-sm);
-    color: var(--color-error);
-    margin-top: var(--spacing-xs);
-    min-height: 1.25rem;
-    font-weight: var(--font-weight-medium);
+    display: block;            /* ocupa su propia línea */
+    font-size: var(--texto-sm);
+    color: var(--color-error); /* rojo */
+    font-weight: 500;
+    margin-top: var(--espacio-xs);
+    min-height: 1.2rem; /* reserva espacio aunque esté vacío, evita que el layout "salte" */
 }
 
-/* BOTONES */
+
+/* BOTÓN
+   Conecta con: <button class="btn btn--primary"> */
 
 .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md) var(--spacing-xl);
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-semibold);
-    font-family: var(--font-family-base);
-    line-height: 1;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all var(--transition-base);
+    display: inline-flex;    /* permite alinear el texto y el ícono en la misma fila */
+    align-items: center;     /* los centra verticalmente */
+    justify-content: center; /* los centra horizontalmente */
+    gap: var(--espacio-sm);  /* espacio entre el texto y el ícono */
+    padding: var(--espacio-md) var(--espacio-xl); /* arriba/abajo | izquierda/derecha */
+    font-size: var(--texto-md);
+    font-weight: 600;
+    font-family: var(--fuente);
+    border: none;            /* elimina el borde nativo del botón */
+    border-radius: var(--radio-md);
+    cursor: pointer;         /* muestra la manito al pasar el cursor */
+    transition: all var(--transicion);
     outline: none;
-    text-decoration: none;
-    white-space: nowrap;
 }
 
+/* La clase .btn da la forma, esta da el color morado */
 .btn--primary {
-    background-color: var(--color-primary);
-    color: white;
-    box-shadow: var(--shadow-sm);
+    background: var(--color-primario); /* fondo morado */
+    color: white;                      /* texto blanco */
+    box-shadow: var(--sombra-sm);
 }
 
+/* Efecto al pasar el mouse */
 .btn--primary:hover {
-    background-color: var(--color-primary-dark);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+    background: var(--color-primario-oscuro); /* morado más oscuro */
+    box-shadow: var(--sombra-md);
+    transform: translateY(-1px); /* sube 1px simulando que "se levanta" */
 }
 
+/* Efecto al hacer clic */
 .btn--primary:active {
-    transform: translateY(0);
-    box-shadow: var(--shadow-sm);
+    transform: translateY(0); /* vuelve a su posición original */
+    box-shadow: var(--sombra-sm);
 }
 
-.btn--primary:focus-visible {
-    box-shadow: 0 0 0 3px var(--color-primary-lighter);
-}
-
+/* <span class="btn__icon"> */
 .btn__icon {
-    font-size: var(--font-size-lg);
+    font-size: var(--texto-lg); /* el ícono un poco más grande que el texto */
 }
 
-/* SECCIÓN DE MENSAJES */
 
-.messages-section {
-    margin-bottom: var(--spacing-2xl);
+/* DATOS DEL USUARIO
+   Oculta por defecto. JavaScript quita "hidden" al encontrar el usuario.
+   Conecta con: <section class="user-data-section hidden">
+   y con: <div class="user-info"> */
+
+/* Contenedor de los datos: ID, Nombre, Email */
+.user-info {
+    display: flex;          /* activa flexbox */
+    flex-direction: column; /* apila los items en columna */
+    gap: var(--espacio-sm); /* espacio entre cada dato */
 }
 
-.messages-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
-    padding: var(--spacing-md);
+/* Cada fila de dato. Conecta con: <p class="user-info__item"> */
+.user-info__item {
+    padding: var(--espacio-sm) var(--espacio-md); /* espacio interno */
+    background: var(--fondo-gris);                /* fondo gris muy suave */
+    border-radius: var(--radio-sm);               /* esquinas levemente redondeadas */
+    font-size: var(--texto-md);
+    color: var(--texto-medio);
 }
 
-.messages-header__title {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
+/* <strong> dentro de cada .user-info__item */
+.user-info__item strong {
+    color: var(--texto-oscuro);       /* más oscuro para diferenciarse del valor */
+    margin-right: var(--espacio-xs);  /* pequeño espacio entre la etiqueta y el valor */
 }
 
-.messages-header__count {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-secondary);
-    background-color: var(--color-gray-100);
-    padding: var(--spacing-xs) var(--spacing-md);
-    border-radius: var(--radius-full);
+
+/* SECCIÓN Y TABLA DE TAREAS
+   Oculta por defecto. JavaScript la muestra cuando hay tareas.
+   Conecta con: <section class="tasks-section hidden"> */
+
+.tasks-section {
+    background: white;                /* fondo blanco profesional */
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-lg);
+    border: 1px solid #bae6fd;        /* borde celeste suave */
+    overflow: hidden;                 /* impide que la tabla desborde los bordes redondeados */
 }
 
-.messages-container {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
+/* Barra superior con título y contador. Conecta con: <div class="tasks-header"> */
+.tasks-header {
+    display: flex;                               /* alinea hijos en fila */
+    justify-content: space-between;              /* título a la izquierda, contador a la derecha */
+    align-items: center;                         /* centra ambos verticalmente */
+    padding: var(--espacio-lg) var(--espacio-xl);
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); /* degradado celeste */
+    border-bottom: 2px solid #bae6fd;            /* línea separadora celeste */
 }
 
-/* Estado vacío */
-.messages-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-3xl) var(--spacing-xl);
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    border: 2px dashed var(--color-gray-200);
+/* <h2 class="tasks-header__title"> */
+.tasks-header__title {
+    font-size: var(--texto-xl);
+    font-weight: 600;
+    color: var(--texto-oscuro);
+}
+
+/* Badge con el número de tareas. JavaScript actualiza su contenido.
+   Conecta con: <span class="tasks-header__count"> */
+.tasks-header__count {
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: #0369a1;                  /* azul oscuro profesional */
+    background: #e0f2fe;             /* fondo celeste suave */
+    padding: var(--espacio-xs) var(--espacio-md);
+    border-radius: var(--radio-full); /* forma de pastilla */
+}
+
+/* Contenedor de la tabla. Agrega scroll horizontal en pantallas pequeñas.
+   Conecta con: <div class="tasks-table-container"> */
+.tasks-table-container {
+    overflow-x: auto; /* si la tabla es más ancha que la pantalla, aparece scroll horizontal */
+}
+
+/* <table class="tasks-table"> */
+.tasks-table {
+    width: 100%;
+    border-collapse: collapse; /* une los bordes de las celdas en uno solo */
+    font-size: var(--texto-sm);
+}
+
+/* <th> dentro de <thead> */
+.tasks-table thead th {
+    padding: var(--espacio-md) var(--espacio-lg);
+    text-align: left;                            /* texto alineado a la izquierda */
+    font-weight: 600;
+    color: #0c4a6e;                              /* azul oscuro profesional */
+    background: #f0f9ff;                         /* fondo celeste muy suave */
+    border-bottom: 2px solid #bae6fd;            /* línea celeste debajo del encabezado */
+    white-space: nowrap;                         /* evita que el texto se parta en varias líneas */
+}
+
+/* <td> dentro de <tbody>. JavaScript crea estas celdas dinámicamente. */
+.tasks-table tbody td {
+    padding: var(--espacio-md) var(--espacio-lg);
+    color: var(--texto-medio);
+    border-bottom: 1px solid var(--borde-suave); /* línea separadora entre filas */
+    vertical-align: middle;                       /* centra verticalmente el contenido de la celda */
+}
+
+/* Resalta la fila al pasar el mouse por encima */
+.tasks-table tbody tr:hover td {
+    background: #f0f9ff; /* fondo celeste muy suave en hover */
+}
+
+/* La última fila no necesita borde inferior (evita línea doble con el borde del contenedor) */
+.tasks-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* BADGES DE ESTADO EN LA TABLA
+   JavaScript crea un span con estas clases para cada estado.
+   Cada badge tiene su color pastel para identificar el estado rápido. */
+
+/* Estilo base compartido por todos los badges */
+.status-badge {
+    display: inline-block;     /* permite aplicar padding sin ocupar toda la línea */
+    padding: 4px 12px;         /* espacio interno del badge */
+    border-radius: 12px;       /* esquinas redondeadas (forma de pastilla) */
+    font-size: 0.875rem;       /* texto pequeño */
+    font-weight: 500;          /* semi-negrita */
+}
+
+/* Estado "pendiente": amarillo pastel */
+.status-pendiente {
+    background-color: #fef3c7; /* fondo amarillo suave */
+    color: #92400e;            /* texto café oscuro */
+}
+
+/* Estado "en_progreso": azul pastel */
+.status-en_progreso {
+    background-color: #dbeafe; /* fondo azul suave */
+    color: #1e40af;            /* texto azul oscuro */
+}
+
+/* Estado "completada": verde pastel */
+.status-completada {
+    background-color: #d1fae5; /* fondo verde suave */
+    color: #065f46;            /* texto verde oscuro */
+}
+
+
+/* ESTADO VACÍO DE LA TABLA
+   Se muestra cuando no hay tareas. JavaScript lo oculta o muestra.
+   Conecta con: <div class="tasks-empty" id="tasksEmptyState"> */
+
+.tasks-empty {
+    display: flex;           /* activa flexbox */
+    flex-direction: column;  /* apila los elementos en columna */
+    align-items: center;     /* centra horizontalmente */
+    justify-content: center; /* centra verticalmente */
     text-align: center;
+    padding: var(--espacio-2xl) var(--espacio-xl);
 }
 
-.messages-empty__icon {
-    color: var(--color-gray-300);
-    margin-bottom: var(--spacing-lg);
+/* Emoji decorativo. Conecta con: <div class="tasks-empty__icon"> */
+.tasks-empty__icon {
+    font-size: 3rem;             /* tamaño grande del emoji */
+    margin-bottom: var(--espacio-md);
+    opacity: 0.4;                /* semitransparente para que se vea sutil */
 }
 
-.messages-empty__text {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-secondary);
-    margin-bottom: var(--spacing-xs);
+/* Texto principal. Conecta con: <p class="tasks-empty__text"> */
+.tasks-empty__text {
+    font-size: var(--texto-lg);
+    font-weight: 500;
+    color: var(--texto-medio);
+    margin-bottom: var(--espacio-xs);
 }
 
-.messages-empty__subtext {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-tertiary);
+/* Texto secundario. Conecta con: <p class="tasks-empty__subtext"> */
+.tasks-empty__subtext {
+    font-size: var(--texto-sm);
+    color: var(--texto-claro);
 }
 
-/* Tarjeta de mensaje */
-.message-card {
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
-    border-left: 4px solid var(--color-primary);
-    animation: slideIn var(--transition-slow) ease-out;
-    transition: all var(--transition-base);
-}
 
-.message-card:hover {
-    box-shadow: var(--shadow-xl);
-    transform: translateY(-2px);
-}
-
-.message-card__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-md);
-}
-
-.message-card__user {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.message-card__avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: var(--font-weight-bold);
-    font-size: var(--font-size-sm);
-}
-
-.message-card__username {
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-primary);
-}
-
-.message-card__timestamp {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-tertiary);
-    font-weight: var(--font-weight-medium);
-}
-
-.message-card__content {
-    font-size: var(--font-size-base);
-    color: var(--color-text-secondary);
-    line-height: 1.6;
-    word-wrap: break-word;
-}
-
-/* FOOTER */
+/* PIE DE PÁGINA
+   Conecta con: <footer class="footer"> */
 
 .footer {
     text-align: center;
-    padding: var(--spacing-xl);
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
+    padding: var(--espacio-xl);
+    background: white;
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-sm);
 }
 
+/* <p class="footer__text"> */
 .footer__text {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
+    font-size: var(--texto-sm);
+    color: var(--texto-claro);
 }
 
-/* ANIMACIONES */
+
+/* ANIMACIÓN DE ENTRADA
+   Se usa cuando JavaScript muestra un elemento nuevo.
+   @keyframes define los fotogramas de inicio y fin. */
 
 @keyframes slideIn {
     from {
-        opacity: 0;
-        transform: translateY(-10px);
+        opacity: 0;                  /* empieza invisible */
+        transform: translateY(-8px); /* empieza 8px más arriba de su posición */
     }
     to {
-        opacity: 1;
-        transform: translateY(0);
+        opacity: 1;                  /* termina completamente visible */
+        transform: translateY(0);    /* termina en su posición normal */
     }
 }
 
-/* RESPONSIVE DESIGN */
 
-@media (max-width: 768px) {
-    body {
-        padding: var(--spacing-md);
-    }
-    
-    .header {
-        padding: var(--spacing-lg) var(--spacing-md);
-        margin-bottom: var(--spacing-xl);
-    }
-    
-    .header__title {
-        font-size: var(--font-size-2xl);
-    }
-    
-    .header__subtitle {
-        font-size: var(--font-size-base);
-    }
-    
-    .card {
-        padding: var(--spacing-lg);
-    }
-    
-    .messages-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-sm);
-    }
-}
+/* UTILIDADES
+   Clases de uso general que JavaScript agrega o quita. */
 
-@media (max-width: 480px) {
-    .btn {
-        width: 100%;
-    }
-    
-    .message-card__header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-sm);
-    }
-}
-
-/* UTILIDADES */
-
+/* Oculta cualquier elemento. JavaScript usa classList.add/remove('hidden').
+   !important garantiza que siempre gane sobre otros estilos de display. */
 .hidden {
     display: none !important;
 }
 
-.fade-out {
-    animation: fadeOut var(--transition-base) ease-out forwards;
-}
 
-@keyframes fadeOut {
-    to {
-        opacity: 0;
-        transform: scale(0.95);
+/* RESPONSIVE (ADAPTABLE A PANTALLAS PEQUEÑAS)
+   @media aplica estilos SOLO cuando se cumple la condición.
+   max-width: 768px cubre tablets y teléfonos en horizontal. */
+
+@media (max-width: 768px) {
+
+    body {
+        padding: var(--espacio-md); /* menos espacio en los bordes de la pantalla */
+    }
+
+    .header__title {
+        font-size: var(--texto-2xl); /* título más pequeño en pantallas pequeñas */
+    }
+
+    .card {
+        padding: var(--espacio-lg); /* menos padding en las tarjetas */
+    }
+
+    /* El título y el contador de tareas se apilan verticalmente */
+    .tasks-header {
+        flex-direction: column;  /* cambia de fila a columna */
+        align-items: flex-start; /* alinea los elementos a la izquierda */
+        gap: var(--espacio-sm);
+    }
+
+    /* El botón ocupa todo el ancho en pantallas pequeñas */
+    .btn {
+        width: 100%;
     }
 }

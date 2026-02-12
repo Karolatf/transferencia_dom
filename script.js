@@ -329,8 +329,12 @@ function createTaskRow(task, index) {
     
     // ----- PASO 5: CREAR Y LLENAR LA CELDA DE ESTADO -----
     const statusCell = document.createElement('td');
-    // Insertamos el estado formateado (convertido a texto legible)
-    statusCell.textContent = formatTaskStatus(task.status);
+    // Creamos un span con clase de badge para el estado
+    const statusBadge = document.createElement('span');
+    statusBadge.classList.add('status-badge'); // clase base del badge
+    statusBadge.classList.add(`status-${task.status}`); // clase específica: status-pendiente, status-en_progreso, status-completada
+    statusBadge.textContent = formatTaskStatus(task.status); // texto formateado
+    statusCell.appendChild(statusBadge); // insertamos el badge en la celda
     
     // ----- PASO 6: CREAR Y LLENAR LA CELDA DE USUARIO -----
     const userCell = document.createElement('td');
