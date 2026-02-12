@@ -191,3 +191,6 @@ npx json-server server.json
        - El formulario se limpia para permitir registrar otra tarea
        Todo esto ocurre sin recargar la página gracias al DOM
 ```
+---
+**Fin de las peguntas**
+---
