@@ -5,6 +5,7 @@
  * responder a eventos y crear nuevos elementos dinámicamente.
  * 
  * Autor: [Karol Nicolle Torres Fuentes]
+ * Autor: [Juan Sebastian Patiño Hernandez]
  * Fecha: [11-02-26]
  * 
  */
