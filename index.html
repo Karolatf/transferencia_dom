@@ -7,80 +7,255 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Contenedor principal que agrupa toda la aplicación -->
     <div class="container">
-        <!-- Encabezado principal -->
+        
+        <!-- ===== SECCIÓN: ENCABEZADO ===== -->
+        <!-- Header semántico que contiene el título y descripción de la aplicación -->
         <header class="header">
-            <h1 class="header__title">Registro de Mensajes</h1>
-            <p class="header__subtitle">Practica la manipulación del DOM en tiempo real</p>
+            <!-- Título principal de nivel 1, representa el nombre de la aplicación -->
+            <h1 class="header__title">Sistema de Gestión de Tareas</h1>
+            
+            <!-- Párrafo descriptivo que explica el propósito de la aplicación -->
+            <p class="header__subtitle">Busca usuarios y registra tareas asociadas | Ejercicio DOM - SENA</p>
         </header>
 
-        <!-- Formulario de entrada -->
+        <!-- ===== SECCIÓN: BÚSQUEDA DE USUARIO ===== -->
+        <!-- Section semántico que agrupa el formulario de búsqueda de usuario -->
         <section class="form-section">
+            <!-- Card contenedor para organizar visualmente el formulario -->
             <div class="card">
-                <h2 class="card__title">Nuevo Mensaje</h2>
+                <!-- Título secundario que identifica la sección de búsqueda -->
+                <h2 class="card__title">Buscar Usuario</h2>
                 
-                <form id="messageForm" class="form" novalidate>
+                <!-- Formulario de búsqueda de usuario por documento -->
+                <!-- El atributo novalidate desactiva la validación HTML5 para usar validación personalizada en JavaScript -->
+                <form id="searchUserForm" class="form" novalidate>
+                    <!-- Grupo de campos del formulario para organizar label + input + mensaje de error -->
                     <div class="form__group">
-                        <label for="userName" class="form__label">
-                            Nombre de usuario
+                        <!-- Label asociado al input mediante el atributo 'for', mejora accesibilidad -->
+                        <label for="userDocument" class="form__label">
+                            Documento del Usuario
                         </label>
+                        
+                        <!-- Input de tipo number para capturar el documento del usuario -->
+                        <!-- El aria-required se agregará dinámicamente desde JavaScript para control total de validación -->
                         <input 
                             type="text" 
-                            id="userName" 
+                            id="userDocument" 
                             class="form__input" 
-                            placeholder="Ingresa tu nombre"
-                            aria-required="true"
+                            placeholder="Ingresa el número de documento"
                         >
-                        <span class="form__error" id="userNameError"></span>
+                        
+                        <!-- Span vacío que se llenará dinámicamente con mensajes de error desde JavaScript -->
+                        <span class="form__error" id="userDocumentError"></span>
                     </div>
 
-                    <div class="form__group">
-                        <label for="userMessage" class="form__label">
-                            Tu mensaje
-                        </label>
-                        <textarea 
-                            id="userMessage" 
-                            class="form__input form__textarea" 
-                            placeholder="Escribe tu mensaje aquí..."
-                            rows="4"
-                            aria-required="true"
-                        ></textarea>
-                        <span class="form__error" id="userMessageError"></span>
-                    </div>
-
-                    <button type="submit" class="btn btn--primary" id="submitBtn">
-                        <span class="btn__text">Agregar Mensaje</span>
-                        <span class="btn__icon">➤</span>
+                    <!-- Botón de tipo submit para enviar el formulario de búsqueda -->
+                    <button type="submit" class="btn btn--primary" id="searchBtn">
+                        <!-- Span para el texto del botón -->
+                        <span class="btn__text">Buscar Usuario</span>
+                        
+                        <!-- Span para el ícono visual del botón -->
+                        <span class="btn__icon">🔍</span>
                     </button>
                 </form>
             </div>
         </section>
 
-        <!-- Área de mensajes -->
-        <section class="messages-section">
-            <div class="messages-header">
-                <h2 class="messages-header__title">Mensajes Publicados</h2>
-                <span class="messages-header__count" id="messageCount">0 mensajes</span>
-            </div>
-            
-            <div id="messagesContainer" class="messages-container">
-                <!-- Los mensajes se agregarán aquí dinámicamente -->
-                <div class="messages-empty" id="emptyState">
-                    <svg class="messages-empty__icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <p class="messages-empty__text">Aún no hay mensajes</p>
-                    <p class="messages-empty__subtext">Completa el formulario para agregar tu primer mensaje</p>
+        <!-- ===== SECCIÓN: DATOS DEL USUARIO ===== -->
+        <!-- Section que muestra los datos del usuario encontrado -->
+        <!-- Esta sección está oculta por defecto y se muestra cuando se encuentra un usuario -->
+        <section class="user-data-section hidden" id="userDataSection">
+            <!-- Card contenedor para organizar visualmente los datos del usuario -->
+            <div class="card">
+                <!-- Título secundario que identifica la sección de datos del usuario -->
+                <h2 class="card__title">Datos del Usuario</h2>
+                
+                <!-- Div contenedor para organizar los datos del usuario en formato de información -->
+                <div class="user-info" id="userInfo">
+                    <!-- Párrafo para mostrar el ID del usuario -->
+                    <!-- El strong enfatiza visualmente la etiqueta -->
+                    <p class="user-info__item">
+                        <strong>ID:</strong> 
+                        <!-- Span que se llenará dinámicamente con el ID del usuario desde JavaScript -->
+                        <span id="userId"></span>
+                    </p>
+                    
+                    <!-- Párrafo para mostrar el nombre del usuario -->
+                    <p class="user-info__item">
+                        <strong>Nombre:</strong> 
+                        <!-- Span que se llenará dinámicamente con el nombre del usuario desde JavaScript -->
+                        <span id="userName"></span>
+                    </p>
+                    
+                    <!-- Párrafo para mostrar el email del usuario -->
+                    <p class="user-info__item">
+                        <strong>Email:</strong> 
+                        <!-- Span que se llenará dinámicamente con el email del usuario desde JavaScript -->
+                        <span id="userEmail"></span>
+                    </p>
                 </div>
             </div>
         </section>
 
-        <!-- Footer informativo -->
+        <!-- ===== SECCIÓN: REGISTRO DE TAREAS ===== -->
+        <!-- Section que contiene el formulario para registrar nuevas tareas -->
+        <!-- Esta sección está oculta por defecto y se habilita cuando se encuentra un usuario -->
+        <section class="form-section hidden" id="taskFormSection">
+            <!-- Card contenedor para organizar visualmente el formulario de tareas -->
+            <div class="card">
+                <!-- Título secundario que identifica la sección de registro de tareas -->
+                <h2 class="card__title">Registrar Nueva Tarea</h2>
+                
+                <!-- Formulario de registro de tareas -->
+                <!-- El atributo novalidate desactiva la validación HTML5 para usar validación personalizada en JavaScript -->
+                <form id="taskForm" class="form" novalidate>
+                    <!-- Grupo de campos para el título de la tarea -->
+                    <div class="form__group">
+                        <!-- Label asociado al input del título -->
+                        <label for="taskTitle" class="form__label">
+                            Título de la Tarea
+                        </label>
+                        
+                        <!-- Input de tipo text para capturar el título de la tarea -->
+                        <!-- El aria-required se agregará dinámicamente desde JavaScript -->
+                        <input 
+                            type="text" 
+                            id="taskTitle" 
+                            class="form__input" 
+                            placeholder="Ingresa el título de la tarea"
+                        >
+                        
+                        <!-- Span para mostrar mensajes de error de validación -->
+                        <span class="form__error" id="taskTitleError"></span>
+                    </div>
+
+                    <!-- Grupo de campos para la descripción de la tarea -->
+                    <div class="form__group">
+                        <!-- Label asociado al textarea de la descripción -->
+                        <label for="taskDescription" class="form__label">
+                            Descripción
+                        </label>
+                        
+                        <!-- Textarea para capturar la descripción detallada de la tarea -->
+                        <!-- El atributo rows define la altura visual inicial del textarea -->
+                        <!-- El aria-required se agregará dinámicamente desde JavaScript -->
+                        <textarea 
+                            id="taskDescription" 
+                            class="form__input form__textarea" 
+                            placeholder="Describe la tarea..."
+                            rows="4"
+                        ></textarea>
+                        
+                        <!-- Span para mostrar mensajes de error de validación -->
+                        <span class="form__error" id="taskDescriptionError"></span>
+                    </div>
+
+                    <!-- Grupo de campos para el estado de la tarea -->
+                    <div class="form__group">
+                        <!-- Label asociado al select del estado -->
+                        <label for="taskStatus" class="form__label">
+                            Estado de la Tarea
+                        </label>
+                        
+                        <!-- Select (lista desplegable) para seleccionar el estado de la tarea -->
+                        <!-- El aria-required se agregará dinámicamente desde JavaScript -->
+                        <select 
+                            id="taskStatus" 
+                            class="form__input"
+                        >
+                            <!-- Opción por defecto deshabilitada que funciona como placeholder -->
+                            <option value="" disabled selected>Selecciona un estado</option>
+                            
+                            <!-- Opciones de estado disponibles para la tarea -->
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en_progreso">En Progreso</option>
+                            <option value="completada">Completada</option>
+                        </select>
+                        
+                        <!-- Span para mostrar mensajes de error de validación -->
+                        <span class="form__error" id="taskStatusError"></span>
+                    </div>
+
+                    <!-- Botón de tipo submit para enviar el formulario de tareas -->
+                    <button type="submit" class="btn btn--primary" id="taskSubmitBtn">
+                        <!-- Span para el texto del botón -->
+                        <span class="btn__text">Registrar Tarea</span>
+                        
+                        <!-- Span para el ícono visual del botón -->
+                        <span class="btn__icon">✓</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ===== SECCIÓN: LISTA DE TAREAS ===== -->
+        <!-- Section que muestra la tabla de tareas registradas -->
+        <!-- Esta sección está oculta por defecto y se muestra cuando hay tareas registradas -->
+        <section class="tasks-section hidden" id="tasksSection">
+            <!-- Div contenedor del encabezado de la sección de tareas -->
+            <div class="tasks-header">
+                <!-- Título secundario que identifica la sección de tareas registradas -->
+                <h2 class="tasks-header__title">Tareas Registradas</h2>
+                
+                <!-- Span que muestra el contador de tareas -->
+                <!-- Se actualiza dinámicamente desde JavaScript -->
+                <span class="tasks-header__count" id="tasksCount">0 tareas</span>
+            </div>
+            
+            <!-- Div contenedor para la tabla de tareas -->
+            <div class="tasks-table-container">
+                <!-- Tabla HTML para mostrar las tareas de forma estructurada -->
+                <!-- La tabla permite organizar datos en filas y columnas -->
+                <table class="tasks-table" id="tasksTable">
+                    <!-- Thead agrupa las filas de encabezado de la tabla -->
+                    <thead>
+                        <!-- Fila de encabezado que contiene los títulos de las columnas -->
+                        <tr>
+                            <!-- Cada th representa un encabezado de columna -->
+                            <!-- El scope="col" mejora la accesibilidad indicando que es encabezado de columna -->
+                            <th scope="col">#</th>
+                            <th scope="col">Título</th>
+                            <th scope="col">Descripción</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Usuario</th>
+                        </tr>
+                    </thead>
+                    
+                    <!-- Tbody agrupa las filas de datos de la tabla -->
+                    <!-- Las filas de datos se crearán dinámicamente desde JavaScript -->
+                    <tbody id="tasksTableBody">
+                        <!-- Las filas de tareas se insertarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Div que se muestra cuando no hay tareas registradas -->
+            <!-- Estado vacío con mensaje informativo -->
+            <!-- El ícono se puede agregar dinámicamente desde JavaScript o usar un emoji directamente -->
+            <div class="tasks-empty" id="tasksEmptyState">
+                <!-- Emoji como ícono decorativo simple (alternativa al SVG) -->
+                <div class="tasks-empty__icon">📋</div>
+                
+                <!-- Párrafo con mensaje principal del estado vacío -->
+                <p class="tasks-empty__text">No hay tareas registradas</p>
+                
+                <!-- Párrafo con mensaje secundario que guía al usuario -->
+                <p class="tasks-empty__subtext">Busca un usuario y registra su primera tarea</p>
+            </div>
+        </section>
+
+        <!-- ===== SECCIÓN: PIE DE PÁGINA ===== -->
+        <!-- Footer semántico que contiene información institucional -->
         <footer class="footer">
-            <p class="footer__text">Ejercicio de manipulación del DOM | SENA - Desarrollo Web</p>
+            <!-- Párrafo con información del ejercicio y la institución -->
+            <p class="footer__text">Ejercicio de Manipulación del DOM - Transferencia del Conocimiento | SENA - Técnico en Programación de Software</p>
         </footer>
     </div>
 
+    <!-- Script que enlaza el archivo JavaScript externo -->
+    <!-- Se coloca al final del body para asegurar que el DOM esté completamente cargado antes de ejecutar el script -->
     <script src="script.js"></script>
 </body>
 </html>
