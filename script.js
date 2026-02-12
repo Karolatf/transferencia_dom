@@ -1,31 +1,16 @@
-/**
- * ========================================
- * SISTEMA DE GESTIÓN DE TAREAS - EJERCICIO DOM
- * ========================================
- * 
- * Objetivo: Aplicar conceptos del DOM para:
- * - Buscar usuarios existentes en el servidor
- * - Registrar tareas asociadas a usuarios
- * - Crear elementos dinámicamente sin recargar la página
- * - Validar formularios
- * - Manipular el DOM en tiempo real
- * 
- * Autores: Karol Nicolle Torres Fuentes, Juan Sebastian Patiño Hernandez
- * Fecha: 11-02-26
- * Institución: SENA - Técnico en Programación de Software
- */
+// SISTEMA DE GESTIÓN DE TAREAS - EJERCICIO DOM
 
-// ========================================
+// Autores: Karol Nicolle Torres Fuentes, Juan Sebastian Patiño Hernandez
+// Fecha: 11-02-26
+// Institución: SENA - Técnico en Programación de Software
+
 // 1. CONFIGURACIÓN INICIAL Y CONSTANTES
-// ========================================
 
 // URL base del servidor JSON (json-server)
 // Este servidor simula una API REST y debe estar corriendo en el puerto 3000
 const API_BASE_URL = 'http://localhost:3000';
 
-// ========================================
 // 2. SELECCIÓN DE ELEMENTOS DEL DOM
-// ========================================
 
 // ----- FORMULARIO DE BÚSQUEDA DE USUARIO -----
 // Seleccionamos el formulario completo de búsqueda usando su ID único
@@ -84,9 +69,7 @@ const tasksTableBody = document.getElementById('tasksTableBody');
 // Seleccionamos el estado vacío que se muestra cuando no hay tareas
 const tasksEmptyState = document.getElementById('tasksEmptyState');
 
-// ========================================
 // 3. VARIABLES DE ESTADO DE LA APLICACIÓN
-// ========================================
 
 // Variable que almacenará los datos del usuario actualmente seleccionado
 // Se llenará cuando el usuario sea encontrado en el servidor
@@ -99,40 +82,22 @@ let registeredTasks = [];
 // Contador que llevará el número total de tareas registradas
 let taskCounter = 0;
 
-// ========================================
 // 4. FUNCIONES DE VALIDACIÓN
-// ========================================
 
-/**
- * Valida que un campo no esté vacío ni contenga solo espacios en blanco
- * 
- * @param {string} value - El valor del campo a validar
- * @returns {boolean} - true si el campo es válido (tiene contenido), false si está vacío
- * 
- * Funcionamiento:
- * 1. Recibe el valor del campo como parámetro
- * 2. Usa trim() para eliminar espacios al inicio y final
- * 3. Verifica si después de trim() la longitud es mayor a 0
- * 4. Retorna true si tiene contenido, false si está vacío
- */
+// Valida que un campo no esté vacío ni contenga solo espacios en blanco
+// Parámetro: value - El valor del campo a validar
+// Retorna: true si el campo es válido (tiene contenido), false si está vacío
 function isValidInput(value) {
     // trim() elimina espacios en blanco al inicio y final del string
     // length > 0 verifica que después de limpiar espacios, aún hay contenido
     return value.trim().length > 0;
 }
 
-/**
- * Muestra un mensaje de error en un elemento específico del DOM
- * También agrega la clase 'error' al input para mostrar estilo de error
- * 
- * @param {HTMLElement} errorElement - Elemento span donde se mostrará el error
- * @param {HTMLElement} inputElement - Elemento input que tiene el error
- * @param {string} message - Mensaje de error a mostrar
- * 
- * Funcionamiento:
- * 1. Asigna el mensaje de error al textContent del span
- * 2. Agrega la clase 'error' al input para aplicar estilos visuales de error
- */
+// Muestra un mensaje de error en un elemento específico del DOM
+// También agrega la clase 'error' al input para mostrar estilo de error
+// Parámetros: errorElement - span donde se mostrará el error
+//             inputElement - input que tiene el error
+//             message - mensaje de error a mostrar
 function showError(errorElement, inputElement, message) {
     // Asignamos el mensaje de error al contenido de texto del elemento span
     errorElement.textContent = message;
@@ -142,17 +107,10 @@ function showError(errorElement, inputElement, message) {
     inputElement.classList.add('error');
 }
 
-/**
- * Limpia el mensaje de error de un elemento específico
- * También remueve la clase 'error' del input
- * 
- * @param {HTMLElement} errorElement - Elemento span del cual limpiar el error
- * @param {HTMLElement} inputElement - Elemento input del cual remover la clase error
- * 
- * Funcionamiento:
- * 1. Limpia el contenido del span de error
- * 2. Remueve la clase 'error' del input para quitar estilos de error
- */
+// Limpia el mensaje de error de un elemento específico
+// También remueve la clase 'error' del input
+// Parámetros: errorElement - span del cual limpiar el error
+//             inputElement - input del cual remover la clase error
 function clearError(errorElement, inputElement) {
     // Limpiamos el contenido del span asignando un string vacío
     errorElement.textContent = '';
@@ -161,20 +119,9 @@ function clearError(errorElement, inputElement) {
     inputElement.classList.remove('error');
 }
 
-/**
- * Valida el formulario de búsqueda de usuario
- * Verifica que el campo de documento no esté vacío
- * 
- * @returns {boolean} - true si el formulario es válido, false si tiene errores
- * 
- * Flujo de validación:
- * 1. Obtiene el valor del input de documento
- * 2. Asume que el formulario es válido inicialmente
- * 3. Valida el campo usando isValidInput()
- * 4. Si no es válido, muestra error y cambia el estado a false
- * 5. Si es válido, limpia cualquier error previo
- * 6. Retorna el estado final de validación
- */
+// Valida el formulario de búsqueda de usuario
+// Verifica que el campo de documento no esté vacío
+// Retorna: true si el formulario es válido, false si tiene errores
 function validateSearchForm() {
     // Obtenemos el valor actual del input de documento
     const documentValue = userDocumentInput.value;
@@ -202,20 +149,9 @@ function validateSearchForm() {
     return isValid;
 }
 
-/**
- * Valida el formulario de registro de tareas
- * Verifica que todos los campos estén completos
- * 
- * @returns {boolean} - true si todos los campos son válidos, false si hay errores
- * 
- * Flujo de validación:
- * 1. Obtiene los valores de todos los campos
- * 2. Asume que el formulario es válido inicialmente
- * 3. Valida cada campo uno por uno
- * 4. Para cada campo inválido, muestra error y marca como inválido
- * 5. Para cada campo válido, limpia errores previos
- * 6. Retorna el estado final de validación
- */
+// Valida el formulario de registro de tareas
+// Verifica que todos los campos estén completos
+// Retorna: true si todos los campos son válidos, false si hay errores
 function validateTaskForm() {
     // Obtenemos los valores de todos los campos del formulario
     const titleValue = taskTitleInput.value;
@@ -274,19 +210,10 @@ function validateTaskForm() {
     return isValid;
 }
 
-// ========================================
 // 5. FUNCIONES DE MANIPULACIÓN DEL DOM
-// ========================================
 
-/**
- * Muestra la sección de datos del usuario y la completa con información
- * 
- * @param {Object} user - Objeto con los datos del usuario (id, name, email)
- * 
- * Funcionamiento:
- * 1. Remueve la clase 'hidden' de la sección para hacerla visible
- * 2. Inserta cada dato del usuario en su span correspondiente
- */
+// Muestra la sección de datos del usuario y la completa con información
+// Parámetro: user - Objeto con los datos del usuario (id, name, email)
 function displayUserData(user) {
     // Removemos la clase 'hidden' para mostrar la sección
     // classList.remove() quita una clase del elemento
@@ -299,14 +226,8 @@ function displayUserData(user) {
     userEmailSpan.textContent = user.email;
 }
 
-/**
- * Oculta la sección de datos del usuario
- * Útil cuando se realiza una nueva búsqueda o hay un error
- * 
- * Funcionamiento:
- * 1. Agrega la clase 'hidden' a la sección
- * 2. Limpia el contenido de todos los spans
- */
+// Oculta la sección de datos del usuario
+// Útil cuando se realiza una nueva búsqueda o hay un error
 function hideUserData() {
     // Agregamos la clase 'hidden' para ocultar la sección
     userDataSection.classList.add('hidden');
@@ -317,52 +238,29 @@ function hideUserData() {
     userEmailSpan.textContent = '';
 }
 
-/**
- * Muestra la sección del formulario de tareas
- * Solo debe mostrarse cuando se ha encontrado un usuario
- * 
- * Funcionamiento:
- * 1. Remueve la clase 'hidden' para hacer visible el formulario
- */
+// Muestra la sección del formulario de tareas
+// Solo debe mostrarse cuando se ha encontrado un usuario
 function showTaskForm() {
     // Removemos la clase 'hidden' para mostrar el formulario de tareas
     taskFormSection.classList.remove('hidden');
 }
 
-/**
- * Oculta la sección del formulario de tareas
- * Se oculta cuando no hay usuario seleccionado
- * 
- * Funcionamiento:
- * 1. Agrega la clase 'hidden' para ocultar el formulario
- */
+// Oculta la sección del formulario de tareas
+// Se oculta cuando no hay usuario seleccionado
 function hideTaskForm() {
     // Agregamos la clase 'hidden' para ocultar el formulario de tareas
     taskFormSection.classList.add('hidden');
 }
 
-/**
- * Muestra la sección de tareas registradas
- * Se muestra cuando hay al menos una tarea
- * 
- * Funcionamiento:
- * 1. Remueve la clase 'hidden' de la sección completa
- */
+// Muestra la sección de tareas registradas
+// Se muestra cuando hay al menos una tarea
 function showTasksSection() {
     // Removemos la clase 'hidden' para mostrar la sección de tareas
     tasksSection.classList.remove('hidden');
 }
 
-/**
- * Actualiza el contador de tareas en la interfaz
- * 
- * @param {number} count - Número total de tareas
- * 
- * Funcionamiento:
- * 1. Verifica si hay una sola tarea o múltiples
- * 2. Usa la forma singular o plural según corresponda
- * 3. Actualiza el textContent del contador
- */
+// Actualiza el contador de tareas en la interfaz
+// Parámetro: count - Número total de tareas
 function updateTaskCounter(count) {
     // Usamos un operador ternario para manejar singular/plural
     // Si count === 1, usamos "tarea", si no, usamos "tareas"
@@ -372,40 +270,23 @@ function updateTaskCounter(count) {
     tasksCount.textContent = text;
 }
 
-/**
- * Muestra el estado vacío de tareas
- * Se muestra cuando no hay tareas registradas
- * 
- * Funcionamiento:
- * 1. Remueve la clase 'hidden' del elemento de estado vacío
- */
+// Muestra el estado vacío de tareas
+// Se muestra cuando no hay tareas registradas
 function showEmptyState() {
     // Removemos la clase 'hidden' para mostrar el mensaje de estado vacío
     tasksEmptyState.classList.remove('hidden');
 }
 
-/**
- * Oculta el estado vacío de tareas
- * Se oculta cuando hay al menos una tarea
- * 
- * Funcionamiento:
- * 1. Agrega la clase 'hidden' para ocultar el estado vacío
- */
+// Oculta el estado vacío de tareas
+// Se oculta cuando hay al menos una tarea
 function hideEmptyState() {
     // Agregamos la clase 'hidden' para ocultar el estado vacío
     tasksEmptyState.classList.add('hidden');
 }
 
-/**
- * Formatea el estado de la tarea para mostrar en español
- * 
- * @param {string} status - Estado en formato de base de datos
- * @returns {string} - Estado formateado para mostrar
- * 
- * Funcionamiento:
- * 1. Usa un switch para convertir el valor técnico a texto legible
- * 2. Retorna el texto formateado en español
- */
+// Formatea el estado de la tarea para mostrar en español
+// Parámetro: status - Estado en formato de base de datos
+// Retorna: Estado formateado para mostrar
 function formatTaskStatus(status) {
     // Switch para convertir valores técnicos a texto legible
     switch(status) {
@@ -420,22 +301,11 @@ function formatTaskStatus(status) {
     }
 }
 
-/**
- * Crea una fila (TR) de tabla con los datos de una tarea
- * Esta es la función clave para la creación dinámica de elementos
- * 
- * @param {Object} task - Objeto con los datos de la tarea
- * @param {number} index - Índice de la tarea en el arreglo
- * 
- * Funcionamiento:
- * 1. Crea un nuevo elemento TR (fila de tabla)
- * 2. Crea elementos TD (celdas) para cada dato
- * 3. Inserta el contenido en cada celda
- * 4. Agrega todas las celdas a la fila
- * 5. Retorna la fila completa
- * 
- * Esta función demuestra la CREACIÓN DE ELEMENTOS con el DOM
- */
+// Crea una fila (TR) de tabla con los datos de una tarea
+// Esta es la función clave para la creación dinámica de elementos
+// Parámetros: task - Objeto con los datos de la tarea
+//             index - Índice de la tarea en el arreglo
+// Retorna: Elemento TR completo con todas las celdas
 function createTaskRow(task, index) {
     // ----- PASO 1: CREAR EL ELEMENTO FILA -----
     // createElement() crea un nuevo elemento HTML del tipo especificado
@@ -481,20 +351,9 @@ function createTaskRow(task, index) {
     return row;
 }
 
-/**
- * Agrega una nueva tarea a la tabla en el DOM
- * Esta función demuestra cómo INSERTAR ELEMENTOS CREADOS en el DOM
- * 
- * @param {Object} task - Objeto con los datos de la tarea a agregar
- * 
- * Funcionamiento:
- * 1. Crea la fila usando createTaskRow()
- * 2. Inserta la fila en el tbody de la tabla
- * 3. Incrementa el contador de tareas
- * 4. Actualiza el contador visual
- * 5. Oculta el estado vacío
- * 6. Muestra la sección de tareas
- */
+// Agrega una nueva tarea a la tabla en el DOM
+// Esta función demuestra cómo INSERTAR ELEMENTOS CREADOS en el DOM
+// Parámetro: task - Objeto con los datos de la tarea a agregar
 function addTaskToTable(task) {
     // ----- PASO 1: CREAR LA FILA -----
     // Llamamos a createTaskRow() para crear el elemento TR con todas sus celdas
@@ -523,13 +382,7 @@ function addTaskToTable(task) {
     showTasksSection();
 }
 
-/**
- * Limpia todos los campos del formulario de tareas
- * 
- * Funcionamiento:
- * 1. Resetea cada campo a su valor inicial
- * 2. Limpia todos los mensajes de error
- */
+// Limpia todos los campos del formulario de tareas
 function clearTaskForm() {
     // Limpiamos el campo de título
     taskTitleInput.value = '';
@@ -546,14 +399,8 @@ function clearTaskForm() {
     clearError(taskStatusError, taskStatusSelect);
 }
 
-/**
- * Reinicia el estado de la aplicación
- * Se ejecuta cuando se realiza una nueva búsqueda de usuario
- * 
- * Funcionamiento:
- * 1. Limpia el usuario actual
- * 2. Oculta todas las secciones relacionadas con el usuario anterior
- */
+// Reinicia el estado de la aplicación
+// Se ejecuta cuando se realiza una nueva búsqueda de usuario
 function resetApplicationState() {
     // Limpiamos el usuario actual
     currentUser = null;
@@ -565,24 +412,12 @@ function resetApplicationState() {
     hideTaskForm();
 }
 
-// ========================================
 // 6. FUNCIONES DE COMUNICACIÓN CON EL SERVIDOR
-// ========================================
 
-/**
- * Busca un usuario en el servidor por su documento (ID)
- * Esta función usa fetch() para hacer una petición HTTP GET
- * 
- * @param {string} documentId - Documento del usuario a buscar
- * @returns {Promise<Object|null>} - Promesa que resuelve con el usuario o null
- * 
- * Funcionamiento:
- * 1. Construye la URL de búsqueda
- * 2. Realiza la petición GET al servidor
- * 3. Convierte la respuesta a JSON
- * 4. Busca el usuario en el arreglo de usuarios
- * 5. Retorna el usuario o null si no existe
- */
+// Busca un usuario en el servidor por su documento (ID)
+// Esta función usa fetch() para hacer una petición HTTP GET
+// Parámetro: documentId - Documento del usuario a buscar
+// Retorna: Promesa que resuelve con el usuario o null
 async function searchUserByDocument(documentId) {
     try {
         // ----- PASO 1: CONSTRUIR LA URL -----
@@ -611,7 +446,7 @@ async function searchUserByDocument(documentId) {
         const user = users.find(u => u.id.toString() === documentId.toString());
         
         // ----- PASO 6: RETORNAR EL RESULTADO -----
-        // Retornamos el usuario si existe, o undefined si no se encontró
+        // Retornamos el usuario si existe, o null si no se encontró
         return user || null;
         
     } catch (error) {
@@ -623,20 +458,10 @@ async function searchUserByDocument(documentId) {
     }
 }
 
-/**
- * Registra una nueva tarea en el servidor
- * Esta función usa fetch() para hacer una petición HTTP POST
- * 
- * @param {Object} taskData - Objeto con los datos de la tarea a registrar
- * @returns {Promise<Object|null>} - Promesa que resuelve con la tarea creada o null
- * 
- * Funcionamiento:
- * 1. Construye la URL de registro
- * 2. Configura las opciones de la petición POST
- * 3. Realiza la petición al servidor
- * 4. Convierte la respuesta a JSON
- * 5. Retorna la tarea creada o null en caso de error
- */
+// Registra una nueva tarea en el servidor
+// Esta función usa fetch() para hacer una petición HTTP POST
+// Parámetro: taskData - Objeto con los datos de la tarea a registrar
+// Retorna: Promesa que resuelve con la tarea creada o null
 async function registerTask(taskData) {
     try {
         // ----- PASO 1: CONSTRUIR LA URL -----
@@ -677,25 +502,11 @@ async function registerTask(taskData) {
         return null;
     }
 }
-
-// ========================================
 // 7. MANEJADORES DE EVENTOS
-// ========================================
 
-/**
- * Maneja el evento submit del formulario de búsqueda de usuario
- * Esta función se ejecuta cuando el usuario envía el formulario de búsqueda
- * 
- * @param {Event} event - Evento del formulario
- * 
- * Flujo de ejecución:
- * 1. Previene el comportamiento por defecto (recarga de página)
- * 2. Valida el formulario
- * 3. Si es válido, busca el usuario en el servidor
- * 4. Muestra los datos del usuario si se encuentra
- * 5. Muestra error si no se encuentra
- * 6. Habilita el formulario de tareas si el usuario existe
- */
+// Maneja el evento submit del formulario de búsqueda de usuario
+// Esta función se ejecuta cuando el usuario envía el formulario de búsqueda
+// Parámetro: event - Evento del formulario
 async function handleSearchFormSubmit(event) {
     // ----- PASO 1: PREVENIR COMPORTAMIENTO POR DEFECTO -----
     // preventDefault() evita que el formulario se envíe de forma tradicional
@@ -753,21 +564,9 @@ async function handleSearchFormSubmit(event) {
     }
 }
 
-/**
- * Maneja el evento submit del formulario de registro de tareas
- * Esta función se ejecuta cuando el usuario envía el formulario de tareas
- * 
- * @param {Event} event - Evento del formulario
- * 
- * Flujo de ejecución:
- * 1. Previene el comportamiento por defecto
- * 2. Valida que haya un usuario seleccionado
- * 3. Valida todos los campos del formulario
- * 4. Construye el objeto de tarea
- * 5. Envía la tarea al servidor
- * 6. Agrega la tarea a la tabla si se registra exitosamente
- * 7. Limpia el formulario
- */
+// Maneja el evento submit del formulario de registro de tareas
+// Esta función se ejecuta cuando el usuario envía el formulario de tareas
+// Parámetro: event - Evento del formulario
 async function handleTaskFormSubmit(event) {
     // ----- PASO 1: PREVENIR COMPORTAMIENTO POR DEFECTO -----
     event.preventDefault();
@@ -829,30 +628,17 @@ async function handleTaskFormSubmit(event) {
     }
 }
 
-/**
- * Maneja el evento input de los campos del formulario de búsqueda
- * Se ejecuta cada vez que el usuario escribe en el campo
- * 
- * Funcionamiento:
- * 1. Detecta cuándo el usuario empieza a escribir
- * 2. Limpia el mensaje de error mientras escribe
- */
+// Maneja el evento input de los campos del formulario de búsqueda
+// Se ejecuta cada vez que el usuario escribe en el campo
 function handleSearchInputChange() {
     // Limpiamos el error del campo de documento cuando el usuario escribe
     // Esto mejora la experiencia de usuario al dar feedback inmediato
     clearError(userDocumentError, userDocumentInput);
 }
 
-/**
- * Maneja el evento input de los campos del formulario de tareas
- * Se ejecuta cada vez que el usuario escribe en cualquier campo
- * 
- * @param {Event} event - Evento de input
- * 
- * Funcionamiento:
- * 1. Identifica qué campo generó el evento
- * 2. Limpia el error específico de ese campo
- */
+// Maneja el evento input de los campos del formulario de tareas
+// Se ejecuta cada vez que el usuario escribe en cualquier campo
+// Parámetro: event - Evento de input
 function handleTaskInputChange(event) {
     // Obtenemos el elemento que generó el evento
     const target = event.target;
@@ -874,20 +660,10 @@ function handleTaskInputChange(event) {
     }
 }
 
-// ========================================
 // 8. REGISTRO DE EVENTOS (EVENT LISTENERS)
-// ========================================
 
-/**
- * Función que registra todos los event listeners de la aplicación
- * Esta función se ejecuta cuando el DOM está completamente cargado
- * 
- * Funcionamiento:
- * 1. Registra el evento submit del formulario de búsqueda
- * 2. Registra el evento input del campo de documento
- * 3. Registra el evento submit del formulario de tareas
- * 4. Registra los eventos input de todos los campos de tareas
- */
+// Función que registra todos los event listeners de la aplicación
+// Esta función se ejecuta cuando el DOM está completamente cargado
 function registerEventListeners() {
     // ----- EVENTOS DEL FORMULARIO DE BÚSQUEDA -----
     
@@ -910,20 +686,10 @@ function registerEventListeners() {
     taskStatusSelect.addEventListener('change', handleTaskInputChange);
 }
 
-// ========================================
 // 9. INICIALIZACIÓN DE LA APLICACIÓN
-// ========================================
 
-/**
- * Función de inicialización que se ejecuta cuando el DOM está listo
- * Esta es la función principal que arranca toda la aplicación
- * 
- * Funcionamiento:
- * 1. Espera a que el DOM esté completamente cargado
- * 2. Registra todos los event listeners
- * 3. Inicializa el estado de la interfaz
- * 4. Muestra mensajes en consola para debugging
- */
+// Función de inicialización que se ejecuta cuando el DOM está listo
+// Esta es la función principal que arranca toda la aplicación
 document.addEventListener('DOMContentLoaded', function() {
     // ----- MENSAJE DE INICIO -----
     console.log('✅ DOM completamente cargado');
@@ -939,50 +705,46 @@ document.addEventListener('DOMContentLoaded', function() {
     showEmptyState();
     
     // Mensaje de confirmación
-    console.log('✓ Event listeners registrados correctamente');
-    console.log('✓ Aplicación lista para usar');
+    console.log('Event listeners registrados correctamente');
+    console.log('Aplicación lista para usar');
 });
 
-// ========================================
 // 10. PREGUNTAS DE REFLEXIÓN (RESPUESTAS)
-// ========================================
 
-/**
- * PREGUNTAS DE REFLEXIÓN:
- * 
- * 1. ¿Qué elemento del DOM estás seleccionando?
- *    R: Estoy seleccionando múltiples elementos del DOM usando getElementById():
- *       - Formularios: searchUserForm, taskForm
- *       - Inputs: userDocumentInput, taskTitleInput, taskDescriptionInput
- *       - Selects: taskStatusSelect
- *       - Secciones: userDataSection, taskFormSection, tasksSection
- *       - Spans para errores y datos de usuario
- *       - Elementos de tabla: tasksTableBody
- * 
- * 2. ¿Qué evento provoca el cambio en la página?
- *    R: Los principales eventos son:
- *       - 'submit' en los formularios: cuando el usuario envía datos
- *       - 'input' en los campos: cuando el usuario escribe
- *       - 'change' en el select: cuando el usuario selecciona una opción
- * 
- * 3. ¿Qué nuevo elemento se crea?
- *    R: Se crean dinámicamente:
- *       - Elementos TR (filas de tabla) para cada tarea
- *       - Elementos TD (celdas) dentro de cada fila
- *       Estos elementos se crean con createElement() y se insertan con appendChild()
- * 
- * 4. ¿Dónde se inserta ese elemento dentro del DOM?
- *    R: Los elementos TR se insertan dentro del elemento TBODY de la tabla,
- *       que tiene el ID 'tasksTableBody'. Se insertan al final usando appendChild(),
- *       de manera que cada nueva tarea aparece debajo de la anterior.
- * 
- * 5. ¿Qué ocurre en la página cada vez que repites la acción?
- *    R: Cada vez que se registra una nueva tarea:
- *       - Se crea una nueva fila en la tabla
- *       - Se incrementa el contador de tareas
- *       - Se actualiza el texto del contador
- *       - La tabla se expande para mostrar la nueva tarea
- *       - El estado vacío permanece oculto
- *       - El formulario se limpia para permitir registrar otra tarea
- *       Todo esto ocurre sin recargar la página gracias al DOM
- */
+// PREGUNTAS DE REFLEXIÓN:
+// 
+// 1. ¿Qué elemento del DOM estás seleccionando?
+//    R: Estoy seleccionando múltiples elementos del DOM usando getElementById():
+//       - Formularios: searchUserForm, taskForm
+//       - Inputs: userDocumentInput, taskTitleInput, taskDescriptionInput
+//       - Selects: taskStatusSelect
+//       - Secciones: userDataSection, taskFormSection, tasksSection
+//       - Spans para errores y datos de usuario
+//       - Elementos de tabla: tasksTableBody
+// 
+// 2. ¿Qué evento provoca el cambio en la página?
+//    R: Los principales eventos son:
+//       - 'submit' en los formularios: cuando el usuario envía datos
+//       - 'input' en los campos: cuando el usuario escribe
+//       - 'change' en el select: cuando el usuario selecciona una opción
+// 
+// 3. ¿Qué nuevo elemento se crea?
+//    R: Se crean dinámicamente:
+//       - Elementos TR (filas de tabla) para cada tarea
+//       - Elementos TD (celdas) dentro de cada fila
+//       Estos elementos se crean con createElement() y se insertan con appendChild()
+// 
+// 4. ¿Dónde se inserta ese elemento dentro del DOM?
+//    R: Los elementos TR se insertan dentro del elemento TBODY de la tabla,
+//       que tiene el ID 'tasksTableBody'. Se insertan al final usando appendChild(),
+//       de manera que cada nueva tarea aparece debajo de la anterior.
+// 
+// 5. ¿Qué ocurre en la página cada vez que repites la acción?
+//    R: Cada vez que se registra una nueva tarea:
+//       - Se crea una nueva fila en la tabla
+//       - Se incrementa el contador de tareas
+//       - Se actualiza el texto del contador
+//       - La tabla se expande para mostrar la nueva tarea
+//       - El estado vacío permanece oculto
+//       - El formulario se limpia para permitir registrar otra tarea
+//       Todo esto ocurre sin recargar la página gracias al DOM
