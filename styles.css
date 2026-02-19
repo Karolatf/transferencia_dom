@@ -519,3 +519,161 @@ body {
         width: 100%;
     }
 }
+
+/* ============================================================
+   BOTONES DE ACCIÓN EN LA TABLA (RF-03 UPDATE y RF-04 DELETE)
+   Estos botones se crean dinámicamente desde createTaskRow() en ui.js
+   y se insertan en la columna 'Acciones' de cada fila de la tabla
+   ============================================================ */
+
+/* Contenedor de los botones de acción dentro de cada celda de la tabla */
+/* display: flex permite alinear los botones en fila con separación uniforme */
+.task-actions {
+    display: flex;           /* alinea los botones Editar y Eliminar en una fila */
+    gap: 0.5rem;             /* espacio de 8px entre los dos botones */
+    align-items: center;     /* centra los botones verticalmente en la celda */
+    flex-wrap: wrap;         /* en pantallas pequeñas, los botones se apilan */
+}
+
+/* Estilo base compartido por los botones de Editar y Eliminar */
+/* Es más pequeño y discreto que el botón principal de la app */
+.btn-action {
+    display: inline-flex;    /* permite alinear el emoji y el texto en la misma fila */
+    align-items: center;     /* centra el contenido verticalmente */
+    gap: 0.25rem;            /* pequeño espacio entre el emoji y el texto */
+    padding: 0.3rem 0.75rem; /* espacio interno: compacto pero cómodo para el clic */
+    font-size: 0.8rem;       /* texto más pequeño que el botón principal */
+    font-weight: 600;        /* semi-negrita para buena legibilidad */
+    font-family: var(--fuente);
+    border: none;            /* elimina el borde nativo del elemento button */
+    border-radius: var(--radio-sm); /* esquinas levemente redondeadas */
+    cursor: pointer;         /* cambia el cursor a manito al pasar por encima */
+    transition: all var(--transicion); /* animación suave en hover y active */
+    white-space: nowrap;     /* impide que el texto del botón se parta en dos líneas */
+}
+
+/* Variante azul para el botón Editar (RF-03 UPDATE) */
+/* Azul transmite acción segura y reversible */
+.btn-action--edit {
+    background: #dbeafe;     /* fondo azul muy suave (pastel) */
+    color: #1d4ed8;          /* texto azul oscuro para buen contraste */
+}
+
+/* Efecto hover del botón Editar: se intensifica el color */
+.btn-action--edit:hover {
+    background: #bfdbfe;     /* azul un poco más oscuro al pasar el mouse */
+    transform: translateY(-1px); /* sube 1px para simular que se eleva */
+}
+
+/* Variante roja para el botón Eliminar (RF-04 DELETE) */
+/* Rojo advierte que la acción es irreversible */
+.btn-action--delete {
+    background: #fee2e2;     /* fondo rojo muy suave (pastel) */
+    color: #dc2626;          /* texto rojo oscuro para buen contraste */
+}
+
+/* Efecto hover del botón Eliminar: se intensifica el color */
+.btn-action--delete:hover {
+    background: #fecaca;     /* rojo un poco más oscuro al pasar el mouse */
+    transform: translateY(-1px); /* sube 1px para simular que se eleva */
+}
+
+/* Efecto al hacer clic en cualquier botón de acción */
+.btn-action:active {
+    transform: translateY(0); /* vuelve a su posición original al hacer clic */
+}
+
+
+/* ============================================================
+   MODAL DE EDICIÓN (RF-03 UPDATE)
+   El modal es una ventana emergente que aparece sobre el contenido
+   para que el usuario pueda editar los datos de una tarea
+   ============================================================ */
+
+/* Overlay oscuro semitransparente que cubre toda la pantalla */
+/* Se muestra detrás del modal para enfocar la atención del usuario */
+.modal-overlay {
+    position: fixed;         /* se fija a la ventana del navegador, no al contenido */
+    top: 0;                  /* empieza desde la esquina superior izquierda */
+    left: 0;
+    width: 100%;             /* cubre todo el ancho de la ventana */
+    height: 100%;            /* cubre todo el alto de la ventana */
+    background: rgba(0, 0, 0, 0.55); /* negro al 55% de opacidad (semitransparente) */
+    display: flex;           /* flexbox para centrar el modal */
+    align-items: center;     /* centra el modal verticalmente */
+    justify-content: center; /* centra el modal horizontalmente */
+    z-index: 1000;           /* se posiciona por encima de todos los demás elementos */
+    padding: var(--espacio-lg); /* espacio en los bordes en pantallas pequeñas */
+}
+
+/* La caja blanca del modal propiamente dicha */
+.modal {
+    background: white;                    /* fondo blanco para contrastar con el overlay */
+    border-radius: var(--radio-lg);       /* esquinas redondeadas consistentes con el diseño */
+    box-shadow: var(--sombra-lg);         /* sombra pronunciada para efecto de profundidad */
+    width: 100%;                          /* ocupa todo el ancho disponible */
+    max-width: 520px;                     /* pero no más de 520px en pantallas grandes */
+    border-top: 4px solid var(--color-primario); /* línea decorativa morada en la parte superior */
+    animation: slideIn 0.2s ease;         /* animación de entrada definida en el CSS original */
+}
+
+/* Encabezado del modal: contiene el título y el botón de cerrar */
+.modal__header {
+    display: flex;                        /* alinea título y botón en una fila */
+    justify-content: space-between;       /* título a la izquierda, botón a la derecha */
+    align-items: center;                  /* los centra verticalmente */
+    padding: var(--espacio-lg) var(--espacio-xl); /* espacio interno */
+    border-bottom: 1px solid var(--borde-suave); /* línea separadora sutil */
+}
+
+/* Título dentro del encabezado del modal */
+.modal__title {
+    font-size: var(--texto-xl);
+    font-weight: 600;
+    color: var(--texto-oscuro);
+}
+
+/* Botón X para cerrar el modal sin guardar cambios */
+.modal__close {
+    background: none;        /* sin fondo para que sea solo el ícono visible */
+    border: none;            /* sin borde */
+    font-size: var(--texto-xl); /* tamaño grande para que sea fácil de hacer clic */
+    color: var(--texto-claro);  /* gris claro para que no distraiga */
+    cursor: pointer;         /* manito al pasar el cursor */
+    padding: var(--espacio-xs); /* pequeño espacio para que sea más fácil de clicar */
+    line-height: 1;          /* evita espacio vertical extra alrededor del ícono */
+    transition: color var(--transicion); /* animación suave del color en hover */
+}
+
+/* Efecto hover del botón de cerrar: se pone más oscuro */
+.modal__close:hover {
+    color: var(--texto-oscuro); /* se vuelve más visible al pasar el mouse */
+}
+
+/* Área del formulario dentro del modal con espacio interno */
+.modal form {
+    padding: var(--espacio-xl); /* espacio cómodo alrededor del formulario */
+}
+
+/* Contenedor de los botones Cancelar y Guardar Cambios */
+/* Se alinean en una fila con separación y justificación a la derecha */
+.modal__actions {
+    display: flex;           /* alinea los botones en una fila */
+    justify-content: flex-end; /* los empuja hacia el lado derecho del modal */
+    gap: var(--espacio-md);  /* espacio entre el botón Cancelar y Guardar */
+    margin-top: var(--espacio-md); /* espacio encima de los botones */
+}
+
+/* Variante de botón secundario para el botón Cancelar del modal */
+/* Estilo neutral que no compite visualmente con el botón principal */
+.btn--secondary {
+    background: var(--fondo-gris); /* fondo gris muy suave */
+    color: var(--texto-medio);     /* texto gris */
+    border: 1px solid var(--borde-suave); /* borde sutil para definir el contorno */
+}
+
+/* Efecto hover del botón secundario */
+.btn--secondary:hover {
+    background: var(--borde-suave); /* se oscurece levemente al pasar el mouse */
+    transform: translateY(-1px);    /* sube 1px */
+}
