@@ -217,6 +217,8 @@
                             <th scope="col">Descripción</th>
                             <th scope="col">Estado</th>
                             <th scope="col">Usuario</th>
+                            <!-- Columna nueva para los botones de editar y eliminar (RF-03 y RF-04) -->
+                            <th scope="col">Acciones</th>
                         </tr>
                     </thead>
                     
@@ -253,6 +255,105 @@
 
     <!-- Script que enlaza el archivo JavaScript externo -->
     <!-- Se coloca al final del body para asegurar que el DOM esté completamente cargado antes de ejecutar el script -->
-    <script src="script.js"></script>
+
+    <!-- ===== MODAL DE EDICIÓN DE TAREAS (RF-03 - UPDATE) ===== -->
+    <!-- Este overlay oscuro cubre toda la pantalla cuando el modal está abierto -->
+    <!-- JavaScript lo muestra/oculta quitando y agregando la clase 'hidden' -->
+    <div class="modal-overlay hidden" id="editModal">
+        
+        <!-- Contenedor del modal propiamente dicho (la caja blanca al centro) -->
+        <div class="modal">
+            
+            <!-- Encabezado del modal con título y botón de cerrar -->
+            <div class="modal__header">
+                <!-- Título del modal que indica la acción a realizar -->
+                <h2 class="modal__title">Editar Tarea</h2>
+                
+                <!-- Botón X para cerrar el modal sin guardar cambios -->
+                <!-- Su handler se registra dinámicamente desde handlers.js -->
+                <button class="modal__close" id="editCancelBtn" type="button">✕</button>
+            </div>
+
+            <!-- Formulario de edición dentro del modal -->
+            <!-- novalidate desactiva la validación HTML5 para usar la nuestra en JS -->
+            <form id="editTaskForm" class="form" novalidate>
+                
+                <!-- Campo oculto que guarda el ID de la tarea que se está editando -->
+                <!-- JavaScript lee este valor al enviar el PATCH para saber qué tarea actualizar -->
+                <input type="hidden" id="editTaskId">
+
+                <!-- Grupo de campos para el título de la tarea -->
+                <div class="form__group">
+                    <!-- Label asociado al input de título de edición -->
+                    <label for="editTaskTitle" class="form__label">
+                        Título de la Tarea
+                    </label>
+                    
+                    <!-- Input de texto precargado con el título actual de la tarea -->
+                    <!-- JavaScript llenará este campo con task.title al abrir el modal -->
+                    <input
+                        type="text"
+                        id="editTaskTitle"
+                        class="form__input"
+                        placeholder="Ingresa el nuevo título"
+                    >
+                </div>
+
+                <!-- Grupo de campos para la descripción de la tarea -->
+                <div class="form__group">
+                    <!-- Label asociado al textarea de descripción de edición -->
+                    <label for="editTaskDescription" class="form__label">
+                        Descripción
+                    </label>
+                    
+                    <!-- Textarea precargado con la descripción actual de la tarea -->
+                    <!-- JavaScript llenará este campo con task.description al abrir el modal -->
+                    <textarea
+                        id="editTaskDescription"
+                        class="form__input form__textarea"
+                        placeholder="Ingresa la nueva descripción..."
+                        rows="4"
+                    ></textarea>
+                </div>
+
+                <!-- Grupo de campos para el estado de la tarea -->
+                <div class="form__group">
+                    <!-- Label asociado al select de estado de edición -->
+                    <label for="editTaskStatus" class="form__label">
+                        Estado de la Tarea
+                    </label>
+                    
+                    <!-- Select precargado con el estado actual de la tarea -->
+                    <!-- JavaScript seleccionará la opción correspondiente al estado actual -->
+                    <select id="editTaskStatus" class="form__input">
+                        <!-- Opción por defecto deshabilitada que funciona como placeholder -->
+                        <option value="" disabled>Selecciona un estado</option>
+                        
+                        <!-- Las mismas opciones que el formulario de creación -->
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en_progreso">En Progreso</option>
+                        <option value="completada">Completada</option>
+                    </select>
+                </div>
+
+                <!-- Contenedor de los botones de acción del modal -->
+                <div class="modal__actions">
+                    <!-- Botón para cancelar la edición y cerrar el modal sin guardar -->
+                    <!-- type="button" evita que dispare el submit del formulario -->
+                    <button type="button" class="btn btn--secondary" id="editCancelBtn">
+                        <span class="btn__text">Cancelar</span>
+                    </button>
+                    
+                    <!-- Botón para guardar los cambios enviando el formulario -->
+                    <!-- type="submit" dispara el evento submit del form al hacer clic -->
+                    <button type="submit" class="btn btn--primary">
+                        <span class="btn__text">Guardar Cambios</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
 </body>
 </html>
