@@ -251,8 +251,7 @@ export function handleTaskInputChange(event) {
 // Parámetro: task - Objeto con los datos actuales de la tarea seleccionada
 export function handleEditTask(task) {
     // ----- PASO 1: MOSTRAR EL MODAL CON LOS DATOS ACTUALES -----
-    // showEditModal() llena los campos del formulario del modal con la información de la tarea
-    // y luego lo hace visible quitando la clase 'hidden'
+    // showEditModal() llena los campos del formulario del modal con la información de la tarea y luego lo hace visible quitando la clase 'hidden'
     showEditModal(task);
 
     // ----- PASO 2: REGISTRAR EL EVENTO DEL FORMULARIO DE EDICIÓN -----

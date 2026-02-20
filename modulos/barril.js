@@ -1,11 +1,11 @@
 // ARCHIVO BARRIL del Sistema de Gestión de Tareas
 // Re-exporta todos los módulos desde un único punto de entrada
 
-// ----- RE-EXPORTACIONES DESDE config.js -----
+// ----- RE-EXPORTACIONES DESDE config.js ----
 // Exponemos la constante de configuración global de la aplicación
 export { API_BASE_URL } from './config.js';
 
-// ----- RE-EXPORTACIONES DESDE state.js -----
+// ----- RE-EXPORTACIONES DESDE state.js ----
 // Exponemos el estado global y todas sus funciones de lectura y modificación
 export {
     currentUser,           // Variable con el usuario actualmente seleccionado
@@ -19,7 +19,7 @@ export {
     removeTaskFromState    // Elimina una tarea del arreglo local (RF-04)
 } from './state.js';
 
-// ----- RE-EXPORTACIONES DESDE dom.js -----
+// ----- RE-EXPORTACIONES DESDE dom.js ----
 // Exponemos todos los elementos del DOM que la aplicación manipula
 export {
     // Formulario de búsqueda de usuario
@@ -65,7 +65,7 @@ export {
     hideEditModal      // Oculta y limpia el modal de edición (RF-03)
 } from './ui.js';
 
-// ----- RE-EXPORTACIONES DESDE api.js -----
+// ----- RE-EXPORTACIONES DESDE api.js ----
 // Exponemos las funciones de comunicación con el servidor
 export {
     searchUserByDocument, // Busca un usuario en el servidor por su documento (GET)
@@ -74,7 +74,7 @@ export {
     deleteTask            // Elimina una tarea del servidor (DELETE) (RF-04)
 } from './api.js';
 
-// ----- RE-EXPORTACIONES DESDE handlers.js -----
+// ----- RE-EXPORTACIONES DESDE handlers.js ----
 // Exponemos los manejadores de eventos de los formularios y la tabla
 export {
     handleSearchFormSubmit,  // Maneja el submit del formulario de búsqueda
@@ -86,7 +86,7 @@ export {
     handleTableClick         // Delegador de clics en la tabla (RF-03 y RF-04)
 } from './handlers.js';
 
-// ----- RE-EXPORTACIONES DESDE events.js -----
+// ----- RE-EXPORTACIONES DESDE events.js ----
 // Exponemos la función que registra todos los event listeners de la app
 export {
     registerEventListeners // Conecta todos los elementos del DOM con sus handlers

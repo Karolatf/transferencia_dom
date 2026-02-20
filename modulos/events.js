@@ -73,7 +73,7 @@ export function registerEventListeners() {
     // handleTaskInputChange limpiará el error del estado al detectar una selección
     taskStatusSelect.addEventListener('change', handleTaskInputChange);
 
-    // ----- EVENTO DELEGADO DE LA TABLA (RF-03 y RF-04) -----
+    //                 EVENTO DELEGADO DE LA TABLA (RF-03 y RF-04) 
     // En lugar de agregar un listener a cada botón de Editar/Eliminar individualmente,
     // registramos UN SOLO listener en el tbody (contenedor padre de todas las filas)
     // Esto funciona porque los eventos "burbujean" (bubble) desde el hijo hasta el padre

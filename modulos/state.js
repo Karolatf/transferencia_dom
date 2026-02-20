@@ -1,8 +1,7 @@
 // VARIABLES DE ESTADO DE LA APLICACIÓN
 
 // Este módulo centraliza el estado global de la aplicación
-// En lugar de tener variables sueltas en el script principal, las agrupamos aquí para tener un único lugar donde consultar
-// o modificar el estado actual del sistema
+// En lugar de tener variables sueltas en el script principal, las agrupamos aquí para tener un único lugar donde consultar o modificar el estado actual del sistema
 
 // Variable que almacenará los datos del usuario actualmente seleccionado
 // Inicia en null porque al cargar la app aún no se ha buscado ningún usuario

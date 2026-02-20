@@ -288,16 +288,16 @@ export function updateTaskRow(updatedTask) {
         return;
     }
 
-    // ----- PASO 3: ACTUALIZAR LA CELDA DE TÍTULO -----
+    // ----- PASO 3: ACTUALIZAR LA CELDA DE TÍTULO 
     // Seleccionamos la segunda celda (índice 1) que corresponde al título
     // nth-child(2) sería el selector CSS equivalente, pero con JS usamos el índice del array
     row.cells[1].textContent = updatedTask.title;
 
-    // ----- PASO 4: ACTUALIZAR LA CELDA DE DESCRIPCIÓN -----
+    // ----- PASO 4: ACTUALIZAR LA CELDA DE DESCRIPCIÓN 
     // La descripción está en la tercera celda (índice 2)
     row.cells[2].textContent = updatedTask.description;
 
-    // ----- PASO 5: ACTUALIZAR LA CELDA DE ESTADO -----
+    // ----- PASO 5: ACTUALIZAR LA CELDA DE ESTADO 
     // El badge de estado es un span dentro de la cuarta celda (índice 3)
     // Necesitamos actualizar tanto el texto como las clases CSS del badge
     const statusCell  = row.cells[3];

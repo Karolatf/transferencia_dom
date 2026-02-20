@@ -50,8 +50,7 @@ export const taskFormSection = document.getElementById('taskFormSection');
 // Este formulario tiene los campos: título, descripción y estado
 export const taskForm = document.getElementById('taskForm');
 
-// Seleccionamos cada campo del formulario de tareas individualmente
-// para poder leer sus valores y controlarlos desde otros módulos
+// Seleccionamos cada campo del formulario de tareas individualmente para poder leer sus valores y controlarlos desde otros módulos
 
 // Input de texto para el título de la tarea
 export const taskTitleInput = document.getElementById('taskTitle');

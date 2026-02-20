@@ -11,8 +11,7 @@
 
 // Este módulo centraliza todas las peticiones HTTP que la aplicación hace al servidor
 // Usa la API Fetch nativa del navegador para comunicarse con json-server
-// Separar la lógica de red aquí permite cambiar la fuente de datos (ej: otra API)
-// sin tener que modificar los manejadores de eventos ni la lógica de UI
+// Separar la lógica de red aquí permite cambiar la fuente de datos (ej: otra API) sin tener que modificar los manejadores de eventos ni la lógica de UI
 
 // Importamos la URL base del servidor desde el módulo de configuración
 // Así si el puerto o la dirección cambia, solo se actualiza en config.js
@@ -50,8 +49,7 @@ export async function searchUserByDocument(documentId) {
 
         // ----- PASO 5: BUSCAR EL USUARIO EN EL ARREGLO -----
         // find() recorre el arreglo y retorna el primer elemento que cumple la condición
-        // Convertimos ambos valores a string con toString() para evitar errores de comparación
-        // ya que el ID en el servidor puede ser número y el input del formulario es siempre string
+        // Convertimos ambos valores a string con toString() para evitar errores de comparación ya que el ID en el servidor puede ser número y el input del formulario es siempre string
         const user = users.find(u => u.id.toString() === documentId.toString());
 
         // ----- PASO 6: RETORNAR EL RESULTADO -----
@@ -61,8 +59,7 @@ export async function searchUserByDocument(documentId) {
 
     } catch (error) {
         // ----- MANEJO DE ERRORES -----
-        // Si ocurre cualquier error (red caída, servidor inaccesible, error lanzado arriba),
-        // lo capturamos aquí para no romper la aplicación con un error no controlado
+        // Si ocurre cualquier error (red caída, servidor inaccesible, error lanzado arriba), lo capturamos aquí para no romper la aplicación con un error no controlado
         console.error('Error al buscar usuario:', error);
         // Retornamos null para indicar que no se pudo obtener el usuario
         // El handler que llama esta función verifica este null para mostrar el mensaje adecuado
@@ -127,9 +124,8 @@ export async function registerTask(taskData) {
 // RF-03 – ACTUALIZACIÓN DE TAREAS (UPDATE)
 
 // Actualiza una tarea existente en el servidor enviando solo los campos modificados
-// Usa el método HTTP PATCH porque modifica únicamente los campos indicados,
-// no reemplaza el recurso completo (eso sería PUT)
-// Parámetros:
+// Usa el método HTTP PATCH porque modifica únicamente los campos indicados, no reemplaza el recurso completo (eso sería PUT)
+//   Parámetros:
 //   taskId   - ID de la tarea a actualizar (necesario para construir la URL correcta)
 //   taskData - Objeto con los campos que se desean modificar (título, descripción, estado, etc.)
 // Retorna: Promesa que resuelve con el objeto de la tarea actualizada, o null si hubo error

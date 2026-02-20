@@ -28,10 +28,10 @@ import { showEmptyState } from './modulos/barril.js';
 document.addEventListener('DOMContentLoaded', function () {
     // ----- MENSAJES DE INICIO EN CONSOLA -----
     // Confirmamos en consola que el DOM está listo y la app inicia correctamente
-    console.log('✅ DOM completamente cargado');
-    console.log('🚀 Sistema de Gestión de Tareas iniciado');
+    console.log('DOM completamente cargado');
+    console.log('Sistema de Gestión de Tareas iniciado');
     // Mostramos la URL del servidor para verificar que la configuración es correcta
-    console.log('📡 Servidor esperado en:', API_BASE_URL);
+    console.log('Servidor esperado en:', API_BASE_URL);
 
     // ----- REGISTRAR TODOS LOS EVENT LISTENERS -----
     // Llamamos a la función que conecta cada elemento del DOM con su handler correspondiente

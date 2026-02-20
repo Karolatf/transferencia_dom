@@ -112,7 +112,7 @@ export function validateTaskForm() {
         clearError(taskTitleError, taskTitleInput);
     }
 
-    // ----- VALIDACIÓN DE LA DESCRIPCIÓN -----
+    // ----- VALIDACIÓN DE LA DESCRIPCIÓN 
     if (!isValidInput(descriptionValue)) {
         // Si la descripción está vacía, mostramos el mensaje de error correspondiente
         showError(
@@ -127,7 +127,7 @@ export function validateTaskForm() {
         clearError(taskDescriptionError, taskDescriptionInput);
     }
 
-    // ----- VALIDACIÓN DEL ESTADO -----
+    // ----- VALIDACIÓN DEL ESTADO 
     if (!isValidInput(statusValue)) {
         // Si no se seleccionó ningún estado del select, mostramos el error
         showError(

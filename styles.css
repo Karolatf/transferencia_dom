@@ -520,11 +520,11 @@ body {
     }
 }
 
-/* ============================================================
+/* 
    BOTONES DE ACCIÓN EN LA TABLA (RF-03 UPDATE y RF-04 DELETE)
    Estos botones se crean dinámicamente desde createTaskRow() en ui.js
    y se insertan en la columna 'Acciones' de cada fila de la tabla
-   ============================================================ */
+    */
 
 /* Contenedor de los botones de acción dentro de cada celda de la tabla */
 /* display: flex permite alinear los botones en fila con separación uniforme */
@@ -584,11 +584,11 @@ body {
 }
 
 
-/* ============================================================
+/* 
    MODAL DE EDICIÓN (RF-03 UPDATE)
    El modal es una ventana emergente que aparece sobre el contenido
    para que el usuario pueda editar los datos de una tarea
-   ============================================================ */
+    */
 
 /* Overlay oscuro semitransparente que cubre toda la pantalla */
 /* Se muestra detrás del modal para enfocar la atención del usuario */
