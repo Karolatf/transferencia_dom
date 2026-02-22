@@ -9,42 +9,53 @@
 // y se encarga de inicializar todo lo que la aplicación necesita para funcionar
 // Gracias al archivo barril, todos los imports se hacen desde un único lugar
 
-// Importamos la URL del servidor para mostrarla en la consola al iniciar
-// Viene del módulo de configuración a través del barril
-import { API_BASE_URL } from './modulos/barril.js';
+// Flujo de la aplicación:
+// Usuario → Evento → main.js → services → api → respuesta → services → ui → DOM
 
-// Importamos la función que conecta todos los elementos del DOM con sus handlers
-// Viene del módulo de eventos a través del barril
-import { registerEventListeners } from './modulos/barril.js';
+// ----- IMPORTACIONES -----
+// Importamos SOLO lo que main.js necesita para arrancar la aplicación.
+// Toda la lógica de negocio, API y UI se delega a los módulos correspondientes.
 
-// Importamos la función que muestra el mensaje inicial de "no hay tareas"
-// Viene del módulo de UI a través del barril
-import { showEmptyState } from './modulos/barril.js';
+// Importamos el servicio de eventos que conecta el DOM con los manejadores
+// Viene de la capa de servicios, que coordina la lógica intermedia
+import { registrarEventListeners } from './services/tareasService.js';
 
-// Escuchamos el evento 'DOMContentLoaded' del documento
-// Este evento se dispara cuando el HTML fue completamente analizado y el DOM está listo
-// Es importante esperar este evento antes de manipular el DOM o registrar eventos,
-// ya que si intentamos acceder a elementos antes de que existan, obtendremos null
+// Importamos la función de UI que muestra el mensaje inicial de "no hay tareas"
+// Viene directamente de la capa de interfaz, ya que es solo una acción visual
+import { mostrarEstadoVacio } from './ui/tareasUI.js';
+
+// Importamos la URL base para confirmar en consola que la configuración es correcta
+import { API_BASE_URL } from './utils/config.js';
+
+// INICIALIZACIÓN DE LA APLICACIÓN
+
+// Esperamos el evento 'DOMContentLoaded' antes de ejecutar cualquier lógica.
+// Este evento se dispara cuando el navegador termina de analizar el HTML
+// y construir el árbol del DOM, pero antes de cargar imágenes y estilos.
+
+// Si intentáramos acceder a elementos del DOM antes de este evento,
+// document.getElementById() retornaría null y la aplicación fallaría.
 document.addEventListener('DOMContentLoaded', function () {
-    // ----- MENSAJES DE INICIO EN CONSOLA -----
-    // Confirmamos en consola que el DOM está listo y la app inicia correctamente
-    console.log('DOM completamente cargado');
-    console.log('Sistema de Gestión de Tareas iniciado');
-    // Mostramos la URL del servidor para verificar que la configuración es correcta
+
+    // ----- PASO 1: CONFIRMAR INICIO EN CONSOLA -----
+    // Mensajes de diagnóstico para verificar que el módulo cargó correctamente
+    console.log('DOM completamente cargado y listo');
+    console.log('Sistema de Gestión de Tareas - SENA iniciando...');
     console.log('Servidor esperado en:', API_BASE_URL);
 
-    // ----- REGISTRAR TODOS LOS EVENT LISTENERS -----
-    // Llamamos a la función que conecta cada elemento del DOM con su handler correspondiente
-    // Esto debe hacerse aquí (dentro de DOMContentLoaded) para garantizar que todos
-    // los elementos del HTML ya existen en el DOM antes de intentar añadirles eventos
-    registerEventListeners();
+    // ----- PASO 2: REGISTRAR TODOS LOS EVENT LISTENERS -----
+    // Delegamos al servicio la responsabilidad de conectar cada elemento
+    // del DOM con su manejador de eventos correspondiente.
+    // Esto debe hacerse aquí (dentro de DOMContentLoaded) para garantizar
+    // que todos los elementos HTML ya existen antes de añadirles eventos.
+    registrarEventListeners();
 
-    // ----- INICIALIZAR EL ESTADO VACÍO -----
-    // Mostramos el mensaje de "no hay tareas" al iniciar la aplicación
-    // Así el usuario ve feedback inmediato de que la tabla existe pero está vacía
-    showEmptyState();
+    // ----- PASO 3: INICIALIZAR EL ESTADO VISUAL -----
+    // Mostramos el mensaje "no hay tareas" para dar feedback inmediato al usuario
+    // de que la tabla existe pero aún está vacía, esperando la primera tarea.
+    mostrarEstadoVacio();
 
-    // Confirmamos en consola que la inicialización fue exitosa
-    console.log('Event listeners registrados correctamente');
-    console.log('Aplicación lista para usar');
+    // ----- PASO 4: CONFIRMAR INICIALIZACIÓN EXITOSA -----
+    console.log('📋 Event listeners registrados correctamente');
+    console.log('✔️  Aplicación lista para usar');
 });
