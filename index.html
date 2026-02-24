@@ -203,6 +203,60 @@
             
             <!-- Div contenedor para la tabla de tareas -->
             <div class="tasks-table-container">
+
+                <!-- CONTROLES DE FILTRO, ORDEN Y EXPORTACION (RF01, RF02, RF04) -->
+                <!-- Estos elementos los usa Juan para conectar la logica desde tareasService.js -->
+                <div class="tasks-controls">
+
+                    <!-- RF01: Filtro por estado — Juan conecta el listener en manejarFiltro() -->
+                    <div class="tasks-controls__grupo">
+                        <label for="filtroEstado" class="tasks-controls__label">Filtrar por estado:</label>
+                        <select id="filtroEstado" class="tasks-controls__select">
+                            <option value="">Todos</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en_progreso">En Progreso</option>
+                            <option value="completada">Completada</option>
+                        </select>
+                    </div>
+
+                    <!-- RF01: Filtro por ID de usuario — Juan conecta el listener en manejarFiltro() -->
+                    <div class="tasks-controls__grupo">
+                        <label for="filtroUsuario" class="tasks-controls__label">Filtrar por usuario:</label>
+                        <input
+                            type="text"
+                            id="filtroUsuario"
+                            class="tasks-controls__input"
+                            placeholder="ID del usuario"
+                        />
+                    </div>
+
+                    <!-- RF01: Boton para limpiar todos los filtros activos -->
+                    <div class="tasks-controls__grupo">
+                        <button type="button" id="limpiarFiltros" class="btn btn--secondary">
+                            <span class="btn__text">Limpiar filtros</span>
+                        </button>
+                    </div>
+
+                    <!-- RF02: Selector de ordenamiento — Juan conecta el listener en manejarOrdenamiento() -->
+                    <div class="tasks-controls__grupo">
+                        <label for="ordenSelect" class="tasks-controls__label">Ordenar por:</label>
+                        <select id="ordenSelect" class="tasks-controls__select">
+                            <option value="">Sin ordenar</option>
+                            <option value="titulo">Titulo A-Z</option>
+                            <option value="estado">Estado</option>
+                            <option value="fecha">Fecha de creacion</option>
+                        </select>
+                    </div>
+
+                    <!-- RF04: Boton de exportacion — Juan conecta el listener en manejarExportacion() -->
+                    <div class="tasks-controls__grupo">
+                        <button type="button" id="exportarBtn" class="btn btn--secondary">
+                            <span class="btn__text">Exportar JSON</span>
+                        </button>
+                    </div>
+
+                </div>
+
                 <!-- Tabla HTML para mostrar las tareas de forma estructurada -->
                 <!-- La tabla permite organizar datos en filas y columnas -->
                 <table class="tasks-table" id="tasksTable">
