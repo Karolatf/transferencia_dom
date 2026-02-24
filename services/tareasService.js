@@ -59,6 +59,11 @@ import {
     limpiarError               // Limpia el error de un campo del DOM
 } from '../utils/validaciones.js';
 
+// ----- IMPORTACIONES DESDE LA CAPA SERVICES (NOTIFICACIONES) -----
+import { 
+    mostrarNotificacion 
+} from '../utils/notificaciones.js';
+
 // ESTADO LOCAL DEL MÓDULO
 
 // Estas variables mantienen el estado de la aplicación en memoria.
@@ -168,7 +173,8 @@ export async function manejarRegistroTarea(event) {
     // ----- PASO 2: VERIFICAR QUE HAY USUARIO SELECCIONADO -----
     // No tiene sentido registrar una tarea si no hay usuario activo
     if (!usuarioActual) {
-        alert('⚠️ Primero debes buscar y seleccionar un usuario');
+        // RF03: reemplazamos alert() por notificacion visual tipo toast
+        mostrarNotificacion('Primero debes buscar y seleccionar un usuario', 'error');
         return;
     }
 
@@ -221,7 +227,8 @@ export async function manejarRegistroTarea(event) {
 
     } else {
         // ----- ERROR EN EL REGISTRO -----
-        alert('❌ Error al registrar la tarea. Por favor, intenta nuevamente.');
+        // RF03: reemplazamos alert() por notificacion visual tipo toast
+        mostrarNotificacion('Error al registrar la tarea. Por favor, intenta nuevamente.', 'error');
     }
 }
 
@@ -284,11 +291,13 @@ export function manejarEdicionTarea(tarea) {
             ocultarModalEdicion();
 
             // Notificamos al usuario del éxito
-            alert('✅ Tarea actualizada exitosamente');
+            // RF03: reemplazamos alert() por notificacion visual tipo toast
+            mostrarNotificacion('Tarea actualizada exitosamente', 'exito');
 
         } else {
             // ----- ERROR EN LA ACTUALIZACIÓN -----
-            alert('❌ Error al actualizar la tarea. Por favor, intenta nuevamente.');
+            // RF03: reemplazamos alert() por notificacion visual tipo toast
+            mostrarNotificacion('Error al actualizar la tarea. Por favor, intenta nuevamente.', 'error');
         }
 
         // ----- PASO 8: REMOVER EL LISTENER PARA EVITAR ACUMULACIÓN -----
@@ -360,11 +369,13 @@ export async function manejarEliminacionTarea(tarea) {
         eliminarFilaTarea(tarea.id);
 
         // Notificamos al usuario del éxito
-        alert('🗑️ Tarea eliminada exitosamente');
+        // RF03: reemplazamos alert() por notificacion visual tipo toast
+        mostrarNotificacion('Tarea eliminada exitosamente', 'exito');
 
     } else {
         // ----- ERROR EN LA ELIMINACIÓN -----
-        alert('❌ Error al eliminar la tarea. Por favor, intenta nuevamente.');
+        // RF03: reemplazamos alert() por notificacion visual tipo toast
+        mostrarNotificacion('Error al eliminar la tarea. Por favor, intenta nuevamente.', 'error');
     }
 }
 
