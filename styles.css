@@ -677,3 +677,48 @@ body {
     background: var(--borde-suave); /* se oscurece levemente al pasar el mouse */
     transform: translateY(-1px);    /* sube 1px */
 }
+
+/* ── NOTIFICACIONES TOAST (RF03) ── */
+
+#notificaciones-contenedor {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9999;
+}
+
+.notificacion {
+    padding: 14px 20px;
+    border-radius: 8px;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s ease;
+}
+
+.notificacion--exito {
+    background-color: #2E7D32;
+}
+
+.notificacion--error {
+    background-color: #C62828;
+}
+
+.notificacion--info {
+    background-color: #1565C0;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
