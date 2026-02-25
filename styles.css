@@ -678,6 +678,32 @@ body {
     transform: translateY(-1px);    /* sube 1px */
 }
 
+/* Botones Limpiar filtros y Exportar JSON dentro de la barra de controles.
+   Sobreescribe btn--secondary solo en ese contexto para no afectar el modal. */
+.tasks-controls .btn--secondary {
+    padding: 0 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: var(--radio-sm);
+    background: #0369a1;
+    color: white;
+    border: none;
+    box-shadow: 0 1px 3px rgba(3, 105, 161, 0.25);
+    transition: all var(--transicion);
+    height: 2.1rem;
+}
+
+.tasks-controls .btn--secondary:hover {
+    background: #0c4a6e;
+    box-shadow: 0 3px 8px rgba(3, 105, 161, 0.3);
+    transform: translateY(-1px);
+}
+
+.tasks-controls .btn--secondary:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(3, 105, 161, 0.2);
+}
+
 /* ── NOTIFICACIONES TOAST (RF03) ── */
 
 #notificaciones-contenedor {
@@ -720,5 +746,121 @@ body {
     to {
         transform: translateX(0);
         opacity: 1;
+    }
+}
+
+/* ── CONTROLES DE TAREAS: FILTROS, ORDENAMIENTO Y EXPORTACIÓN ──────────────
+   RF01 — Filtro avanzado       (Juan)
+   RF02 — Ordenamiento dinámico (Juan)
+   RF04 — Exportación a JSON    (Juan)
+   Conecta con: <div class="tasks-controls"> en index.html                 */
+
+/* Barra contenedora: dos filas organizadas con separación visual */
+.tasks-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--espacio-md);
+    padding: var(--espacio-lg) var(--espacio-xl);
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-bottom: 2px solid #bae6fd;
+}
+
+/* Cada grupo: label encima, campo debajo */
+.tasks-controls__grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+/* Label superior pequeño */
+.tasks-controls__label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #0c4a6e;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+/* Estilo base compartido por select e input de controles */
+.tasks-controls__select,
+.tasks-controls__input {
+    padding: 0.4rem 0.65rem;
+    font-size: var(--texto-sm);
+    font-family: var(--fuente);
+    color: var(--texto-oscuro);
+    background: white;
+    border: 1.5px solid #bae6fd;
+    border-radius: var(--radio-sm);
+    outline: none;
+    transition: border-color var(--transicion), box-shadow var(--transicion);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    height: 2.1rem;
+}
+
+.tasks-controls__select {
+    cursor: pointer;
+    min-width: 130px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230c4a6e' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    padding-right: 2rem;
+}
+
+.tasks-controls__input {
+    width: 150px;
+}
+
+.tasks-controls__input::placeholder {
+    color: var(--texto-claro);
+    font-style: italic;
+}
+
+/* Foco: borde celeste oscuro + anillo suave */
+.tasks-controls__select:focus,
+.tasks-controls__input:focus {
+    border-color: #0369a1;
+    box-shadow: 0 0 0 3px rgba(186, 230, 253, 0.5);
+}
+
+/* Hover suave en los campos */
+.tasks-controls__select:hover,
+.tasks-controls__input:hover {
+    border-color: #7dd3fc;
+}
+
+/* Grupo que contiene un botón: lo empuja hacia abajo para alinearse con los inputs */
+.tasks-controls__grupo--btn {
+    justify-content: flex-end;
+}
+
+
+/* ── RESPONSIVE: controles en pantalla pequeña ─────────────────────────────
+   En móvil los grupos se apilan y los campos ocupan todo el ancho.        */
+
+@media (max-width: 768px) {
+
+    .tasks-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--espacio-sm);
+        padding: var(--espacio-md);
+    }
+
+    .tasks-controls__grupo {
+        width: 100%;
+    }
+
+    .tasks-controls__select,
+    .tasks-controls__input {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .tasks-controls .btn--secondary {
+        width: 100%;
+        justify-content: center;
     }
 }
