@@ -864,3 +864,62 @@ body {
         justify-content: center;
     }
 }
+
+/* ─── SWEETALERT2 — PERSONALIZACIÓN CON PALETA DEL PROYECTO ─── */
+
+/* Contenedor principal del popup */
+.swal-popup {
+    border-radius: var(--radio-xl);
+    border: 2px solid var(--color-primario);
+    box-shadow: var(--sombra-lg);
+    font-family: var(--fuente);
+}
+
+/* Título del popup */
+.swal-title {
+    color: var(--texto-oscuro);
+    font-size: var(--texto-xl);
+    font-weight: 700;
+}
+
+/* Texto del cuerpo */
+.swal-text {
+    color: var(--texto-medio);
+    font-size: var(--texto-md);
+}
+
+/* Botón confirmar — morado sólido */
+.swal-btn-confirmar {
+    background-color: var(--color-primario) !important;
+    color: white !important;
+    border-radius: var(--radio-full) !important;
+    padding: 0.6rem 1.5rem !important;
+    font-size: var(--texto-md) !important;
+    font-weight: 600 !important;
+    border: none !important;
+    transition: background-color var(--transicion) !important;
+}
+.swal-btn-confirmar:hover {
+    background-color: var(--color-primario-oscuro) !important;
+}
+
+/* Botón cancelar — borde morado, fondo blanco */
+.swal-btn-cancelar {
+    background-color: white !important;
+    color: var(--color-primario) !important;
+    border: 2px solid var(--color-primario) !important;
+    border-radius: var(--radio-full) !important;
+    padding: 0.6rem 1.5rem !important;
+    font-size: var(--texto-md) !important;
+    font-weight: 600 !important;
+    transition: background-color var(--transicion) !important;
+}
+.swal-btn-cancelar:hover {
+    background-color: var(--color-primario-suave) !important;
+}
+
+/* Ícono de advertencia del dialog de eliminar — rojo del proyecto */
+.swal-popup.swal-eliminar .swal2-icon.swal2-warning {
+    border-color: var(--color-error) !important;
+    color: var(--color-error) !important;
+}
