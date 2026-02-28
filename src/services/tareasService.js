@@ -69,9 +69,16 @@ import {
     limpiarError               // Limpia el error visual de un campo del DOM
 } from '../utils/validaciones.js';
 
-// RF03 — Notificaciones visuales (Karol)
-// Reemplaza los alert() nativos por toasts visuales no bloqueantes
-import { mostrarNotificacion } from '../utils/notificaciones.js';
+// RF03 — Notificaciones visuales
+// Importamos ambas funciones del módulo de notificaciones.
+// mostrarNotificacion: reemplaza los toast manuales anteriores.
+// mostrarConfirmacion: reemplaza el confirm() nativo del navegador.
+// Ambas son async, por lo que el caller debe usar await al llamarlas
+// para garantizar que el código espera la respuesta antes de continuar.
+import {
+    mostrarNotificacion,
+    mostrarConfirmacion   // ← función nueva, reemplaza a confirm() nativo
+} from '../utils/notificaciones.js';
 
 // RF01 — Filtrado (Juan)
 // Función pura que filtra el arreglo de tareas sin modificarlo
@@ -390,22 +397,53 @@ export function manejarEdicionTarea(tarea) {
 // RF-04 – ELIMINAR TAREA (DELETE)
 
 // Maneja el clic en el botón "Eliminar" de una fila.
-// Pide confirmación y, si el usuario acepta, llama a la API y actualiza la UI.
-// Parámetro: tarea - Objeto con los datos de la tarea a eliminar
+// Muestra un dialog de confirmación visual y, si el usuario acepta,
+// llama a la API para eliminar la tarea y actualiza la UI.
+
+// La función es async porque usa await en tres puntos:
+//   1. await mostrarConfirmacion() → espera la decisión del usuario
+//   2. await eliminarTarea()       → espera la respuesta del servidor
+// Sin async/await el código continuaría sin esperar y eliminaría
+// la tarea sin que el usuario hubiera tenido tiempo de confirmar.
+
+// Parámetro: tarea - Objeto con los datos de la tarea a eliminar.
+//            Necesitamos tarea.title para el mensaje del dialog
+//            y tarea.id para la petición DELETE a la API.
 export async function manejarEliminacionTarea(tarea) {
 
     // ----- PASO 1: PEDIR CONFIRMACIÓN AL USUARIO -----
-    // confirm() muestra un diálogo nativo; retorna true si acepta
-    const confirmado = confirm(
-        `¿Estás seguro de que deseas eliminar la tarea "${tarea.title}"?\nEsta acción no se puede deshacer.`
+    // mostrarConfirmacion() es async y retorna una Promesa.
+    // await pausa la ejecución AQUÍ hasta que el usuario hace clic
+    // en cualquier botón del dialog. Sin el await, 'confirmado'
+    // sería una Promesa pendiente (siempre truthy) y la tarea
+    // se eliminaría siempre sin esperar la decisión del usuario.
+    const confirmado = await mostrarConfirmacion(
+
+        // Primer argumento: título del dialog (texto grande del encabezado)
+        '¿Eliminar tarea?',
+
+        // Segundo argumento: texto del cuerpo del dialog.
+        // Incluimos el nombre de la tarea para que el usuario sepa
+        // exactamente qué está a punto de eliminar y no haya confusión.
+        // Template literal para interpolar tarea.title dinámicamente.
+        `La tarea "${tarea.title}" se eliminará permanentemente. Esta acción no se puede deshacer.`,
+
+        // Tercer argumento: texto del botón de confirmación.
+        // Usamos texto descriptivo de la acción en lugar de "Sí" genérico
+        // para que el usuario entienda exactamente qué confirma al hacer clic.
+        'Sí, eliminar'
     );
 
     // ----- PASO 2: VERIFICAR SI EL USUARIO CONFIRMÓ -----
-    // Si canceló, detenemos la ejecución sin hacer nada
+    // mostrarConfirmacion() retorna true si confirmó, false si canceló.
+    // Si el usuario canceló o cerró el dialog, salimos de la función
+    // sin hacer ninguna petición al servidor ni modificar el estado.
     if (!confirmado) return;
 
     // ----- PASO 3: LLAMAR A LA CAPA API -----
-    // Enviamos la petición DELETE al servidor a través del módulo de API
+    // Solo llegamos aquí si el usuario confirmó la eliminación.
+    // Delegamos la petición DELETE al módulo de API.
+    // await pausa hasta que el servidor responde con éxito o error.
     const exitoso = await eliminarTarea(tarea.id);
 
     // ----- PASO 4: PROCESAR EL RESULTADO -----
@@ -413,20 +451,28 @@ export async function manejarEliminacionTarea(tarea) {
 
         // ELIMINACIÓN EXITOSA
         // filter() crea un nuevo arreglo conservando solo las tareas
-        // cuyo ID es distinto al de la tarea eliminada
+        // cuyo ID es distinto al de la tarea recién eliminada.
+        // No mutamos el arreglo original; reemplazamos la referencia.
         tareasRegistradas = tareasRegistradas.filter(
             t => t.id.toString() !== tarea.id.toString()
         );
 
         // RF01+RF02: refrescamos la tabla para que los filtros y el orden
-        // se mantengan activos después de la eliminación
+        // activos se mantengan después de la eliminación.
         refrescarTabla();
 
+        // Notificamos al usuario que la eliminación fue exitosa.
+        // 'exito' mapea a 'success' en SweetAlert2 (ícono verde).
+        // No necesitamos await aquí porque no dependemos de que
+        // el toast se cierre para continuar con alguna otra lógica.
         mostrarNotificacion('Tarea eliminada exitosamente', 'exito');
 
     } else {
 
         // ERROR EN LA ELIMINACIÓN
+        // Llegamos aquí si el servidor respondió con error o si la
+        // red estaba caída. Informamos al usuario para que reintente.
+        // 'error' mapea a 'error' en SweetAlert2 (ícono rojo con X).
         mostrarNotificacion('Error al eliminar la tarea. Por favor, intenta nuevamente.', 'error');
     }
 }
