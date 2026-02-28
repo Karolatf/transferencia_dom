@@ -22,5 +22,8 @@
   "homepage": "https://github.com/Karolatf/transferencia_dom#readme",
   "devDependencies": {
     "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "sweetalert2": "^11.26.20"
   }
 }
