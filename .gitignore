@@ -1,2 +1,5 @@
-/node_modules
+# Dependencias
+node_modules/
 
+# Build de producción
+dist/
