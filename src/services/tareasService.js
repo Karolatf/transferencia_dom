@@ -271,9 +271,9 @@ export async function manejarRegistroTarea(event) {
         title:       inputTitulo.value.trim(),
         description: inputDesc.value.trim(),
         status:      selectEst.value,
-        userId:      usuarioActual.id,           // Del estado local del service
-        userName:    usuarioActual.name,         // Para mostrar en la tabla
-        completed:   selectEst.value === 'completada' // Campo de coherencia
+        userId:      usuarioActual.documento,  // ← antes era usuarioActual.id
+        userName:    usuarioActual.name,
+        completed:   selectEst.value === 'completada'
     };
 
     // ----- PASO 6: LLAMAR A LA CAPA API -----
