@@ -27,6 +27,12 @@ import { mostrarEstadoVacio } from './ui/tareasUI.js';
 // Importamos la URL base para confirmar en consola que la configuración es correcta
 import { API_BASE_URL } from './utils/config.js';
 
+// Se importa la función que monta el panel de administración
+import { montarAdminPanel } from './ui/adminPanel.js';
+
+// Se importa la función que monta la vista de búsqueda por documento
+import { montarBuscarUsuario } from './ui/buscarUsuario.js';
+
 // INICIALIZACIÓN DE LA APLICACIÓN
 
 // Esperamos el evento 'DOMContentLoaded' antes de ejecutar cualquier lógica.
@@ -58,4 +64,36 @@ document.addEventListener('DOMContentLoaded', function () {
     // ----- PASO 4: CONFIRMAR INICIALIZACIÓN EXITOSA -----
     console.log('📋 Event listeners registrados correctamente');
     console.log('✔️  Aplicación lista para usar');
+
+    // ----- PASO 5: CONECTAR BOTONES DE NAVEGACIÓN CON LAS VISTAS NUEVAS -----
+
+    // Se obtienen los botones de navegación del header
+    const btnAdmin = document.getElementById('btnAdmin');
+    const btnBuscar = document.getElementById('btnBuscar');
+
+    // Se obtienen las secciones de las vistas nuevas
+    const adminSection = document.getElementById('adminSection');
+    const buscarSection = document.getElementById('buscarSection');
+
+    // Se obtienen los contenedores donde cada vista renderiza su contenido
+    const adminPanelContenedor = document.getElementById('adminPanelContenedor');
+    const buscarContenedor = document.getElementById('buscarContenedor');
+
+    // Al hacer clic en "Panel Admin" se muestra esa sección y se oculta la otra
+    btnAdmin.addEventListener('click', async function () {
+        // Se muestra la sección del admin y se oculta la de búsqueda
+        adminSection.classList.remove('hidden');
+        buscarSection.classList.add('hidden');
+        // Se monta el panel cada vez que se abre para tener datos actualizados
+        await montarAdminPanel(adminPanelContenedor);
+    });
+
+    // Al hacer clic en "Buscar por Documento" se muestra esa sección y se oculta la otra
+    btnBuscar.addEventListener('click', function () {
+        // Se muestra la sección de búsqueda y se oculta la del admin
+        buscarSection.classList.remove('hidden');
+        adminSection.classList.add('hidden');
+        // Se monta la vista de búsqueda en su contenedor
+        montarBuscarUsuario(buscarContenedor);
+    });
 });
