@@ -18,6 +18,15 @@
             
             <!-- Párrafo descriptivo que explica el propósito de la aplicación -->
             <p class="header__subtitle">Busca usuarios y registra tareas asociadas | Ejercicio DOM - SENA</p>
+
+            <!-- Botones de navegación para cambiar entre las vistas principales -->
+            <div class="header__nav" id="headerNav">
+                <!-- Botón para mostrar el panel de administración de usuarios -->
+                <button type="button" class="btn btn--nav" id="btnAdmin"> Panel Admin</button>
+
+                <!-- Botón para mostrar la vista de búsqueda por documento -->
+                <button type="button" class="btn btn--nav" id="btnBuscar"> Buscar por Documento</button>
+            </div>
         </header>
 
         <!--  SECCIÓN: BÚSQUEDA DE USUARIO  -->
@@ -299,6 +308,20 @@
             </div>
         </section>
 
+        <!--  SECCIÓN: PANEL DE ADMINISTRACIÓN  -->
+        <!-- Oculta por defecto. Se muestra al hacer clic en "Panel Admin" -->
+        <!-- adminPanel.js monta aquí la tabla de usuarios y la lista de tareas -->
+        <section class="form-section hidden" id="adminSection">
+            <div id="adminPanelContenedor"></div>
+        </section>
+
+        <!--  SECCIÓN: BÚSQUEDA POR DOCUMENTO  -->
+        <!-- Oculta por defecto. Se muestra al hacer clic en "Buscar por Documento" -->
+        <!-- buscarUsuario.js monta aquí el formulario y los resultados -->
+        <section class="form-section hidden" id="buscarSection">
+            <div id="buscarContenedor"></div>
+        </section>
+        
         <!--  SECCIÓN: PIE DE PÁGINA  -->
         <!-- Footer semántico que contiene información institucional -->
         <footer class="footer">
