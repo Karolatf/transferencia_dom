@@ -57,8 +57,7 @@ export async function buscarUsuarioPorDocumento(documentoId) {
         // ----- PASO 5: BUSCAR EL USUARIO EN EL ARREGLO -----
         // find() recorre el arreglo y retorna el primero que cumpla la condición
         // Convertimos ambos a string para evitar errores de tipo (número vs string)
-        const usuario = usuarios.find(u => u.id.toString() === documentoId.toString());
-
+        const usuario = usuarios.find(u => u.documento.toString() === documentoId.toString());
         // ----- PASO 6: RETORNAR EL RESULTADO -----
         // Si find() encontró el usuario, retornamos ese objeto
         // Si no lo encontró, find() retorna undefined; el operador || lo convierte a null
