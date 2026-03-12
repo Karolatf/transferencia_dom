@@ -923,3 +923,171 @@ body {
     border-color: var(--color-error) !important;
     color: var(--color-error) !important;
 }
+
+/* ── BOTONES DE NAVEGACIÓN DEL HEADER ── */
+
+/* Contenedor de los botones que aparecen en el header para cambiar de vista */
+.header__nav {
+    display: flex;
+    justify-content: center;
+    gap: var(--espacio-md);
+    margin-top: var(--espacio-lg);
+    flex-wrap: wrap;
+}
+
+/* Botón de navegación: fondo transparente con borde morado */
+/* Contrasta con el fondo blanco de la card del header */
+.btn--nav {
+    background: transparent;
+    color: var(--color-primario);
+    border: 2px solid var(--color-primario);
+    padding: var(--espacio-sm) var(--espacio-xl);
+    border-radius: var(--radio-full);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    font-family: var(--fuente);
+    cursor: pointer;
+    transition: all var(--transicion);
+}
+
+/* En hover el botón se rellena de morado con texto blanco */
+.btn--nav:hover {
+    background: var(--color-primario);
+    color: white;
+}
+
+
+/* ── PANEL DE ADMINISTRACIÓN ── */
+
+/* Separación visual entre las dos secciones del panel admin */
+.admin-seccion {
+    margin-bottom: var(--espacio-xl);
+}
+
+/* Título de cada sección dentro del panel admin */
+.admin-seccion__titulo {
+    font-size: var(--texto-lg);
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    margin-bottom: var(--espacio-md);
+    padding-left: var(--espacio-md);
+    border-left: 3px solid var(--color-primario);
+}
+
+/* Formulario de creación: distribuye los campos en fila en pantallas grandes */
+.admin-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-md);
+    align-items: flex-end;
+    margin-bottom: var(--espacio-lg);
+}
+
+/* Cada grupo label+input ocupa un ancho mínimo de 180px */
+.admin-form__grupo {
+    flex: 1 1 180px;
+    margin-bottom: 0;
+}
+
+/* Espaciado superior en la tabla del panel admin */
+.admin-tabla {
+    margin-top: var(--espacio-md);
+}
+
+/* Mensaje que se muestra cuando no hay datos */
+.admin-vacio {
+    color: var(--texto-claro);
+    font-style: italic;
+    padding: var(--espacio-md);
+    text-align: center;
+}
+
+
+/* ── VISTA DE BÚSQUEDA POR DOCUMENTO ── */
+
+/* Contenedor del resultado: empieza oculto con .hidden, se muestra al buscar */
+.buscar-resultado {
+    margin-top: var(--espacio-lg);
+    padding: var(--espacio-lg);
+    background: var(--fondo-gris);
+    border-radius: var(--radio-md);
+    border: 1px solid var(--borde-suave);
+}
+
+/* Nombre del usuario encontrado */
+.buscar-resultado__titulo {
+    font-size: var(--texto-lg);
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    margin-bottom: var(--espacio-sm);
+}
+
+/* Contador de tareas del usuario */
+.buscar-resultado__contador {
+    font-size: var(--texto-sm);
+    color: var(--texto-medio);
+    margin-bottom: var(--espacio-md);
+}
+
+/* Mensaje cuando el usuario no tiene tareas */
+.buscar-resultado__sin-tareas {
+    color: var(--texto-claro);
+    font-style: italic;
+}
+
+/* Mensaje cuando no se encuentra el usuario */
+.buscar-resultado__no-encontrado {
+    color: var(--color-error);
+    font-weight: 500;
+}
+
+/* Lista de tareas sin viñetas */
+.buscar-resultado__lista {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-sm);
+}
+
+/* Cada ítem: título a la izquierda, badge de estado a la derecha */
+.buscar-resultado__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--espacio-sm) var(--espacio-md);
+    background: white;
+    border-radius: var(--radio-sm);
+    border: 1px solid var(--borde-suave);
+}
+
+/* Título de la tarea dentro del ítem */
+.buscar-resultado__tarea-titulo {
+    font-size: var(--texto-sm);
+    color: var(--texto-oscuro);
+}
+
+
+/* ── RESPONSIVE: PANEL ADMIN Y BÚSQUEDA EN PANTALLA PEQUEÑA ── */
+
+@media (max-width: 768px) {
+
+    /* El formulario del admin se apila en columna en móvil */
+    .admin-form {
+        flex-direction: column;
+    }
+
+    .admin-form__grupo {
+        flex: 1 1 100%;
+    }
+
+    /* Los botones del header se apilan y se centran */
+    .header__nav {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn--nav {
+        width: 100%;
+        max-width: 280px;
+    }
+}
