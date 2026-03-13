@@ -4,6 +4,9 @@
     --color-primario-oscuro: #be5cc3;
     --color-primario-suave:  #faf5ff;
 
+    --color-admin:        #0284c7;
+    --color-admin-oscuro: #0369a1;
+
     --color-pendiente:  #fbbf24;
     --color-progreso:   #60a5fa;
     --color-completada: #34d399;
@@ -36,6 +39,7 @@
     --radio-md:   0.5rem;
     --radio-lg:   0.75rem;
     --radio-xl:   1rem;
+    --radio-2xl:  1.5rem;
     --radio-full: 9999px;
 
     --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -111,7 +115,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     min-width: 280px;
     max-width: 360px;
     background: white;
-    border-radius: var(--radio-xl);
+    border-radius: var(--radio-2xl);
     padding: var(--espacio-xl);
     box-shadow: var(--sombra-lg);
     text-align: center;
@@ -152,8 +156,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 .btn-acceso--usuario { background-color: var(--color-primario); color: white; }
 .btn-acceso--usuario:hover { background-color: var(--color-primario-oscuro); }
-.btn-acceso--admin { background-color: #0284c7; color: white; }
-.btn-acceso--admin:hover { background-color: #0369a1; }
+.btn-acceso--admin { background-color: var(--color-admin); color: white; }
+.btn-acceso--admin:hover { background-color: var(--color-admin-oscuro); }
 
 
 /* VISTAS */
@@ -169,6 +173,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     padding: var(--espacio-lg) var(--espacio-xl);
     text-align: center;
     position: relative;
+    border-radius: var(--radio-2xl);
+    margin-bottom: var(--espacio-lg);
 }
 
 .header--usuario {
@@ -176,7 +182,14 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     box-shadow: var(--sombra-sm);
 }
 
-.header--admin { background: #0284c7; }
+.header--admin {
+    background: var(--color-admin);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--espacio-md);
+    padding-bottom: var(--espacio-xl);
+}
 
 .header--admin .header__title,
 .header--admin .header__subtitle { color: white; }
@@ -193,18 +206,23 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     margin-top: var(--espacio-xs);
 }
 
+.header--admin .header__subtitle { color: rgba(255,255,255,0.85); }
+
 .header__nav {
     position: absolute;
     left: var(--espacio-lg);
-    top: 50%;
-    transform: translateY(-50%);
+    top: var(--espacio-lg);
 }
 
+/* Botón volver rediseñado: flechita + texto, redondeado */
 .btn-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-xs);
     background: transparent;
     border: 2px solid var(--color-primario);
     color: var(--color-primario);
-    padding: var(--espacio-sm) var(--espacio-md);
+    padding: var(--espacio-xs) var(--espacio-md);
     border-radius: var(--radio-full);
     font-size: var(--texto-sm);
     font-weight: 600;
@@ -212,10 +230,67 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     transition: background-color var(--transicion), color var(--transicion);
 }
 
-.btn-volver:hover { background-color: var(--color-primario); color: white; }
+.btn-volver::before {
+    content: '←';
+    font-size: var(--texto-md);
+    line-height: 1;
+}
 
-.btn-volver--admin { border-color: white; color: white; }
-.btn-volver--admin:hover { background-color: white; color: #0284c7; }
+.btn-volver:hover {
+    background-color: var(--color-primario);
+    color: white;
+}
+
+/* Variante admin del botón volver: azul */
+.btn-volver--admin {
+    border-color: white;
+    color: white;
+}
+
+.btn-volver--admin:hover {
+    background-color: white;
+    color: var(--color-admin);
+}
+
+/* Buscador integrado en el header del admin */
+.header__busqueda-admin {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: var(--radio-full);
+    padding: var(--espacio-xs) var(--espacio-md);
+    width: 100%;
+    max-width: 400px;
+}
+
+.header__busqueda-admin input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: var(--texto-sm);
+    font-family: var(--fuente);
+}
+
+.header__busqueda-admin input::placeholder { color: rgba(255,255,255,0.7); }
+
+.header__busqueda-admin button {
+    background: white;
+    border: none;
+    border-radius: var(--radio-full);
+    padding: var(--espacio-xs) var(--espacio-sm);
+    cursor: pointer;
+    font-size: var(--texto-sm);
+    color: var(--color-admin);
+    font-weight: 600;
+    transition: background-color var(--transicion);
+    white-space: nowrap;
+}
+
+.header__busqueda-admin button:hover { background-color: #e0f2fe; }
 
 
 /* CONTENIDO PRINCIPAL */
@@ -236,7 +311,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 /* CARD BASE */
 .card {
     background: white;
-    border-radius: var(--radio-lg);
+    border-radius: var(--radio-xl);
     padding: var(--espacio-xl);
     box-shadow: var(--sombra-md);
 }
@@ -248,7 +323,6 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     margin-bottom: var(--espacio-lg);
 }
 
-/* La card de info del usuario no lleva borde lateral de color */
 .card--usuario-info { background: white; }
 
 
@@ -350,7 +424,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .btn--secondary:hover { background-color: var(--borde-suave); }
 
 .btn--admin-primary {
-    background-color: #0284c7;
+    background-color: var(--color-admin);
     color: white;
     width: 100%;
     margin-top: var(--espacio-sm);
@@ -363,12 +437,12 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     transition: background-color var(--transicion);
 }
 
-.btn--admin-primary:hover { background-color: #0369a1; }
+.btn--admin-primary:hover { background-color: var(--color-admin-oscuro); }
 
 .btn--admin-secondary {
     background-color: transparent;
-    color: #0284c7;
-    border: 2px solid #0284c7;
+    color: var(--color-admin);
+    border: 2px solid var(--color-admin);
     padding: var(--espacio-xs) var(--espacio-md);
     border-radius: var(--radio-full);
     font-size: var(--texto-sm);
@@ -377,7 +451,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     transition: background-color var(--transicion), color var(--transicion);
 }
 
-.btn--admin-secondary:hover { background-color: #0284c7; color: white; }
+.btn--admin-secondary:hover { background-color: var(--color-admin); color: white; }
 
 
 /* USER INFO */
@@ -409,7 +483,12 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 
 /* TABLA DE TAREAS */
-.tasks-section { background: white; border-radius: var(--radio-lg); box-shadow: var(--sombra-md); overflow: hidden; }
+.tasks-section {
+    background: white;
+    border-radius: var(--radio-xl);
+    box-shadow: var(--sombra-md);
+    overflow: hidden;
+}
 
 .tasks-header {
     display: flex;
@@ -466,9 +545,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     vertical-align: middle;
 }
 
-/* Variante admin de la tabla */
 .tasks-table--admin .tasks-table__head { background-color: #e0f2fe; }
-.tasks-table--admin .tasks-table__head th { color: #0369a1; }
+.tasks-table--admin .tasks-table__head th { color: var(--color-admin-oscuro); }
 
 
 /* BADGES DE ESTADO */
@@ -527,12 +605,12 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .tasks-empty__subtext { font-size: var(--texto-sm); }
 
 
-/* MODAL */
+/* MODAL BASE (edición de tarea) */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -541,7 +619,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 .modal {
     background: white;
-    border-radius: var(--radio-xl);
+    border-radius: var(--radio-2xl);
     padding: var(--espacio-xl);
     width: 90%;
     max-width: 500px;
@@ -587,6 +665,141 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .modal__actions .btn { width: auto; margin-top: 0; }
 
 
+/* MODAL DINÁMICO DE USUARIO (reemplaza panel fijo y card estática de buscar) */
+/* Se abre al hacer "Ver/Asignar", al buscar usuario en admin, o al buscar en modo usuario */
+.modal-usuario-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 900;
+    animation: fadeOverlay 200ms ease;
+}
+
+.modal-usuario {
+    background: white;
+    border-radius: var(--radio-2xl);
+    padding: var(--espacio-xl);
+    width: 90%;
+    max-width: 600px;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    animation: slideIn 220ms ease;
+    position: relative;
+}
+
+.modal-usuario__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--espacio-lg);
+    gap: var(--espacio-md);
+}
+
+.modal-usuario__titulo {
+    font-size: var(--texto-xl);
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    flex: 1;
+}
+
+.modal-usuario__subtitulo {
+    font-size: var(--texto-sm);
+    color: var(--texto-medio);
+    margin-top: var(--espacio-xs);
+}
+
+.modal-usuario__cerrar {
+    background: none;
+    border: none;
+    font-size: var(--texto-xl);
+    color: var(--texto-claro);
+    cursor: pointer;
+    padding: var(--espacio-xs);
+    border-radius: var(--radio-md);
+    transition: color var(--transicion);
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.modal-usuario__cerrar:hover { color: var(--texto-oscuro); }
+
+/* Cuerpo del modal de usuario: dos columnas en admin, una en usuario */
+.modal-usuario__cuerpo {
+    display: flex;
+    gap: var(--espacio-xl);
+    flex-wrap: wrap;
+}
+
+.modal-usuario__tareas,
+.modal-usuario__asignar { flex: 1; min-width: 220px; }
+
+.modal-usuario__seccion-titulo {
+    font-size: var(--texto-md);
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    margin-bottom: var(--espacio-md);
+    padding-bottom: var(--espacio-xs);
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+/* Ítem de tarea dentro del modal */
+.modal-tarea-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--espacio-sm) var(--espacio-md);
+    margin-bottom: var(--espacio-xs);
+    background: #f0f9ff;
+    border-radius: var(--radio-md);
+    font-size: var(--texto-sm);
+    gap: var(--espacio-sm);
+}
+
+.modal-tarea-item span:first-child {
+    color: var(--texto-oscuro);
+    font-weight: 500;
+    flex: 1;
+}
+
+/* Vacío dentro del modal */
+.modal-vacio {
+    color: var(--texto-claro);
+    font-size: var(--texto-sm);
+    padding: var(--espacio-md) 0;
+}
+
+/* Resultado de búsqueda en modo usuario (vista simple) */
+.modal-usuario__lista-tareas {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-sm);
+    margin-top: var(--espacio-md);
+}
+
+.modal-usuario__lista-tareas li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--espacio-sm) var(--espacio-md);
+    background: var(--fondo-gris);
+    border-radius: var(--radio-md);
+    font-size: var(--texto-sm);
+    gap: var(--espacio-sm);
+}
+
+.modal-usuario__lista-tareas li span:first-child {
+    color: var(--texto-oscuro);
+    font-weight: 500;
+    flex: 1;
+}
+
+
 /* CONTROLES DE FILTRO (admin) */
 .tasks-controls {
     display: flex;
@@ -609,7 +822,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .tasks-controls__label {
     font-size: var(--texto-sm);
     font-weight: 600;
-    color: #0369a1;
+    color: var(--color-admin-oscuro);
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
@@ -632,7 +845,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 .tasks-controls__select:focus,
 .tasks-controls__input:focus {
-    border-color: #0284c7;
+    border-color: var(--color-admin);
     box-shadow: 0 0 0 3px rgba(186, 230, 253, 0.5);
 }
 
@@ -644,11 +857,12 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     flex-wrap: wrap;
 }
 
+/* En admin solo mostramos la card de crear usuario (buscar se movió al header) */
 .admin-card {
     flex: 1;
     min-width: 300px;
     background: white;
-    border-radius: var(--radio-lg);
+    border-radius: var(--radio-xl);
     padding: var(--espacio-xl);
     box-shadow: var(--sombra-md);
 }
@@ -665,106 +879,14 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     margin-bottom: var(--espacio-lg);
 }
 
-/* Títulos admin: solo color azul oscuro, sin bordes ni decoraciones */
 .admin-card__titulo {
     font-size: var(--texto-lg);
     font-weight: 700;
-    color: #0369a1;
+    color: var(--color-admin-oscuro);
     margin-bottom: var(--espacio-md);
 }
 
 .admin-card__cabecera .admin-card__titulo { margin-bottom: 0; }
-
-/* Panel dinámico del usuario seleccionado */
-.admin-panel__cuerpo {
-    display: flex;
-    gap: var(--espacio-xl);
-    flex-wrap: wrap;
-}
-
-.admin-panel__tareas,
-.admin-panel__asignar { flex: 1; min-width: 260px; }
-
-.admin-panel__subtitulo {
-    font-size: var(--texto-md);
-    font-weight: 600;
-    color: var(--texto-oscuro);
-    margin-bottom: var(--espacio-md);
-    padding-bottom: var(--espacio-xs);
-    border-bottom: 1px solid var(--borde-suave);
-}
-
-.admin-panel__cabecera { margin-bottom: var(--espacio-lg); }
-
-.panel-tarea-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--espacio-sm) var(--espacio-md);
-    margin-bottom: var(--espacio-xs);
-    background: #f0f9ff;
-    border-radius: var(--radio-md);
-    font-size: var(--texto-sm);
-}
-
-.panel-vacio {
-    color: var(--texto-claro);
-    font-size: var(--texto-sm);
-    padding: var(--espacio-md) 0;
-}
-
-
-/* RESULTADO DE BÚSQUEDA DE USUARIO (modo usuario) */
-.buscar-resultado {
-    margin-top: var(--espacio-lg);
-    padding-top: var(--espacio-lg);
-    border-top: 1px solid var(--borde-suave);
-}
-
-.buscar-resultado__titulo {
-    font-size: var(--texto-md);
-    font-weight: 700;
-    color: var(--texto-oscuro);
-    margin-bottom: var(--espacio-sm);
-}
-
-.buscar-resultado__no-encontrado {
-    font-size: var(--texto-sm);
-    color: var(--color-error);
-}
-
-.buscar-resultado__sin-tareas {
-    font-size: var(--texto-sm);
-    color: var(--texto-claro);
-}
-
-.buscar-resultado__contador {
-    font-size: var(--texto-sm);
-    color: var(--texto-medio);
-    margin-bottom: var(--espacio-md);
-}
-
-.buscar-resultado__lista {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: var(--espacio-sm);
-}
-
-.buscar-resultado__item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--espacio-sm) var(--espacio-md);
-    background: var(--fondo-gris);
-    border-radius: var(--radio-md);
-    font-size: var(--texto-sm);
-}
-
-.buscar-resultado__tarea-titulo {
-    color: var(--texto-oscuro);
-    font-weight: 500;
-}
 
 
 /* FOOTER */
@@ -773,6 +895,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     padding: var(--espacio-lg);
     text-align: center;
     margin-top: auto;
+    border-radius: var(--radio-xl);
+    margin-top: var(--espacio-lg);
 }
 
 .footer__text {
@@ -780,7 +904,11 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     color: var(--texto-claro);
 }
 
-.footer--admin { background-color: #0369a1; }
+.footer--admin {
+    background-color: var(--color-admin-oscuro);
+    border-radius: var(--radio-xl);
+}
+
 .footer--admin .footer__text { color: rgba(255,255,255,0.85); }
 
 
@@ -822,10 +950,15 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 }
 
 
-/* ANIMACIÓN */
+/* ANIMACIONES */
 @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-12px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-14px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fadeOverlay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 
@@ -835,7 +968,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
     .inicio__accesos,
     .admin-fila,
-    .admin-panel__cuerpo { flex-direction: column; }
+    .modal-usuario__cuerpo { flex-direction: column; }
 
     .acceso-card { max-width: 100%; }
 
@@ -848,7 +981,11 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     .header--usuario,
     .header--admin { padding-top: var(--espacio-md); }
 
-    .admin-card__cabecera { flex-direction: column; gap: var(--espacio-sm); align-items: flex-start; }
+    .admin-card__cabecera {
+        flex-direction: column;
+        gap: var(--espacio-sm);
+        align-items: flex-start;
+    }
 
     .tasks-controls { flex-direction: column; }
 
@@ -857,4 +994,6 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     .modal__actions { flex-direction: column; }
 
     .modal__actions .btn { width: 100%; }
+
+    .header__busqueda-admin { max-width: 100%; }
 }
