@@ -1,261 +1,148 @@
 // MÓDULO: services/tareasService.js
-// CAPA:   Services (Lógica intermedia entre API y UI)
+// CAPA: Services — lógica intermedia entre API y UI
+// Responsabilidad: coordinar operaciones de búsqueda, edición y eliminación
+// de tareas en el MODO USUARIO.
+// En modo usuario:
+//   - El usuario busca por documento
+//   - El resultado se muestra FIJO debajo del formulario (no en modal flotante)
+//   - La tabla muestra título, descripción, estado y un comentario
+//   - Cada fila tiene botón Editar (celeste pastel) y Eliminar (rojo pastel)
+//   - Editar abre el modal existente del HTML con SweetAlert2 para confirmaciones
+//   - Eliminar usa SweetAlert2 importado de notificaciones.js
+// Flujo: Evento DOM → service → api → respuesta → service → ui → DOM
 
-// Responsabilidad ÚNICA: coordinar el flujo completo de cada
-// operación. Recibe eventos del DOM, llama a la API, actualiza
-// el estado local y ordena a la UI que se actualice.
-
-// Este módulo es el "cerebro" de la aplicación:
-//   - Conoce la API (puede importar de api/)
-//   - Conoce la UI (puede importar de ui/)
-//   - Conoce el estado (mantiene variables de estado propias)
-//   - Conoce las validaciones (puede importar de utils/)
-
-// REGLA CLAVE: la UI NUNCA llama directamente a la API.
-// Todo pasa por este service.
-// Flujo: Usuario → Evento → service → api → respuesta → service → ui → DOM
-
-// RF-01 READ   -> manejarBusquedaUsuario
-// RF-02 CREATE -> manejarRegistroTarea
-// RF-03 UPDATE -> manejarEdicionTarea, manejarGuardadoEdicion
-// RF-04 DELETE -> manejarEliminacionTarea
-// RF01  FILTER -> manejarFiltro           (Juan)
-// RF02  SORT   -> manejarOrdenamiento     (Juan)
-// RF04  EXPORT -> manejarExportacion      (Juan)
-
-// Dependencias:
-//   api/tareasApi.js         (peticiones HTTP)
-//   ui/tareasUI.js           (actualización visual)
-//   utils/validaciones.js    (validación de formularios)
-//   utils/notificaciones.js  (mensajes visuales toast — RF03, Karol)
-//   utils/filtros.js         (función pura de filtrado — RF01, Juan)
-//   utils/ordenamiento.js    (función pura de ordenamiento — RF02, Juan)
-//   utils/exportacion.js     (función pura de exportación — RF04, Juan)
-
-// ----- IMPORTACIONES DESDE LA CAPA API -----
-// Solo este módulo (service) puede importar funciones de la capa api.
-// La UI nunca debe conocer la existencia de la API directamente.
 import {
-    buscarUsuarioPorDocumento, // RF-01: GET /users
-    registrarTarea,            // RF-02: POST /tasks
-    actualizarTarea,           // RF-03: PATCH /tasks/:id
-    eliminarTarea              // RF-04: DELETE /tasks/:id
+    buscarUsuarioPorDocumento,
+    actualizarTarea,
+    eliminarTarea
 } from '../api/tareasApi.js';
 
-// ----- IMPORTACIONES DESDE LA CAPA UI -----
-// Usamos las funciones de UI para actualizar lo que el usuario ve en pantalla.
-// El service ordena qué mostrar; la UI sabe cómo mostrarlo.
+// Se importan las funciones de UI que manipulan el DOM de la sección de tareas
 import {
-    mostrarDatosUsuario,     // Muestra nombre, email e ID del usuario encontrado
-    ocultarDatosUsuario,     // Oculta y limpia la sección de datos del usuario
-    mostrarFormularioTareas, // Revela el formulario de registro de tareas
-    ocultarFormularioTareas, // Oculta el formulario de tareas
-    agregarTareaATabla,      // Inserta una fila nueva en la tabla de tareas
-    limpiarFormularioTareas, // Limpia los campos del formulario de tareas
-    actualizarFilaTarea,     // Actualiza visualmente una fila existente (RF-03)
-    eliminarFilaTarea,       // Elimina visualmente una fila de la tabla (RF-04)
-    mostrarModalEdicion,     // Muestra el modal de edición con datos precargados
-    ocultarModalEdicion      // Oculta y limpia el modal de edición
+    ocultarDatosUsuario,
+    agregarTareaATabla,
+    actualizarFilaTarea,
+    eliminarFilaTarea,
+    mostrarModalEdicion,
+    ocultarModalEdicion,
+    mostrarEstadoVacio
 } from '../ui/tareasUI.js';
 
-// ----- IMPORTACIONES DESDE LA CAPA UTILS -----
-// Funciones reutilizables e independientes que no pertenecen a ninguna capa específica
-
-// Validaciones: verifican que los datos del formulario sean correctos
+// Se importan las funciones de validación de formularios
 import {
-    validarFormularioBusqueda, // Valida el formulario de búsqueda de usuario
-    validarFormularioTareas,   // Valida el formulario de registro de tareas
-    mostrarError,              // Muestra error visual en un campo del DOM
-    limpiarError               // Limpia el error visual de un campo del DOM
+    validarFormularioBusqueda,
+    mostrarError,
+    limpiarError
 } from '../utils/validaciones.js';
 
-// RF03 — Notificaciones visuales
-// Importamos ambas funciones del módulo de notificaciones.
-// mostrarNotificacion: reemplaza los toast manuales anteriores.
-// mostrarConfirmacion: reemplaza el confirm() nativo del navegador.
-// Ambas son async, por lo que el caller debe usar await al llamarlas
-// para garantizar que el código espera la respuesta antes de continuar.
+// Se importan las funciones de SweetAlert2 para notificaciones y confirmaciones
+// Estas reemplazan los alert/confirm nativos del navegador con UI más bonita
 import {
     mostrarNotificacion,
-    mostrarConfirmacion   // ← función nueva, reemplaza a confirm() nativo
+    mostrarConfirmacion
 } from '../utils/notificaciones.js';
 
-// RF01 — Filtrado (Juan)
-// Función pura que filtra el arreglo de tareas sin modificarlo
-import { filtrarTareas } from '../utils/filtros.js';
+import { filtrarTareas }   from '../utils/filtros.js';
+import { ordenarTareas }   from '../utils/ordenamiento.js';
 
-// RF02 — Ordenamiento (Juan)
-// Función pura que ordena el arreglo de tareas sin modificarlo
-import { ordenarTareas } from '../utils/ordenamiento.js';
+// Se importan las funciones de navegación que registran los eventos de los botones
+import {
+    registrarEventosNavegacion,
+    activarModoInicio
+} from '../ui/modoUI.js';
 
-// RF04 — Exportación (Juan)
-// Función que genera y dispara la descarga del archivo JSON
-import { exportarTareasJSON } from '../utils/exportacion.js';
+// Se importa la URL base para construir peticiones directas al servidor
+import { API_BASE_URL } from '../utils/config.js';
 
-// ESTADO LOCAL DEL MÓDULO
-
-// Estas variables mantienen el estado de la aplicación en memoria.
-// Solo este service las conoce y las modifica.
-// La UI nunca accede directamente al estado; siempre pasa por el service.
-
-// Usuario actualmente seleccionado tras la búsqueda (null si no hay búsqueda activa)
-let usuarioActual = null;
-
-// Arreglo con TODAS las tareas registradas durante la sesión.
-// Es la fuente de verdad: filtros y orden siempre se aplican sobre este arreglo,
-// nunca lo modifican directamente.
+// Estado local del modo usuario
+// usuarioActual guarda el objeto del usuario encontrado en la búsqueda
+let usuarioActual     = null;
+// tareasRegistradas guarda el arreglo de tareas del usuario para filtrar y ordenar localmente
 let tareasRegistradas = [];
+// contadorTareas rastrea la cantidad de tareas visibles para numerar las filas de la tabla
+let contadorTareas    = 0;
 
-// Contador total de tareas registradas en la sesión (para numerar filas)
-let contadorTareas = 0;
-
-// ----- ESTADO DE FILTROS Y ORDEN (RF01, RF02 — Juan) -----
-// Se guardan aquí para poder reaplicarlos automáticamente cada vez que
-// la tabla se repinta (al agregar, editar, eliminar o cambiar filtros)
-
-// Valor actual del select de filtro por estado ('' = sin filtro)
+// Estado de filtros activos en la tabla del modo usuario
+// Se usan para aplicar filtros sin repetir la petición al servidor
 let filtroEstadoActivo  = '';
-
-// Valor actual del input de filtro por usuario ('' = sin filtro)
 let filtroUsuarioActivo = '';
-
-// Criterio actual del select de ordenamiento ('' = sin orden)
 let criterioOrdenActivo = '';
 
-// FUNCIONES PRIVADAS (auxiliares, no exportadas)
-
-// Reinicia el estado de la aplicación a sus valores iniciales.
-// Se llama antes de cada nueva búsqueda para limpiar datos del usuario anterior.
-function reiniciarEstadoAplicacion() {
-    usuarioActual = null;
+// Reinicia la vista del usuario al iniciar una nueva búsqueda
+// Limpia los datos del usuario anterior y vacía la tabla para no mostrar datos obsoletos
+function reiniciarVistaModoUsuario() {
+    usuarioActual     = null;
+    tareasRegistradas = [];
+    contadorTareas    = 0;
+    // Se oculta y limpia la sección de datos del usuario del HTML
     ocultarDatosUsuario();
-    ocultarFormularioTareas();
+
+    // Se oculta la sección de tareas que se reveló al mostrar resultados anteriores
+    const seccion = document.getElementById('tasksSection');
+    if (seccion) seccion.classList.add('hidden');
+
+    // Se vacía el tbody de la tabla para no mostrar filas de búsquedas anteriores
+    const tbody = document.getElementById('tasksTableBody');
+    if (tbody) {
+        while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+    }
+    // Se muestra el mensaje de "no hay tareas" mientras no haya resultados
+    mostrarEstadoVacio();
 }
 
-// RF01 + RF02 — Juan
-// Aplica los filtros y el orden activos sobre tareasRegistradas y repinta el tbody.
-// Esta función centraliza TODO el proceso de pintado de la tabla:
-//   1. Filtra sobre el arreglo completo (fuente de verdad)
-//   2. Ordena el resultado filtrado
-//   3. Limpia el tbody actual
-//   4. Inserta solo las filas del resultado final
-
-// Se llama desde CUALQUIER operación que modifique las tareas o los criterios:
-// agregar, editar, eliminar, cambiar filtro, cambiar orden, limpiar filtros.
-// Así siempre se ve el resultado correcto sin duplicar lógica de pintado.
+// Repinta la tabla del modo usuario aplicando los filtros y el orden activos
+// Se llama después de editar o eliminar una tarea para reflejar el cambio en la tabla
 function refrescarTabla() {
-
-    // ----- PASO 1: FILTRAR -----
-    // Pasamos el arreglo completo y los criterios activos a la función pura
-    // filtrarTareas() devuelve un nuevo arreglo sin modificar tareasRegistradas
-    const tareasFiltradas = filtrarTareas(
-        tareasRegistradas,
-        filtroEstadoActivo,
-        filtroUsuarioActivo
-    );
-
-    // ----- PASO 2: ORDENAR -----
-    // Pasamos el arreglo ya filtrado a ordenarTareas()
-    // ordenarTareas() devuelve un nuevo arreglo sin modificar tareasFiltradas
+    // Se aplican los filtros activos al arreglo de tareas registradas
+    const tareasFiltradas = filtrarTareas(tareasRegistradas, filtroEstadoActivo, filtroUsuarioActivo);
+    // Se aplica el criterio de orden activo sobre las tareas ya filtradas
     const tareasOrdenadas = ordenarTareas(tareasFiltradas, criterioOrdenActivo);
 
-    // ----- PASO 3: LIMPIAR EL TBODY -----
-    // Vaciamos el cuerpo de la tabla antes de volver a pintarla
-    // innerHTML = '' es más rápido que eliminar cada fila individualmente
+    // Se obtiene el tbody de la tabla para repintarlo
     const tbody = document.getElementById('tasksTableBody');
-    tbody.innerHTML = '';
+    if (!tbody) return;
+    // Se vacía el tbody antes de repintar para evitar duplicar filas
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
-    // ----- PASO 4: REPINTAR CON EL RESULTADO FINAL -----
-    // Usamos el índice del forEach como número de fila para la columna '#'
-    tareasOrdenadas.forEach((tarea, indice) => {
+    // Se agrega una fila por cada tarea del arreglo filtrado y ordenado
+    tareasOrdenadas.forEach(function(tarea, indice) {
         agregarTareaATabla(tarea, indice);
     });
 }
 
-// RF-01 – BUSCAR USUARIO (READ)
-
-// Maneja el evento submit del formulario de búsqueda de usuario.
-// Valida el campo, llama a la API y actualiza la UI según el resultado.
-// Es async porque usa await para esperar la respuesta del servidor.
-// Parámetro: event - El objeto Event del formulario (para cancelar el submit nativo)
+// RF-01: Buscar usuario por documento (modo usuario)
+// Limpia el estado anterior, busca el usuario en el servidor y muestra sus tareas
+// El resultado se muestra FIJO debajo del formulario, no en un modal flotante
 export async function manejarBusquedaUsuario(event) {
-
-    // ----- PASO 1: PREVENIR COMPORTAMIENTO POR DEFECTO -----
-    // Por defecto al enviar un formulario el navegador recarga la página.
-    // preventDefault() cancela esa recarga para que nosotros manejemos el envío.
     event.preventDefault();
 
-    // ----- PASO 2: OBTENER LOS ELEMENTOS DEL FORMULARIO -----
     const inputDocumento = document.getElementById('userDocument');
     const errorDocumento = document.getElementById('userDocumentError');
 
-    // ----- PASO 3: VALIDAR EL FORMULARIO -----
-    // Si el campo está vacío, validarFormularioBusqueda() muestra el error
-    // y retorna false. Detenemos la ejecución para no hacer la petición.
+    // Se valida que el campo de documento no esté vacío antes de buscar
     const esValido = validarFormularioBusqueda(inputDocumento, errorDocumento);
     if (!esValido) return;
 
-    // ----- PASO 4: OBTENER EL VALOR DEL DOCUMENTO -----
-    // trim() elimina espacios accidentales al inicio y al final
-    const valorDocumento = inputDocumento.value.trim();
+    // Se limpia cualquier resultado anterior antes de mostrar el nuevo
+    reiniciarVistaModoUsuario();
 
-    // ----- PASO 5: REINICIAR EL ESTADO -----
-    // Limpiamos datos del usuario anterior para evitar confusión visual
-    reiniciarEstadoAplicacion();
+    // Se busca el usuario en el servidor por su número de documento
+    const usuario = await buscarUsuarioPorDocumento(inputDocumento.value.trim());
 
-    // ----- PASO 6: LLAMAR A LA CAPA API -----
-    // Delegamos la petición HTTP al módulo de API.
-    // El service NO hace fetch() directamente; esa es la responsabilidad de api/.
-    const usuario = await buscarUsuarioPorDocumento(valorDocumento);
-
-    // ----- PASO 7: PROCESAR EL RESULTADO Y ACTUALIZAR LA UI -----
-    if (usuario) {
-
-        // USUARIO ENCONTRADO
-        usuarioActual = usuario;           // Guardamos en estado local
-        mostrarDatosUsuario(usuario);      // UI: muestra nombre, email e ID
-        mostrarFormularioTareas();         // UI: revela el formulario de tareas
-        inputDocumento.value = '';         // Limpiamos el input para nueva búsqueda
-        limpiarError(errorDocumento, inputDocumento); // Limpiamos error previo
-
-    } else {
-
-        // USUARIO NO ENCONTRADO
-        // Mostramos el mensaje de error directamente bajo el campo de documento
+    // Si no se encontró ningún usuario se muestra el error en el campo
+    if (!usuario) {
         mostrarError(
             errorDocumento,
             inputDocumento,
-            'No se encontró ningún usuario con ese documento'
+            'No se encontro ningun usuario con ese documento'
         );
-        usuarioActual = null; // Nos aseguramos de que no quede un usuario anterior
-    }
-}
-
-// RF-02 – REGISTRAR TAREA (CREATE)
-
-// Maneja el evento submit del formulario de registro de tareas.
-// Valida, construye el objeto, llama a la API y actualiza la tabla.
-// Parámetro: event - El objeto Event del formulario de tareas
-export async function manejarRegistroTarea(event) {
-
-    // ----- PASO 1: PREVENIR RECARGA DE PÁGINA -----
-    event.preventDefault();
-
-    // ----- PASO 2: VERIFICAR QUE HAY USUARIO SELECCIONADO -----
-    // No tiene sentido registrar una tarea si no hay usuario activo en el estado
-    if (!usuarioActual) {
-        mostrarNotificacion('Primero debes buscar y seleccionar un usuario', 'error');
         return;
     }
 
-    // ----- PASO 3: OBTENER LOS ELEMENTOS DEL FORMULARIO -----
-    const inputTitulo = document.getElementById('taskTitle');
-    const inputDesc   = document.getElementById('taskDescription');
-    const selectEst   = document.getElementById('taskStatus');
-    const errorTitulo = document.getElementById('taskTitleError');
-    const errorDesc   = document.getElementById('taskDescriptionError');
-    const errorEst    = document.getElementById('taskStatusError');
+    // Se guarda el usuario encontrado en el estado local del service
+    usuarioActual = usuario;
 
+<<<<<<< HEAD
     // ----- PASO 4: VALIDAR EL FORMULARIO -----
     // validarFormularioTareas() verifica todos los campos y muestra errores.
     // Si algún campo falla, retorna false y detenemos la ejecución.
@@ -297,412 +184,230 @@ export async function manejarRegistroTarea(event) {
 
         // ERROR EN EL REGISTRO
         mostrarNotificacion('Error al registrar la tarea. Por favor, intenta nuevamente.', 'error');
+=======
+    // Se obtienen las tareas del usuario del servidor filtrando por su id interno
+    let tareas = [];
+    try {
+        const res = await fetch(`${API_BASE_URL}/tasks?userId=${usuario.id}`);
+        tareas    = await res.json();
+        // Se guardan las tareas en el estado local para filtrar y ordenar sin nueva petición
+        tareasRegistradas = tareas;
+        contadorTareas    = tareas.length;
+    } catch (err) {
+        console.error('Error cargando tareas del usuario:', err);
+>>>>>>> upstream/release
     }
+
+    // Se muestra el bloque de datos del usuario debajo del formulario
+    mostrarResultadoUsuarioFijo(usuario, tareas);
 }
 
-// RF-03 – EDITAR TAREA (UPDATE)
+// Construye y muestra el resultado de búsqueda de forma FIJA en la vista usuario
+// En lugar de abrir un modal flotante, se revela la sección que ya existe en el HTML
+// Parámetros:
+//   usuario — objeto del usuario encontrado
+//   tareas  — arreglo de tareas asignadas a ese usuario
+function mostrarResultadoUsuarioFijo(usuario, tareas) {
 
-// Maneja el clic en el botón "Editar" de una fila.
-// Precarga el modal con los datos actuales y gestiona su envío y cancelación.
-// Parámetro: tarea - Objeto con los datos actuales de la tarea a editar
+    // Se revela la sección de datos del usuario que estaba oculta con clase 'hidden'
+    const seccionDatos = document.getElementById('userDataSection');
+    if (seccionDatos) seccionDatos.classList.remove('hidden');
+
+    // Se llenan los spans de datos del usuario con la información encontrada
+    // Se usa textContent (no innerHTML) para evitar inyección de HTML
+    const spanId     = document.getElementById('userId');
+    const spanNombre = document.getElementById('userName');
+    const spanEmail  = document.getElementById('userEmail');
+
+    // Se muestra el documento como identificador visible, no el id interno del servidor
+    if (spanId)     spanId.textContent     = usuario.documento || usuario.id;
+    if (spanNombre) spanNombre.textContent = usuario.name;
+    if (spanEmail)  spanEmail.textContent  = usuario.email;
+
+    // Se revela la sección de la tabla de tareas
+    const seccionTareas = document.getElementById('tasksSection');
+    if (seccionTareas) seccionTareas.classList.remove('hidden');
+
+    // Se actualiza el contador visual de tareas en el encabezado de la tabla
+    const contadorEl = document.getElementById('tasksCount');
+    if (contadorEl) {
+        contadorEl.textContent = `${tareas.length} ${tareas.length === 1 ? 'tarea' : 'tareas'}`;
+    }
+
+    // Se obtiene el tbody de la tabla para llenarlo con las filas de tareas
+    const tbody = document.getElementById('tasksTableBody');
+    if (!tbody) return;
+    // Se vacía el tbody para no duplicar filas si se hizo una búsqueda previa
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+    // Si no hay tareas se muestra el mensaje de estado vacío
+    if (tareas.length === 0) {
+        mostrarEstadoVacio();
+        return;
+    }
+
+    // Se oculta el mensaje de estado vacío porque hay tareas para mostrar
+    const estadoVacio = document.getElementById('tasksEmptyState');
+    if (estadoVacio) estadoVacio.classList.add('hidden');
+
+    // Se crea una fila por cada tarea del usuario usando agregarTareaATabla de tareasUI.js
+    tareas.forEach(function(tarea, indice) {
+        agregarTareaATabla(tarea, indice);
+    });
+}
+
+// RF-03: Editar tarea — abre el modal del HTML con los datos actuales de la tarea
+// El usuario puede modificar el título, la descripción, el estado y el comentario
 export function manejarEdicionTarea(tarea) {
-
-    // ----- PASO 1: MOSTRAR EL MODAL CON LOS DATOS ACTUALES -----
-    // La UI se encarga de precargar cada campo con los valores de 'tarea'
+    // Se llama a tareasUI.js para mostrar el modal con los datos precargados
     mostrarModalEdicion(tarea);
 
-    // ----- PASO 2: OBTENER EL FORMULARIO DEL MODAL -----
-    const formularioEdicion = document.getElementById('editTaskForm');
+    // Se obtiene el formulario del modal del HTML
+    const formulario = document.getElementById('editTaskForm');
 
-    // ----- PASO 3: DEFINIR EL HANDLER DE GUARDADO -----
-    // Se define aquí dentro (función anidada) para que capture la variable
-    // 'tarea' mediante closure y sepa qué ID actualizar al enviar
+    // Se define la función que procesa el guardado cuando el usuario hace submit
+    // Se declara con nombre para poder removerla después y evitar acumulación de listeners
     async function manejarGuardadoEdicion(event) {
         event.preventDefault();
 
-        // ----- PASO 4: LEER LOS VALORES EDITADOS DEL MODAL -----
+        // Se leen los valores actuales de cada campo del modal
         const titulo      = document.getElementById('editTaskTitle').value.trim();
         const descripcion = document.getElementById('editTaskDescription').value.trim();
         const estado      = document.getElementById('editTaskStatus').value;
         const tareaId     = document.getElementById('editTaskId').value;
+        // El comentario es opcional: si el campo no existe en el DOM se usa string vacío
+        const comentEl    = document.getElementById('editTaskComment');
+        const comentario  = comentEl ? comentEl.value.trim() : '';
 
-        // ----- PASO 5: CONSTRUIR EL OBJETO CON LOS DATOS ACTUALIZADOS -----
+        // Se construye el objeto con los datos actualizados para enviar al servidor
         const datosActualizados = {
             title:       titulo,
             description: descripcion,
             status:      estado,
-            completed:   estado === 'completada' // Mantenemos el campo sincronizado
+            comment:     comentario,
+            // completed es un campo booleano que el servidor usa para marcar tareas terminadas
+            completed:   estado === 'completada'
         };
 
-        // ----- PASO 6: LLAMAR A LA CAPA API -----
-        // El service delega la petición PATCH al módulo de API
+        // Se envía el PATCH al servidor con los datos actualizados
         const tareaActualizada = await actualizarTarea(tareaId, datosActualizados);
 
-        // ----- PASO 7: PROCESAR EL RESULTADO -----
         if (tareaActualizada) {
-
-            // ACTUALIZACIÓN EXITOSA
-            // Actualizamos el objeto en el estado local del service
+            // Se actualiza el objeto en el arreglo local para reflejar el cambio sin nueva petición
             const indice = tareasRegistradas.findIndex(
                 t => t.id.toString() === tareaActualizada.id.toString()
             );
-            if (indice !== -1) {
-                tareasRegistradas[indice] = tareaActualizada;
-            }
+            if (indice !== -1) tareasRegistradas[indice] = tareaActualizada;
 
-            // RF01+RF02: refrescamos la tabla para que los filtros y el orden
-            // se mantengan activos después de la edición
+            // Se repinta la tabla con la fila actualizada
             refrescarTabla();
-
+            // Se cierra el modal de edición
             ocultarModalEdicion();
+            // Se muestra la notificación de éxito usando SweetAlert2 (toast morado)
             mostrarNotificacion('Tarea actualizada exitosamente', 'exito');
-
         } else {
-
-            // ERROR EN LA ACTUALIZACIÓN
-            mostrarNotificacion('Error al actualizar la tarea. Por favor, intenta nuevamente.', 'error');
+            // Si el servidor devolvió error se notifica al usuario
+            mostrarNotificacion('Error al actualizar la tarea', 'error');
         }
 
-        // ----- PASO 8: REMOVER EL LISTENER DE SUBMIT -----
-        // Es crucial remover este listener para evitar que se acumule cada vez
-        // que el usuario abra el modal. Sin esto, al tercer clic en Editar
-        // el formulario dispararía el submit tres veces.
-        formularioEdicion.removeEventListener('submit', manejarGuardadoEdicion);
+        // Se remueve el listener para no acumular handlers si el usuario abre el modal varias veces
+        formulario.removeEventListener('submit', manejarGuardadoEdicion);
     }
 
-    // Registramos el listener de submit en el formulario del modal
-    formularioEdicion.addEventListener('submit', manejarGuardadoEdicion);
-
-    // ----- PASO 9: MANEJAR EL CIERRE DEL MODAL SIN GUARDAR -----
-    // El modal tiene dos formas de cerrarse sin guardar:
-    //   - Botón "Cancelar" (id="editCancelBtn")
-    //   - Botón "✕"        (id="editCloseBtn")
-    const botonCancelar = document.getElementById('editCancelBtn');
-    const botonCerrar   = document.getElementById('editCloseBtn');
-
-    // Función compartida por ambos botones de cierre
-    function manejarCancelacionEdicion() {
-        ocultarModalEdicion();
-
-        // Removemos todos los listeners acumulados al cancelar
-        formularioEdicion.removeEventListener('submit', manejarGuardadoEdicion);
-        botonCancelar.removeEventListener('click', manejarCancelacionEdicion);
-        botonCerrar.removeEventListener('click', manejarCancelacionEdicion);
-    }
-
-    botonCancelar.addEventListener('click', manejarCancelacionEdicion);
-    botonCerrar.addEventListener('click', manejarCancelacionEdicion);
+    // Se registra el listener en el formulario del modal
+    formulario.addEventListener('submit', manejarGuardadoEdicion);
 }
 
-// RF-04 – ELIMINAR TAREA (DELETE)
-
-// Maneja el clic en el botón "Eliminar" de una fila.
-// Muestra un dialog de confirmación visual y, si el usuario acepta,
-// llama a la API para eliminar la tarea y actualiza la UI.
-
-// La función es async porque usa await en tres puntos:
-//   1. await mostrarConfirmacion() → espera la decisión del usuario
-//   2. await eliminarTarea()       → espera la respuesta del servidor
-// Sin async/await el código continuaría sin esperar y eliminaría
-// la tarea sin que el usuario hubiera tenido tiempo de confirmar.
-
-// Parámetro: tarea - Objeto con los datos de la tarea a eliminar.
-//            Necesitamos tarea.title para el mensaje del dialog
-//            y tarea.id para la petición DELETE a la API.
+// RF-04: Eliminar tarea del modo usuario
+// Pide confirmación con SweetAlert2 antes de enviar el DELETE al servidor
 export async function manejarEliminacionTarea(tarea) {
-
-    // ----- PASO 1: PEDIR CONFIRMACIÓN AL USUARIO -----
-    // mostrarConfirmacion() es async y retorna una Promesa.
-    // await pausa la ejecución AQUÍ hasta que el usuario hace clic
-    // en cualquier botón del dialog. Sin el await, 'confirmado'
-    // sería una Promesa pendiente (siempre truthy) y la tarea
-    // se eliminaría siempre sin esperar la decisión del usuario.
+    // Se muestra el dialog de confirmación de SweetAlert2 en lugar del confirm nativo
+    // SweetAlert2 es más visual: tiene botones coloreados y animaciones
     const confirmado = await mostrarConfirmacion(
-
-        // Primer argumento: título del dialog (texto grande del encabezado)
-        '¿Eliminar tarea?',
-
-        // Segundo argumento: texto del cuerpo del dialog.
-        // Incluimos el nombre de la tarea para que el usuario sepa
-        // exactamente qué está a punto de eliminar y no haya confusión.
-        // Template literal para interpolar tarea.title dinámicamente.
-        `La tarea "${tarea.title}" se eliminará permanentemente. Esta acción no se puede deshacer.`,
-
-        // Tercer argumento: texto del botón de confirmación.
-        // Usamos texto descriptivo de la acción en lugar de "Sí" genérico
-        // para que el usuario entienda exactamente qué confirma al hacer clic.
-        'Sí, eliminar'
+        `Eliminar la tarea "${tarea.title}"?`,
+        'Esta accion no se puede deshacer.',
+        'Si, eliminar'
     );
-
-    // ----- PASO 2: VERIFICAR SI EL USUARIO CONFIRMÓ -----
-    // mostrarConfirmacion() retorna true si confirmó, false si canceló.
-    // Si el usuario canceló o cerró el dialog, salimos de la función
-    // sin hacer ninguna petición al servidor ni modificar el estado.
+    // Si el usuario canceló o cerró el dialog no se hace nada
     if (!confirmado) return;
 
-    // ----- PASO 3: LLAMAR A LA CAPA API -----
-    // Solo llegamos aquí si el usuario confirmó la eliminación.
-    // Delegamos la petición DELETE al módulo de API.
-    // await pausa hasta que el servidor responde con éxito o error.
-    const exitoso = await eliminarTarea(tarea.id);
+    // Se envía DELETE al servidor para eliminar la tarea por su id
+    const eliminada = await eliminarTarea(tarea.id);
 
-    // ----- PASO 4: PROCESAR EL RESULTADO -----
-    if (exitoso) {
-
-        // ELIMINACIÓN EXITOSA
-        // filter() crea un nuevo arreglo conservando solo las tareas
-        // cuyo ID es distinto al de la tarea recién eliminada.
-        // No mutamos el arreglo original; reemplazamos la referencia.
+    if (eliminada) {
+        // Se elimina la tarea del arreglo local para mantener el estado sincronizado
         tareasRegistradas = tareasRegistradas.filter(
             t => t.id.toString() !== tarea.id.toString()
         );
-
-        // RF01+RF02: refrescamos la tabla para que los filtros y el orden
-        // activos se mantengan después de la eliminación.
+        contadorTareas--;
+        // Se elimina la fila visual de la tabla
+        eliminarFilaTarea(tarea.id);
+        // Se repinta la tabla para actualizar los números correlativos
         refrescarTabla();
-
-        // Notificamos al usuario que la eliminación fue exitosa.
-        // 'exito' mapea a 'success' en SweetAlert2 (ícono verde).
-        // No necesitamos await aquí porque no dependemos de que
-        // el toast se cierre para continuar con alguna otra lógica.
+        // Se muestra la notificación de éxito
         mostrarNotificacion('Tarea eliminada exitosamente', 'exito');
-
     } else {
-
-        // ERROR EN LA ELIMINACIÓN
-        // Llegamos aquí si el servidor respondió con error o si la
-        // red estaba caída. Informamos al usuario para que reintente.
-        // 'error' mapea a 'error' en SweetAlert2 (ícono rojo con X).
-        mostrarNotificacion('Error al eliminar la tarea. Por favor, intenta nuevamente.', 'error');
+        // Si el servidor devolvió error se notifica al usuario
+        mostrarNotificacion('Error al eliminar la tarea', 'error');
     }
 }
 
-// DELEGACIÓN DE EVENTOS DE LA TABLA (RF-03 y RF-04)
-
-// Maneja los clics dentro del tbody usando delegación de eventos.
-// En lugar de registrar un listener por cada botón (que se crean dinámicamente),
-// registramos UN SOLO listener en el tbody padre.
-// Cuando el usuario hace clic en cualquier botón, el evento burbujea
-// hasta el tbody y este listener lo intercepta.
-//
-// Ventajas:
-//   1. Los botones se crean después de que este listener se registra,
-//      por lo que no existirían al momento de inicializar. Con delegación
-//      el tbody ya los escucha sin importar cuándo fueron creados.
-//   2. Un solo listener cubre todos los botones de todas las filas.
-//
-// Parámetro: event - El objeto Event del clic dentro de la tabla
+// Delegación de eventos en el tbody de la tabla del modo usuario
+// Se usa un solo listener en el contenedor padre para manejar todos los botones
+// de todas las filas, sin registrar un listener por cada botón individual
 function manejarClicEnTabla(event) {
-
-    // ----- PASO 1: IDENTIFICAR EL ELEMENTO CLICADO -----
-    // event.target es el elemento exacto donde cayó el clic
-    // Puede ser el botón mismo o un elemento hijo (como el emoji dentro del botón)
-    const objetivo = event.target;
-
-    // ----- PASO 2: BUSCAR EL BOTÓN DE ACCIÓN MÁS CERCANO -----
-    // closest() sube por el árbol del DOM buscando un elemento que tenga [data-action]
-    // Esto maneja el caso de que el clic caiga en el emoji dentro del botón
-    const botonAccion = objetivo.closest('[data-action]');
-
-    // Si el clic no fue en ni dentro de un botón de acción, salimos
+    // closest('[data-action]') sube por el DOM desde el elemento clicado
+    // hasta encontrar el elemento con atributo data-action (el botón)
+    const botonAccion = event.target.closest('[data-action]');
     if (!botonAccion) return;
 
-    // ----- PASO 3: LEER EL ID Y LA ACCIÓN DEL BOTÓN -----
-    // data-id y data-action se guardan en el HTML al crear cada fila en la UI
+    // Se leen el id y la acción del botón desde sus atributos data
     const tareaId = botonAccion.dataset.id;
-    const accion  = botonAccion.dataset.action; // 'edit' o 'delete'
+    const accion  = botonAccion.dataset.action;
 
-    // ----- PASO 4: BUSCAR LA TAREA EN EL ESTADO LOCAL -----
-    // Necesitamos el objeto completo para pasárselo al handler correspondiente
-    const tarea = tareasRegistradas.find(
-        t => t.id.toString() === tareaId.toString()
-    );
+    // Se busca el objeto de la tarea en el arreglo local usando el id del botón
+    const tarea = tareasRegistradas.find(t => t.id.toString() === tareaId.toString());
+    if (!tarea) return;
 
-    // Si no encontramos la tarea en el estado, salimos para evitar errores
-    if (!tarea) {
-        console.warn(`⚠️ No se encontró la tarea con id ${tareaId} en el estado local`);
-        return;
-    }
-
-    // ----- PASO 5: EJECUTAR EL HANDLER SEGÚN LA ACCIÓN -----
-    switch (accion) {
-        case 'edit':
-            manejarEdicionTarea(tarea);   // Abre el modal de edición (RF-03)
-            break;
-        case 'delete':
-            manejarEliminacionTarea(tarea); // Pide confirmación y elimina (RF-04)
-            break;
-        default:
-            console.warn(`⚠️ Acción desconocida: ${accion}`);
-    }
+    // Se delega la acción a la función correspondiente según el botón clicado
+    if (accion === 'edit')   manejarEdicionTarea(tarea);
+    if (accion === 'delete') manejarEliminacionTarea(tarea);
 }
 
-// RF01 — MANEJADOR DE FILTRO
-
-// Lee los valores actuales de los controles de filtro del DOM,
-// actualiza las variables de estado de filtro y llama a refrescarTabla()
-// para que la tabla se actualice sin recargar la página.
-// No recibe parámetros: lee directamente del DOM los controles de filtro.
-function manejarFiltro() {
-
-    // Leemos el valor actual de cada control y lo guardamos en el estado del service
-    // Así refrescarTabla() siempre tiene los criterios más recientes disponibles
-    filtroEstadoActivo  = document.getElementById('filtroEstado').value;
-    filtroUsuarioActivo = document.getElementById('filtroUsuario').value;
-
-    // Repintamos la tabla aplicando los nuevos criterios
-    refrescarTabla();
-}
-
-// RF02 — MANEJADOR DE ORDENAMIENTO
-
-// Lee el criterio de ordenamiento seleccionado en el select del DOM,
-// actualiza la variable de estado del orden activo y llama a refrescarTabla().
-// No recibe parámetros: lee directamente del DOM el control de ordenamiento.
-function manejarOrdenamiento() {
-
-    // Guardamos el criterio seleccionado en el estado del service
-    // para que refrescarTabla() lo aplique en cada repintado posterior
-    criterioOrdenActivo = document.getElementById('ordenSelect').value;
-
-    // Repintamos la tabla aplicando el nuevo criterio de orden
-    refrescarTabla();
-}
-
-// RF04 — MANEJADOR DE EXPORTACIÓN
-
-// Calcula las tareas actualmente visibles (con filtros y orden aplicados)
-// y las pasa a exportarTareasJSON() para generar el archivo descargable.
-//
-// Separación de responsabilidades:
-//   - Este manejador conoce el estado (tareasRegistradas, filtros, orden)
-//   - exportarTareasJSON() solo recibe datos y genera la descarga
-//   - mostrarNotificacion() solo muestra el resultado visual
-// Ninguno de los tres módulos depende directamente de los otros dos.
-function manejarExportacion() {
-
-    // ----- PASO 1: CALCULAR LAS TAREAS VISIBLES -----
-    // Aplicamos los mismos filtros y orden activos que usa refrescarTabla()
-    // para que el archivo exportado sea exactamente lo que el usuario ve
-    const tareasFiltradas = filtrarTareas(
-        tareasRegistradas,
-        filtroEstadoActivo,
-        filtroUsuarioActivo
-    );
-    const tareasVisibles = ordenarTareas(tareasFiltradas, criterioOrdenActivo);
-
-    // ----- PASO 2: LLAMAR AL MÓDULO DE EXPORTACIÓN -----
-    // exportarTareasJSON() devuelve true si generó la descarga, false si estaba vacío
-    const exitoso = exportarTareasJSON(tareasVisibles);
-
-    // ----- PASO 3: MOSTRAR LA NOTIFICACIÓN CORRESPONDIENTE -----
-    if (exitoso) {
-        mostrarNotificacion('Tareas exportadas exitosamente', 'exito');
-    } else {
-        mostrarNotificacion('No hay tareas visibles para exportar', 'info');
-    }
-}
-
-// REGISTRO DE EVENT LISTENERS
-
-// Registra TODOS los event listeners de la aplicación en sus elementos del DOM.
-// Esta función se llama UNA SOLA VEZ desde script.js al inicializar la app,
-// dentro del evento DOMContentLoaded, para garantizar que todos los elementos
-// HTML ya existen antes de intentar agregar listeners.
-//
-// Centralizar el registro aquí facilita agregar o quitar eventos en el futuro
-// sin necesidad de tocar script.js ni otros módulos.
+// Registro de todos los event listeners de la aplicación
+// Se llama desde main.js una única vez al inicializar la aplicación
 export function registrarEventListeners() {
 
-    // ----- FORMULARIO DE BÚSQUEDA DE USUARIO -----
-
-    // 'submit' se activa al hacer clic en "Buscar" o presionar Enter
+    // Formulario de búsqueda por documento del modo usuario
     document.getElementById('searchUserForm')
         .addEventListener('submit', manejarBusquedaUsuario);
 
-    // 'input' se activa con cada pulsación de tecla en el campo documento
-    // Limpia el error en tiempo real mientras el usuario escribe
+    // Limpieza del error de documento mientras el usuario escribe
     document.getElementById('userDocument')
-        .addEventListener('input', function () {
+        .addEventListener('input', function() {
             limpiarError(
                 document.getElementById('userDocumentError'),
                 document.getElementById('userDocument')
             );
         });
 
-    // ----- FORMULARIO DE REGISTRO DE TAREAS -----
-
-    // 'submit' se activa al hacer clic en "Registrar Tarea"
-    document.getElementById('taskForm')
-        .addEventListener('submit', manejarRegistroTarea);
-
-    // 'input' en el campo título: limpia el error del título en tiempo real
-    document.getElementById('taskTitle')
-        .addEventListener('input', function () {
-            limpiarError(
-                document.getElementById('taskTitleError'),
-                document.getElementById('taskTitle')
-            );
-        });
-
-    // 'input' en el campo descripción: limpia el error de descripción en tiempo real
-    document.getElementById('taskDescription')
-        .addEventListener('input', function () {
-            limpiarError(
-                document.getElementById('taskDescriptionError'),
-                document.getElementById('taskDescription')
-            );
-        });
-
-    // 'change' en el select de estado: limpia el error al seleccionar una opción
-    // Se usa 'change' (no 'input') porque es el evento correcto para elementos select
-    document.getElementById('taskStatus')
-        .addEventListener('change', function () {
-            limpiarError(
-                document.getElementById('taskStatusError'),
-                document.getElementById('taskStatus')
-            );
-        });
-
-    // ----- TABLA DE TAREAS (DELEGACIÓN DE EVENTOS) -----
-
-    // Un solo listener en el tbody gestiona los clics en TODOS los botones de acción.
-    // Las filas se crean dinámicamente; con delegación el tbody ya las escucha
-    // sin importar cuándo fueron creadas.
+    // Delegación de eventos en el tbody de tareas del modo usuario
+    // Maneja los clics en Editar y Eliminar de todas las filas desde un solo listener
     document.getElementById('tasksTableBody')
         .addEventListener('click', manejarClicEnTabla);
 
-    // ----- RF01: LISTENERS DE FILTROS -----
+    // Botón X del modal de edición: cierra el modal sin guardar cambios
+    const btnCerrarModal = document.getElementById('editCloseBtn');
+    if (btnCerrarModal) {
+        btnCerrarModal.addEventListener('click', ocultarModalEdicion);
+    }
 
-    // 'change' en el select de estado: se aplica al seleccionar una opción del dropdown
-    document.getElementById('filtroEstado')
-        .addEventListener('change', manejarFiltro);
+    // Botón Cancelar del modal de edición: cierra el modal sin guardar cambios
+    const btnCancelarModal = document.getElementById('editCancelBtn');
+    if (btnCancelarModal) {
+        btnCancelarModal.addEventListener('click', ocultarModalEdicion);
+    }
 
-    // 'input' en el campo de usuario: se aplica con cada pulsación de tecla
-    // para dar respuesta inmediata sin necesitar que el usuario presione Enter
-    document.getElementById('filtroUsuario')
-        .addEventListener('input', manejarFiltro);
-
-    // 'click' en el botón limpiar: resetea los controles del DOM y el estado interno,
-    // luego repinta la tabla mostrando todas las tareas sin ningún filtro
-    document.getElementById('limpiarFiltros')
-        .addEventListener('click', function () {
-            document.getElementById('filtroEstado').value  = '';
-            document.getElementById('filtroUsuario').value = '';
-            filtroEstadoActivo  = '';
-            filtroUsuarioActivo = '';
-            refrescarTabla();
-        });
-
-    // ----- RF02: LISTENER DE ORDENAMIENTO -----
-
-    // 'change' en el select de orden: se aplica al seleccionar un criterio
-    document.getElementById('ordenSelect')
-        .addEventListener('change', manejarOrdenamiento);
-
-    // ----- RF04: LISTENER DE EXPORTACIÓN -----
-
-    // 'click' en el botón exportar: dispara la descarga del JSON con las tareas visibles
-    document.getElementById('exportarBtn')
-        .addEventListener('click', manejarExportacion);
+    // Se registran los eventos de navegación (botones de inicio, volver, admin, etc.)
+    registrarEventosNavegacion();
 }

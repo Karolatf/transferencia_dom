@@ -1,1093 +1,999 @@
-/* VARIABLES CSS
-   :root = selector especial que representa la raíz del HTML.
-   Las variables se definen aquí para usarlas en todo el archivo
-   con var(--nombre). Cambiar el valor aquí lo cambia en todos lados. */
-
+/* VARIABLES GLOBALES */
 :root {
-    /* Colores principales */
-    --color-primario:        #c762e3; /* morado base: botones, bordes, títulos */
-    --color-primario-oscuro: #be5cc3; /* morado más oscuro: hover del botón */
-    --color-primario-suave:  #faf5ff; /* morado muy claro: fondo del focus */
+    --color-primario:        #c762e3;
+    --color-primario-oscuro: #be5cc3;
+    --color-primario-suave:  #faf5ff;
 
-    /* Colores de estado: usados por JavaScript al crear badges en la tabla */
-    --color-pendiente:  #fbbf24; /* amarillo para "pendiente" */
-    --color-progreso:   #60a5fa; /* azul para "en progreso" */
-    --color-completada: #34d399; /* verde para "completada" */
-    --color-error:      #ef4444; /* rojo para errores de formulario */
+    --color-admin:        #0284c7;
+    --color-admin-oscuro: #0369a1;
 
-    /* Colores de texto */
-    --texto-oscuro: #111827; /* casi negro: títulos y etiquetas */
-    --texto-medio:  #4b5563; /* gris: texto de contenido */
-    --texto-claro:  #9ca3af; /* gris claro: placeholders y subtextos */
+    --color-pendiente:  #fbbf24;
+    --color-progreso:   #60a5fa;
+    --color-completada: #34d399;
+    --color-error:      #ef4444;
 
-    /* Colores de fondo y bordes */
-    --fondo-gris:  #f9fafb; /* gris muy suave: fondo de celdas y encabezados */
-    --borde-suave: #e5e7eb; /* gris claro: líneas divisoras */
+    --texto-oscuro: #111827;
+    --texto-medio:  #4b5563;
+    --texto-claro:  #9ca3af;
 
-    /* Tipografía: el navegador usa la primera fuente disponible en el sistema */
+    --fondo-gris:  #f9fafb;
+    --borde-suave: #e5e7eb;
+
     --fuente: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 
-    /* Tamaños de texto. rem = relativo al html (1rem = 16px por defecto) */
-    --texto-sm:  0.875rem; /* 14px */
-    --texto-md:  1rem;     /* 16px: tamaño base */
-    --texto-lg:  1.125rem; /* 18px */
-    --texto-xl:  1.25rem;  /* 20px */
-    --texto-2xl: 1.5rem;   /* 24px */
-    --texto-3xl: 1.875rem; /* 30px */
+    --texto-sm:  0.875rem;
+    --texto-md:  1rem;
+    --texto-lg:  1.125rem;
+    --texto-xl:  1.25rem;
+    --texto-2xl: 1.5rem;
+    --texto-3xl: 1.875rem;
 
-    /* Espaciados usados en padding y margin */
-    --espacio-xs:  0.25rem; /* 4px */
-    --espacio-sm:  0.5rem;  /* 8px */
-    --espacio-md:  1rem;    /* 16px */
-    --espacio-lg:  1.5rem;  /* 24px */
-    --espacio-xl:  2rem;    /* 32px */
-    --espacio-2xl: 3rem;    /* 48px */
+    --espacio-xs:  0.25rem;
+    --espacio-sm:  0.5rem;
+    --espacio-md:  1rem;
+    --espacio-lg:  1.5rem;
+    --espacio-xl:  2rem;
+    --espacio-2xl: 3rem;
 
-    /* Border-radius: controla qué tan redondeadas son las esquinas */
-    --radio-sm:   0.375rem; /* 6px: ligeramente redondeado */
-    --radio-md:   0.5rem;   /* 8px */
-    --radio-lg:   0.75rem;  /* 12px */
-    --radio-xl:   1rem;     /* 16px: muy redondeado */
-    --radio-full: 9999px;   /* completamente redondo (forma de pastilla) */
+    --radio-sm:   0.375rem;
+    --radio-md:   0.5rem;
+    --radio-lg:   0.75rem;
+    --radio-xl:   1rem;
+    --radio-2xl:  1.5rem;
+    --radio-full: 9999px;
 
-    /* Box-shadow (sombras). Valores: eje-X eje-Y desenfoque color */
-    --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.08);  /* sombra sutil */
-    --sombra-md: 0 4px 10px rgba(0, 0, 0, 0.10); /* sombra media */
-    --sombra-lg: 0 8px 20px rgba(0, 0, 0, 0.10); /* sombra pronunciada */
+    --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --sombra-md: 0 4px 10px rgba(0, 0, 0, 0.10);
+    --sombra-lg: 0 8px 20px rgba(0, 0, 0, 0.10);
 
-    /* Transición: velocidad y suavidad de los efectos hover */
-    --transicion: 200ms ease; /* 200 milisegundos con curva suave */
+    --transicion: 200ms ease;
 }
 
-
-/* RESET BÁSICO
-   Los navegadores añaden márgenes y paddings por defecto.
-   Esto los elimina para partir desde cero. */
-
-/* El asterisco (*) selecciona absolutamente todos los elementos */
+/* RESET */
 *, *::before, *::after {
-    box-sizing: border-box; /* el padding y border se incluyen dentro del ancho declarado */
-    margin: 0;              /* elimina márgenes por defecto */
-    padding: 0;             /* elimina paddings por defecto */
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-html {
-    font-size: 16px; /* define la base para los valores rem */
-}
+html { font-size: 16px; }
 
 body {
-    font-family: var(--fuente);   /* fuente general de toda la página */
-    font-size: var(--texto-md);   /* tamaño de texto base */
-    color: var(--texto-medio);    /* color de texto general */
-    line-height: 1.6;             /* altura de línea (espacio entre renglones) */
-    background-color: #f8edf5;    /* fondo rosado suave y profesional */
-    min-height: 100vh;            /* el fondo cubre como mínimo toda la pantalla (vh = viewport height) */
-    padding: var(--espacio-lg);   /* espacio entre el borde de la pantalla y el contenido */
-}
-
-
-/* CONTENEDOR PRINCIPAL
-   Centra y limita el ancho de todo el contenido.
-   Conecta con: <div class="container"> */
-
-.container {
-    max-width: 800px;        /* el contenido no se expande más de 800px */
-    margin: 0 auto;          /* 0 = sin margen arriba/abajo | auto = centra horizontalmente */
-    display: flex;           /* activa flexbox para organizar los hijos */
-    flex-direction: column;  /* apila los hijos en columna (uno debajo del otro) */
-    gap: var(--espacio-2xl); /* espacio uniforme entre cada sección */
-}
-
-
-/* ENCABEZADO
-   Conecta con: <header class="header"> */
-
-.header {
-    text-align: center;                           /* centra el texto */
-    padding: var(--espacio-xl) var(--espacio-lg); /* espacio interno: arriba/abajo | lados */
-    background: white;                            /* fondo blanco */
-    border-radius: var(--radio-xl);               /* esquinas muy redondeadas */
-    box-shadow: var(--sombra-md);                 /* sombra para efecto de tarjeta */
-    border-top: 4px solid var(--color-primario);  /* línea decorativa de color arriba */
-}
-
-/* <h1 class="header__title"> */
-.header__title {
-    font-size: var(--texto-3xl);      /* tamaño grande para el título principal */
-    font-weight: 700;                 /* negrita */
-    color: var(--color-primario);     /* morado */
-    margin-bottom: var(--espacio-sm); /* espacio debajo del título */
-}
-
-/* <p class="header__subtitle"> */
-.header__subtitle {
-    font-size: var(--texto-md); /* tamaño normal */
-    color: var(--texto-claro);  /* gris claro: indica que es texto secundario */
-}
-
-
-/* TARJETA (CARD)
-   Contenedor blanco con sombra. Usada en formularios y datos del usuario.
-   Conecta con: <div class="card"> */
-
-.card {
-    background: white;                    /* fondo blanco */
-    border-radius: var(--radio-lg);       /* esquinas redondeadas */
-    padding: var(--espacio-xl);           /* espacio interno */
-    box-shadow: var(--sombra-lg);         /* sombra para efecto de tarjeta flotante */
-    border: 1px solid var(--borde-suave); /* borde muy sutil para definir el contorno */
-}
-
-/* <h2 class="card__title"> */
-.card__title {
-    font-size: var(--texto-xl);                   /* tamaño del título de sección */
-    font-weight: 600;                             /* semi-negrita */
-    color: var(--texto-oscuro);                   /* texto casi negro */
-    margin-bottom: var(--espacio-lg);             /* espacio debajo del título */
-    padding-left: var(--espacio-md);              /* sangría para que la línea no tape el texto */
-    border-left: 3px solid var(--color-primario); /* línea de color decorativa a la izquierda */
-}
-
-
-/* FORMULARIOS
-   Conecta con: <div class="form__group">, <label>,
-   <input>, <textarea>, <select>, <span class="form__error"> */
-
-/* Agrupa label + input + error. Aporta el espacio entre campos. */
-.form__group {
-    margin-bottom: var(--espacio-lg); /* espacio entre cada campo del formulario */
-}
-
-/* <label class="form__label"> */
-.form__label {
-    display: block;                   /* ocupa su propia línea */
-    font-size: var(--texto-sm);       /* un poco más pequeño que el texto base */
-    font-weight: 500;                 /* peso medio */
-    color: var(--texto-oscuro);       /* texto oscuro para buena legibilidad */
-    margin-bottom: var(--espacio-sm); /* espacio entre el label y el input */
-}
-
-/* Estilos compartidos por <input>, <textarea> y <select>
-   (los tres tienen class="form__input" en el HTML) */
-.form__input {
-    width: 100%;                          /* ocupa todo el ancho disponible */
-    padding: var(--espacio-md);           /* espacio interno */
-    font-size: var(--texto-md);           /* mismo tamaño que el texto base */
-    font-family: var(--fuente);           /* textarea y select no heredan la fuente automáticamente */
-    color: var(--texto-oscuro);           /* color del texto que el usuario escribe */
-    background: white;                    /* fondo blanco */
-    border: 2px solid var(--borde-suave); /* borde gris suave por defecto */
-    border-radius: var(--radio-md);       /* esquinas levemente redondeadas */
-    transition: border-color var(--transicion), box-shadow var(--transicion); /* solo anima borde y sombra */
-    outline: none;                        /* elimina el borde azul del navegador al hacer foco */
-}
-
-/* Estado al hacer clic en el campo (foco activo) */
-.form__input:focus {
-    border-color: var(--color-primario);               /* borde cambia a morado */
-    box-shadow: 0 0 0 3px var(--color-primario-suave); /* anillo de color alrededor (no afecta el layout) */
-}
-
-/* Texto del placeholder (sugerencia que aparece dentro del campo vacío) */
-.form__input::placeholder {
-    color: var(--texto-claro); /* más claro que el texto real para distinguirse */
-}
-
-/* <textarea class="form__input form__textarea"> */
-.form__textarea {
-    resize: vertical;  /* el usuario solo puede redimensionar hacia arriba/abajo */
-    min-height: 100px; /* altura mínima del textarea */
-}
-
-/* Cuando JavaScript agrega la clase "error" al input (validación fallida) */
-.form__input.error {
-    border-color: var(--color-error); /* borde rojo */
-    background: #fff5f5;              /* fondo levemente rosado */
-}
-
-/* Anillo rojo cuando el campo con error tiene foco */
-.form__input.error:focus {
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12); /* rojo al 12% de opacidad */
-}
-
-/* Texto de error debajo del input. JavaScript escribe el mensaje aquí.
-   Conecta con: <span class="form__error" id="...Error"> */
-.form__error {
-    display: block;            /* ocupa su propia línea */
-    font-size: var(--texto-sm);
-    color: var(--color-error); /* rojo */
-    font-weight: 500;
-    margin-top: var(--espacio-xs);
-    min-height: 1.2rem; /* reserva espacio aunque esté vacío, evita que el layout "salte" */
-}
-
-
-/* BOTÓN
-   Conecta con: <button class="btn btn--primary"> */
-
-.btn {
-    display: inline-flex;    /* permite alinear el texto y el ícono en la misma fila */
-    align-items: center;     /* los centra verticalmente */
-    justify-content: center; /* los centra horizontalmente */
-    gap: var(--espacio-sm);  /* espacio entre el texto y el ícono */
-    padding: var(--espacio-md) var(--espacio-xl); /* arriba/abajo | izquierda/derecha */
-    font-size: var(--texto-md);
-    font-weight: 600;
     font-family: var(--fuente);
-    border: none;            /* elimina el borde nativo del botón */
-    border-radius: var(--radio-md);
-    cursor: pointer;         /* muestra la manito al pasar el cursor */
-    transition: all var(--transicion);
-    outline: none;
-}
-
-/* La clase .btn da la forma, esta da el color morado */
-.btn--primary {
-    background: var(--color-primario); /* fondo morado */
-    color: white;                      /* texto blanco */
-    box-shadow: var(--sombra-sm);
-}
-
-/* Efecto al pasar el mouse */
-.btn--primary:hover {
-    background: var(--color-primario-oscuro); /* morado más oscuro */
-    box-shadow: var(--sombra-md);
-    transform: translateY(-1px); /* sube 1px simulando que "se levanta" */
-}
-
-/* Efecto al hacer clic */
-.btn--primary:active {
-    transform: translateY(0); /* vuelve a su posición original */
-    box-shadow: var(--sombra-sm);
-}
-
-/* <span class="btn__icon"> */
-.btn__icon {
-    font-size: var(--texto-lg); /* el ícono un poco más grande que el texto */
-}
-
-
-/* DATOS DEL USUARIO
-   Oculta por defecto. JavaScript quita "hidden" al encontrar el usuario.
-   Conecta con: <section class="user-data-section hidden">
-   y con: <div class="user-info"> */
-
-/* Contenedor de los datos: ID, Nombre, Email */
-.user-info {
-    display: flex;          /* activa flexbox */
-    flex-direction: column; /* apila los items en columna */
-    gap: var(--espacio-sm); /* espacio entre cada dato */
-}
-
-/* Cada fila de dato. Conecta con: <p class="user-info__item"> */
-.user-info__item {
-    padding: var(--espacio-sm) var(--espacio-md); /* espacio interno */
-    background: var(--fondo-gris);                /* fondo gris muy suave */
-    border-radius: var(--radio-sm);               /* esquinas levemente redondeadas */
     font-size: var(--texto-md);
     color: var(--texto-medio);
-}
-
-/* <strong> dentro de cada .user-info__item */
-.user-info__item strong {
-    color: var(--texto-oscuro);       /* más oscuro para diferenciarse del valor */
-    margin-right: var(--espacio-xs);  /* pequeño espacio entre la etiqueta y el valor */
-}
-
-
-/* SECCIÓN Y TABLA DE TAREAS
-   Oculta por defecto. JavaScript la muestra cuando hay tareas.
-   Conecta con: <section class="tasks-section hidden"> */
-
-.tasks-section {
-    background: white;                /* fondo blanco profesional */
-    border-radius: var(--radio-lg);
-    box-shadow: var(--sombra-lg);
-    border: 1px solid #bae6fd;        /* borde celeste suave */
-    overflow: hidden;                 /* impide que la tabla desborde los bordes redondeados */
-}
-
-/* Barra superior con título y contador. Conecta con: <div class="tasks-header"> */
-.tasks-header {
-    display: flex;                               /* alinea hijos en fila */
-    justify-content: space-between;              /* título a la izquierda, contador a la derecha */
-    align-items: center;                         /* centra ambos verticalmente */
-    padding: var(--espacio-lg) var(--espacio-xl);
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); /* degradado celeste */
-    border-bottom: 2px solid #bae6fd;            /* línea separadora celeste */
-}
-
-/* <h2 class="tasks-header__title"> */
-.tasks-header__title {
-    font-size: var(--texto-xl);
-    font-weight: 600;
-    color: var(--texto-oscuro);
-}
-
-/* Badge con el número de tareas. JavaScript actualiza su contenido.
-   Conecta con: <span class="tasks-header__count"> */
-.tasks-header__count {
-    font-size: var(--texto-sm);
-    font-weight: 600;
-    color: #0369a1;                  /* azul oscuro profesional */
-    background: #e0f2fe;             /* fondo celeste suave */
-    padding: var(--espacio-xs) var(--espacio-md);
-    border-radius: var(--radio-full); /* forma de pastilla */
-}
-
-/* Contenedor de la tabla. Agrega scroll horizontal en pantallas pequeñas.
-   Conecta con: <div class="tasks-table-container"> */
-.tasks-table-container {
-    overflow-x: auto; /* si la tabla es más ancha que la pantalla, aparece scroll horizontal */
-}
-
-/* <table class="tasks-table"> */
-.tasks-table {
-    width: 100%;
-    border-collapse: collapse; /* une los bordes de las celdas en uno solo */
-    font-size: var(--texto-sm);
-}
-
-/* <th> dentro de <thead> */
-.tasks-table thead th {
-    padding: var(--espacio-md) var(--espacio-lg);
-    text-align: left;                            /* texto alineado a la izquierda */
-    font-weight: 600;
-    color: #0c4a6e;                              /* azul oscuro profesional */
-    background: #f0f9ff;                         /* fondo celeste muy suave */
-    border-bottom: 2px solid #bae6fd;            /* línea celeste debajo del encabezado */
-    white-space: nowrap;                         /* evita que el texto se parta en varias líneas */
-}
-
-/* <td> dentro de <tbody>. JavaScript crea estas celdas dinámicamente. */
-.tasks-table tbody td {
-    padding: var(--espacio-md) var(--espacio-lg);
-    color: var(--texto-medio);
-    border-bottom: 1px solid var(--borde-suave); /* línea separadora entre filas */
-    vertical-align: middle;                       /* centra verticalmente el contenido de la celda */
-}
-
-/* Resalta la fila al pasar el mouse por encima */
-.tasks-table tbody tr:hover td {
-    background: #f0f9ff; /* fondo celeste muy suave en hover */
-}
-
-/* La última fila no necesita borde inferior (evita línea doble con el borde del contenedor) */
-.tasks-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-
-/* BADGES DE ESTADO EN LA TABLA
-   JavaScript crea un span con estas clases para cada estado.
-   Cada badge tiene su color pastel para identificar el estado rápido. */
-
-/* Estilo base compartido por todos los badges */
-.status-badge {
-    display: inline-block;     /* permite aplicar padding sin ocupar toda la línea */
-    padding: 4px 12px;         /* espacio interno del badge */
-    border-radius: 12px;       /* esquinas redondeadas (forma de pastilla) */
-    font-size: 0.875rem;       /* texto pequeño */
-    font-weight: 500;          /* semi-negrita */
-}
-
-/* Estado "pendiente": amarillo pastel */
-.status-pendiente {
-    background-color: #fef3c7; /* fondo amarillo suave */
-    color: #92400e;            /* texto café oscuro */
-}
-
-/* Estado "en_progreso": azul pastel */
-.status-en_progreso {
-    background-color: #dbeafe; /* fondo azul suave */
-    color: #1e40af;            /* texto azul oscuro */
-}
-
-/* Estado "completada": verde pastel */
-.status-completada {
-    background-color: #d1fae5; /* fondo verde suave */
-    color: #065f46;            /* texto verde oscuro */
-}
-
-
-/* ESTADO VACÍO DE LA TABLA
-   Se muestra cuando no hay tareas. JavaScript lo oculta o muestra.
-   Conecta con: <div class="tasks-empty" id="tasksEmptyState"> */
-
-.tasks-empty {
-    display: flex;           /* activa flexbox */
-    flex-direction: column;  /* apila los elementos en columna */
-    align-items: center;     /* centra horizontalmente */
-    justify-content: center; /* centra verticalmente */
-    text-align: center;
-    padding: var(--espacio-2xl) var(--espacio-xl);
-}
-
-/* Emoji decorativo. Conecta con: <div class="tasks-empty__icon"> */
-.tasks-empty__icon {
-    font-size: 3rem;             /* tamaño grande del emoji */
-    margin-bottom: var(--espacio-md);
-    opacity: 0.4;                /* semitransparente para que se vea sutil */
-}
-
-/* Texto principal. Conecta con: <p class="tasks-empty__text"> */
-.tasks-empty__text {
-    font-size: var(--texto-lg);
-    font-weight: 500;
-    color: var(--texto-medio);
-    margin-bottom: var(--espacio-xs);
-}
-
-/* Texto secundario. Conecta con: <p class="tasks-empty__subtext"> */
-.tasks-empty__subtext {
-    font-size: var(--texto-sm);
-    color: var(--texto-claro);
-}
-
-
-/* PIE DE PÁGINA
-   Conecta con: <footer class="footer"> */
-
-.footer {
-    text-align: center;
-    padding: var(--espacio-xl);
-    background: white;
-    border-radius: var(--radio-lg);
-    box-shadow: var(--sombra-sm);
-}
-
-/* <p class="footer__text"> */
-.footer__text {
-    font-size: var(--texto-sm);
-    color: var(--texto-claro);
-}
-
-
-/* ANIMACIÓN DE ENTRADA
-   Se usa cuando JavaScript muestra un elemento nuevo.
-   @keyframes define los fotogramas de inicio y fin. */
-
-@keyframes slideIn {
-    from {
-        opacity: 0;                  /* empieza invisible */
-        transform: translateY(-8px); /* empieza 8px más arriba de su posición */
-    }
-    to {
-        opacity: 1;                  /* termina completamente visible */
-        transform: translateY(0);    /* termina en su posición normal */
-    }
-}
-
-
-/* UTILIDADES
-   Clases de uso general que JavaScript agrega o quita. */
-
-/* Oculta cualquier elemento. JavaScript usa classList.add/remove('hidden').
-   !important garantiza que siempre gane sobre otros estilos de display. */
-.hidden {
-    display: none !important;
-}
-
-
-/* RESPONSIVE (ADAPTABLE A PANTALLAS PEQUEÑAS)
-   @media aplica estilos SOLO cuando se cumple la condición.
-   max-width: 768px cubre tablets y teléfonos en horizontal. */
-
-@media (max-width: 768px) {
-
-    body {
-        padding: var(--espacio-md); /* menos espacio en los bordes de la pantalla */
-    }
-
-    .header__title {
-        font-size: var(--texto-2xl); /* título más pequeño en pantallas pequeñas */
-    }
-
-    .card {
-        padding: var(--espacio-lg); /* menos padding en las tarjetas */
-    }
-
-    /* El título y el contador de tareas se apilan verticalmente */
-    .tasks-header {
-        flex-direction: column;  /* cambia de fila a columna */
-        align-items: flex-start; /* alinea los elementos a la izquierda */
-        gap: var(--espacio-sm);
-    }
-
-    /* El botón ocupa todo el ancho en pantallas pequeñas */
-    .btn {
-        width: 100%;
-    }
-}
-
-/* 
-   BOTONES DE ACCIÓN EN LA TABLA (RF-03 UPDATE y RF-04 DELETE)
-   Estos botones se crean dinámicamente desde createTaskRow() en ui.js
-   y se insertan en la columna 'Acciones' de cada fila de la tabla
-    */
-
-/* Contenedor de los botones de acción dentro de cada celda de la tabla */
-/* display: flex permite alinear los botones en fila con separación uniforme */
-.task-actions {
-    display: flex;           /* alinea los botones Editar y Eliminar en una fila */
-    gap: 0.5rem;             /* espacio de 8px entre los dos botones */
-    align-items: center;     /* centra los botones verticalmente en la celda */
-    flex-wrap: wrap;         /* en pantallas pequeñas, los botones se apilan */
-}
-
-/* Estilo base compartido por los botones de Editar y Eliminar */
-/* Es más pequeño y discreto que el botón principal de la app */
-.btn-action {
-    display: inline-flex;    /* permite alinear el emoji y el texto en la misma fila */
-    align-items: center;     /* centra el contenido verticalmente */
-    gap: 0.25rem;            /* pequeño espacio entre el emoji y el texto */
-    padding: 0.3rem 0.75rem; /* espacio interno: compacto pero cómodo para el clic */
-    font-size: 0.8rem;       /* texto más pequeño que el botón principal */
-    font-weight: 600;        /* semi-negrita para buena legibilidad */
-    font-family: var(--fuente);
-    border: none;            /* elimina el borde nativo del elemento button */
-    border-radius: var(--radio-sm); /* esquinas levemente redondeadas */
-    cursor: pointer;         /* cambia el cursor a manito al pasar por encima */
-    transition: all var(--transicion); /* animación suave en hover y active */
-    white-space: nowrap;     /* impide que el texto del botón se parta en dos líneas */
-}
-
-/* Variante azul para el botón Editar (RF-03 UPDATE) */
-/* Azul transmite acción segura y reversible */
-.btn-action--edit {
-    background: #dbeafe;     /* fondo azul muy suave (pastel) */
-    color: #1d4ed8;          /* texto azul oscuro para buen contraste */
-}
-
-/* Efecto hover del botón Editar: se intensifica el color */
-.btn-action--edit:hover {
-    background: #bfdbfe;     /* azul un poco más oscuro al pasar el mouse */
-    transform: translateY(-1px); /* sube 1px para simular que se eleva */
-}
-
-/* Variante roja para el botón Eliminar (RF-04 DELETE) */
-/* Rojo advierte que la acción es irreversible */
-.btn-action--delete {
-    background: #fee2e2;     /* fondo rojo muy suave (pastel) */
-    color: #dc2626;          /* texto rojo oscuro para buen contraste */
-}
-
-/* Efecto hover del botón Eliminar: se intensifica el color */
-.btn-action--delete:hover {
-    background: #fecaca;     /* rojo un poco más oscuro al pasar el mouse */
-    transform: translateY(-1px); /* sube 1px para simular que se eleva */
-}
-
-/* Efecto al hacer clic en cualquier botón de acción */
-.btn-action:active {
-    transform: translateY(0); /* vuelve a su posición original al hacer clic */
-}
-
-
-/* 
-   MODAL DE EDICIÓN (RF-03 UPDATE)
-   El modal es una ventana emergente que aparece sobre el contenido
-   para que el usuario pueda editar los datos de una tarea
-    */
-
-/* Overlay oscuro semitransparente que cubre toda la pantalla */
-/* Se muestra detrás del modal para enfocar la atención del usuario */
-.modal-overlay {
-    position: fixed;         /* se fija a la ventana del navegador, no al contenido */
-    top: 0;                  /* empieza desde la esquina superior izquierda */
-    left: 0;
-    width: 100%;             /* cubre todo el ancho de la ventana */
-    height: 100%;            /* cubre todo el alto de la ventana */
-    background: rgba(0, 0, 0, 0.55); /* negro al 55% de opacidad (semitransparente) */
-    display: flex;           /* flexbox para centrar el modal */
-    align-items: center;     /* centra el modal verticalmente */
-    justify-content: center; /* centra el modal horizontalmente */
-    z-index: 1000;           /* se posiciona por encima de todos los demás elementos */
-    padding: var(--espacio-lg); /* espacio en los bordes en pantallas pequeñas */
-}
-
-/* La caja blanca del modal propiamente dicha */
-.modal {
-    background: white;                    /* fondo blanco para contrastar con el overlay */
-    border-radius: var(--radio-lg);       /* esquinas redondeadas consistentes con el diseño */
-    box-shadow: var(--sombra-lg);         /* sombra pronunciada para efecto de profundidad */
-    width: 100%;                          /* ocupa todo el ancho disponible */
-    max-width: 520px;                     /* pero no más de 520px en pantallas grandes */
-    border-top: 4px solid var(--color-primario); /* línea decorativa morada en la parte superior */
-    animation: slideIn 0.2s ease;         /* animación de entrada definida en el CSS original */
-}
-
-/* Encabezado del modal: contiene el título y el botón de cerrar */
-.modal__header {
-    display: flex;                        /* alinea título y botón en una fila */
-    justify-content: space-between;       /* título a la izquierda, botón a la derecha */
-    align-items: center;                  /* los centra verticalmente */
-    padding: var(--espacio-lg) var(--espacio-xl); /* espacio interno */
-    border-bottom: 1px solid var(--borde-suave); /* línea separadora sutil */
-}
-
-/* Título dentro del encabezado del modal */
-.modal__title {
-    font-size: var(--texto-xl);
-    font-weight: 600;
-    color: var(--texto-oscuro);
-}
-
-/* Botón X para cerrar el modal sin guardar cambios */
-.modal__close {
-    background: none;        /* sin fondo para que sea solo el ícono visible */
-    border: none;            /* sin borde */
-    font-size: var(--texto-xl); /* tamaño grande para que sea fácil de hacer clic */
-    color: var(--texto-claro);  /* gris claro para que no distraiga */
-    cursor: pointer;         /* manito al pasar el cursor */
-    padding: var(--espacio-xs); /* pequeño espacio para que sea más fácil de clicar */
-    line-height: 1;          /* evita espacio vertical extra alrededor del ícono */
-    transition: color var(--transicion); /* animación suave del color en hover */
-}
-
-/* Efecto hover del botón de cerrar: se pone más oscuro */
-.modal__close:hover {
-    color: var(--texto-oscuro); /* se vuelve más visible al pasar el mouse */
-}
-
-/* Área del formulario dentro del modal con espacio interno */
-.modal form {
-    padding: var(--espacio-xl); /* espacio cómodo alrededor del formulario */
-}
-
-/* Contenedor de los botones Cancelar y Guardar Cambios */
-/* Se alinean en una fila con separación y justificación a la derecha */
-.modal__actions {
-    display: flex;           /* alinea los botones en una fila */
-    justify-content: flex-end; /* los empuja hacia el lado derecho del modal */
-    gap: var(--espacio-md);  /* espacio entre el botón Cancelar y Guardar */
-    margin-top: var(--espacio-md); /* espacio encima de los botones */
-}
-
-/* Variante de botón secundario para el botón Cancelar del modal */
-/* Estilo neutral que no compite visualmente con el botón principal */
-.btn--secondary {
-    background: var(--fondo-gris); /* fondo gris muy suave */
-    color: var(--texto-medio);     /* texto gris */
-    border: 1px solid var(--borde-suave); /* borde sutil para definir el contorno */
-}
-
-/* Efecto hover del botón secundario */
-.btn--secondary:hover {
-    background: var(--borde-suave); /* se oscurece levemente al pasar el mouse */
-    transform: translateY(-1px);    /* sube 1px */
-}
-
-/* Botones Limpiar filtros y Exportar JSON dentro de la barra de controles.
-   Sobreescribe btn--secondary solo en ese contexto para no afectar el modal. */
-.tasks-controls .btn--secondary {
-    padding: 0 1rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    border-radius: var(--radio-sm);
-    background: #0369a1;
-    color: white;
-    border: none;
-    box-shadow: 0 1px 3px rgba(3, 105, 161, 0.25);
-    transition: all var(--transicion);
-    height: 2.1rem;
-}
-
-.tasks-controls .btn--secondary:hover {
-    background: #0c4a6e;
-    box-shadow: 0 3px 8px rgba(3, 105, 161, 0.3);
-    transform: translateY(-1px);
-}
-
-.tasks-controls .btn--secondary:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(3, 105, 161, 0.2);
-}
-
-/* ── NOTIFICACIONES TOAST (RF03) ── */
-
-#notificaciones-contenedor {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 9999;
-}
-
-.notificacion {
-    padding: 14px 20px;
-    border-radius: 8px;
-    color: white;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    animation: slideInRight 0.3s ease;
-}
-
-.notificacion--exito {
-    background-color: #2E7D32;
-}
-
-.notificacion--error {
-    background-color: #C62828;
-}
-
-.notificacion--info {
-    background-color: #1565C0;
-}
-
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* ── CONTROLES DE TAREAS: FILTROS, ORDENAMIENTO Y EXPORTACIÓN ──────────────
-   RF01 — Filtro avanzado       (Juan)
-   RF02 — Ordenamiento dinámico (Juan)
-   RF04 — Exportación a JSON    (Juan)
-   Conecta con: <div class="tasks-controls"> en index.html                 */
-
-/* Barra contenedora: dos filas organizadas con separación visual */
-.tasks-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: var(--espacio-md);
-    padding: var(--espacio-lg) var(--espacio-xl);
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-bottom: 2px solid #bae6fd;
-}
-
-/* Cada grupo: label encima, campo debajo */
-.tasks-controls__grupo {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-/* Label superior pequeño */
-.tasks-controls__label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #0c4a6e;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    white-space: nowrap;
-}
-
-/* Estilo base compartido por select e input de controles */
-.tasks-controls__select,
-.tasks-controls__input {
-    padding: 0.4rem 0.65rem;
-    font-size: var(--texto-sm);
-    font-family: var(--fuente);
-    color: var(--texto-oscuro);
-    background: white;
-    border: 1.5px solid #bae6fd;
-    border-radius: var(--radio-sm);
-    outline: none;
-    transition: border-color var(--transicion), box-shadow var(--transicion);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-    height: 2.1rem;
-}
-
-.tasks-controls__select {
-    cursor: pointer;
-    min-width: 130px;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230c4a6e' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.6rem center;
-    padding-right: 2rem;
-}
-
-.tasks-controls__input {
-    width: 150px;
-}
-
-.tasks-controls__input::placeholder {
-    color: var(--texto-claro);
-    font-style: italic;
-}
-
-/* Foco: borde celeste oscuro + anillo suave */
-.tasks-controls__select:focus,
-.tasks-controls__input:focus {
-    border-color: #0369a1;
-    box-shadow: 0 0 0 3px rgba(186, 230, 253, 0.5);
-}
-
-/* Hover suave en los campos */
-.tasks-controls__select:hover,
-.tasks-controls__input:hover {
-    border-color: #7dd3fc;
-}
-
-/* Grupo que contiene un botón: lo empuja hacia abajo para alinearse con los inputs */
-.tasks-controls__grupo--btn {
-    justify-content: flex-end;
-}
-
-
-/* ── RESPONSIVE: controles en pantalla pequeña ─────────────────────────────
-   En móvil los grupos se apilan y los campos ocupan todo el ancho.        */
-
-@media (max-width: 768px) {
-
-    .tasks-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: var(--espacio-sm);
-        padding: var(--espacio-md);
-    }
-
-    .tasks-controls__grupo {
-        width: 100%;
-    }
-
-    .tasks-controls__select,
-    .tasks-controls__input {
-        width: 100%;
-        min-width: unset;
-    }
-
-    .tasks-controls .btn--secondary {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-/* ─── SWEETALERT2 — PERSONALIZACIÓN CON PALETA DEL PROYECTO ─── */
-
-/* Contenedor principal del popup */
-.swal-popup {
-    border-radius: var(--radio-xl);
-    border: 2px solid var(--color-primario);
-    box-shadow: var(--sombra-lg);
-    font-family: var(--fuente);
-}
-
-/* Título del popup */
-.swal-title {
-    color: var(--texto-oscuro);
-    font-size: var(--texto-xl);
-    font-weight: 700;
-}
-
-/* Texto del cuerpo */
-.swal-text {
-    color: var(--texto-medio);
-    font-size: var(--texto-md);
-}
-
-/* Botón confirmar — morado sólido */
-.swal-btn-confirmar {
-    background-color: var(--color-primario) !important;
-    color: white !important;
-    border-radius: var(--radio-full) !important;
-    padding: 0.6rem 1.5rem !important;
-    font-size: var(--texto-md) !important;
-    font-weight: 600 !important;
-    border: none !important;
-    transition: background-color var(--transicion) !important;
-}
-.swal-btn-confirmar:hover {
-    background-color: var(--color-primario-oscuro) !important;
-}
-
-/* Botón cancelar — borde morado, fondo blanco */
-.swal-btn-cancelar {
-    background-color: white !important;
-    color: var(--color-primario) !important;
-    border: 2px solid var(--color-primario) !important;
-    border-radius: var(--radio-full) !important;
-    padding: 0.6rem 1.5rem !important;
-    font-size: var(--texto-md) !important;
-    font-weight: 600 !important;
-    transition: background-color var(--transicion) !important;
-}
-.swal-btn-cancelar:hover {
-    background-color: var(--color-primario-suave) !important;
-}
-
-/* Ícono de advertencia del dialog de eliminar — rojo del proyecto */
-.swal-popup.swal-eliminar .swal2-icon.swal2-warning {
-    border-color: var(--color-error) !important;
-    color: var(--color-error) !important;
-}
-
-/* ── BOTONES DE NAVEGACIÓN DEL HEADER ── */
-
-/* Contenedor de los botones que aparecen en el header para cambiar de vista */
-.header__nav {
-    display: flex;
-    justify-content: center;
-    gap: var(--espacio-md);
-    margin-top: var(--espacio-lg);
-    flex-wrap: wrap;
-}
-
-/* Botón de navegación: fondo transparente con borde morado */
-/* Contrasta con el fondo blanco de la card del header */
-.btn--nav {
-    background: transparent;
-    color: var(--color-primario);
-    border: 2px solid var(--color-primario);
-    padding: var(--espacio-sm) var(--espacio-xl);
-    border-radius: var(--radio-full);
-    font-size: var(--texto-sm);
-    font-weight: 600;
-    font-family: var(--fuente);
-    cursor: pointer;
-    transition: all var(--transicion);
-}
-
-/* En hover el botón se rellena de morado con texto blanco */
-.btn--nav:hover {
-    background: var(--color-primario);
-    color: white;
-}
-
-
-/* ── PANEL DE ADMINISTRACIÓN ── */
-
-/* Separación visual entre las dos secciones del panel admin */
-.admin-seccion {
-    margin-bottom: var(--espacio-xl);
-}
-
-/* Título de cada sección dentro del panel admin */
-.admin-seccion__titulo {
-    font-size: var(--texto-lg);
-    font-weight: 600;
-    color: var(--texto-oscuro);
-    margin-bottom: var(--espacio-md);
-    padding-left: var(--espacio-md);
-    border-left: 3px solid var(--color-primario);
-}
-
-/* Formulario de creación: distribuye los campos en fila en pantallas grandes */
-.admin-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--espacio-md);
-    align-items: flex-end;
-    margin-bottom: var(--espacio-lg);
-}
-
-/* Cada grupo label+input ocupa un ancho mínimo de 180px */
-.admin-form__grupo {
-    flex: 1 1 180px;
-    margin-bottom: 0;
-}
-
-/* Espaciado superior en la tabla del panel admin */
-.admin-tabla {
-    margin-top: var(--espacio-md);
-}
-
-/* Mensaje que se muestra cuando no hay datos */
-.admin-vacio {
-    color: var(--texto-claro);
-    font-style: italic;
-    padding: var(--espacio-md);
-    text-align: center;
-}
-
-
-/* ── VISTA DE BÚSQUEDA POR DOCUMENTO ── */
-
-/* Contenedor del resultado: empieza oculto con .hidden, se muestra al buscar */
-.buscar-resultado {
-    margin-top: var(--espacio-lg);
+    line-height: 1.6;
+    min-height: 100vh;
     padding: var(--espacio-lg);
-    background: var(--fondo-gris);
-    border-radius: var(--radio-md);
-    border: 1px solid var(--borde-suave);
 }
 
-/* Nombre del usuario encontrado */
-.buscar-resultado__titulo {
-    font-size: var(--texto-lg);
-    font-weight: 600;
+/* FONDOS POR MODO */
+body[data-modo="inicio"]  { background-color: #f8edf5; }
+body[data-modo="usuario"] { background-color: #f3e8ff; }
+body[data-modo="admin"]   { background-color: #e0f2fe; }
+
+/* HIDDEN */
+.hidden { display: none !important; }
+
+
+/* PANTALLA DE INICIO */
+.pantalla-inicio {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--espacio-xl);
+    gap: var(--espacio-xl);
+}
+
+.inicio__header { text-align: center; }
+
+.inicio__titulo {
+    font-size: var(--texto-3xl);
+    font-weight: 700;
     color: var(--texto-oscuro);
     margin-bottom: var(--espacio-sm);
 }
 
-/* Contador de tareas del usuario */
-.buscar-resultado__contador {
+.inicio__subtitulo {
+    font-size: var(--texto-md);
+    color: var(--texto-medio);
+}
+
+.inicio__accesos {
+    display: flex;
+    gap: var(--espacio-xl);
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 800px;
+}
+
+.acceso-card {
+    flex: 1;
+    min-width: 280px;
+    max-width: 360px;
+    background: white;
+    border-radius: var(--radio-2xl);
+    padding: var(--espacio-xl);
+    box-shadow: var(--sombra-lg);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-md);
+    transition: transform var(--transicion), box-shadow var(--transicion);
+}
+
+.acceso-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.13);
+}
+
+.acceso-card__titulo {
+    font-size: var(--texto-xl);
+    font-weight: 700;
+    color: var(--texto-oscuro);
+}
+
+.acceso-card__desc {
     font-size: var(--texto-sm);
     color: var(--texto-medio);
-    margin-bottom: var(--espacio-md);
+    line-height: 1.6;
+    flex: 1;
 }
 
-/* Mensaje cuando el usuario no tiene tareas */
-.buscar-resultado__sin-tareas {
-    color: var(--texto-claro);
-    font-style: italic;
+.btn-acceso {
+    padding: var(--espacio-md) var(--espacio-lg);
+    border: none;
+    border-radius: var(--radio-full);
+    font-size: var(--texto-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transicion), transform var(--transicion);
+    width: 100%;
 }
 
-/* Mensaje cuando no se encuentra el usuario */
-.buscar-resultado__no-encontrado {
-    color: var(--color-error);
+.btn-acceso--usuario { background-color: var(--color-primario); color: white; }
+.btn-acceso--usuario:hover { background-color: var(--color-primario-oscuro); }
+.btn-acceso--admin { background-color: var(--color-admin); color: white; }
+.btn-acceso--admin:hover { background-color: var(--color-admin-oscuro); }
+
+
+/* VISTAS */
+.vista {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* HEADER */
+.header {
+    padding: var(--espacio-lg) var(--espacio-xl);
+    text-align: center;
+    position: relative;
+    border-radius: var(--radio-2xl);
+    margin-bottom: var(--espacio-lg);
+}
+
+.header--usuario {
+    background: white;
+    box-shadow: var(--sombra-sm);
+}
+
+.header--admin {
+    background: var(--color-admin);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--espacio-md);
+    padding-bottom: var(--espacio-xl);
+}
+
+.header--admin .header__title,
+.header--admin .header__subtitle { color: white; }
+
+.header__title {
+    font-size: var(--texto-2xl);
+    font-weight: 700;
+    color: var(--texto-oscuro);
+}
+
+.header__subtitle {
+    font-size: var(--texto-sm);
+    color: var(--texto-medio);
+    margin-top: var(--espacio-xs);
+}
+
+.header--admin .header__subtitle { color: rgba(255,255,255,0.85); }
+
+.header__nav {
+    position: absolute;
+    left: var(--espacio-lg);
+    top: var(--espacio-lg);
+}
+
+/* Botón volver rediseñado: flechita + texto, redondeado */
+.btn-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-xs);
+    background: transparent;
+    border: 2px solid var(--color-primario);
+    color: var(--color-primario);
+    padding: var(--espacio-xs) var(--espacio-md);
+    border-radius: var(--radio-full);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transicion), color var(--transicion);
+}
+
+.btn-volver::before {
+    content: '←';
+    font-size: var(--texto-md);
+    line-height: 1;
+}
+
+.btn-volver:hover {
+    background-color: var(--color-primario);
+    color: white;
+}
+
+/* Variante admin del botón volver: azul */
+.btn-volver--admin {
+    border-color: white;
+    color: white;
+}
+
+.btn-volver--admin:hover {
+    background-color: white;
+    color: var(--color-admin);
+}
+
+/* Buscador integrado en el header del admin */
+.header__busqueda-admin {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: var(--radio-full);
+    padding: var(--espacio-xs) var(--espacio-md);
+    width: 100%;
+    max-width: 400px;
+}
+
+.header__busqueda-admin input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: var(--texto-sm);
+    font-family: var(--fuente);
+}
+
+.header__busqueda-admin input::placeholder { color: rgba(255,255,255,0.7); }
+
+.header__busqueda-admin button {
+    background: white;
+    border: none;
+    border-radius: var(--radio-full);
+    padding: var(--espacio-xs) var(--espacio-sm);
+    cursor: pointer;
+    font-size: var(--texto-sm);
+    color: var(--color-admin);
+    font-weight: 600;
+    transition: background-color var(--transicion);
+    white-space: nowrap;
+}
+
+.header__busqueda-admin button:hover { background-color: #e0f2fe; }
+
+
+/* CONTENIDO PRINCIPAL */
+.contenido-vista {
+    flex: 1;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    padding: var(--espacio-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-lg);
+}
+
+.contenido-vista--admin { max-width: 1200px; }
+
+
+/* CARD BASE */
+.card {
+    background: white;
+    border-radius: var(--radio-xl);
+    padding: var(--espacio-xl);
+    box-shadow: var(--sombra-md);
+}
+
+.card__title {
+    font-size: var(--texto-lg);
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    margin-bottom: var(--espacio-lg);
+}
+
+.card--usuario-info { background: white; }
+
+
+/* FORMULARIOS */
+.form { display: flex; flex-direction: column; gap: 0; }
+
+.form__group { margin-bottom: var(--espacio-lg); }
+
+.form__label {
+    display: block;
+    font-size: var(--texto-sm);
     font-weight: 500;
+    color: var(--texto-oscuro);
+    margin-bottom: var(--espacio-sm);
 }
 
-/* Lista de tareas sin viñetas */
-.buscar-resultado__lista {
-    list-style: none;
+.form__label--opcional {
+    font-weight: 400;
+    color: var(--texto-claro);
+    font-size: var(--texto-sm);
+}
+
+.form__input {
+    width: 100%;
+    padding: var(--espacio-md);
+    font-size: var(--texto-md);
+    font-family: var(--fuente);
+    color: var(--texto-oscuro);
+    background: white;
+    border: 2px solid var(--borde-suave);
+    border-radius: var(--radio-md);
+    transition: border-color var(--transicion), box-shadow var(--transicion);
+    outline: none;
+}
+
+.form__input:focus {
+    border-color: var(--color-primario);
+    box-shadow: 0 0 0 3px var(--color-primario-suave);
+}
+
+.form__input::placeholder { color: var(--texto-claro); }
+
+.form__textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form__input.error {
+    border-color: var(--color-error);
+    background: #fff5f5;
+}
+
+.form__input.error:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.form__error {
+    display: block;
+    font-size: var(--texto-sm);
+    color: var(--color-error);
+    margin-top: var(--espacio-xs);
+    min-height: 1.2em;
+}
+
+
+/* BOTONES */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espacio-sm);
+    padding: var(--espacio-md) var(--espacio-xl);
+    font-size: var(--texto-md);
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radio-lg);
+    cursor: pointer;
+    transition: background-color var(--transicion), box-shadow var(--transicion), transform var(--transicion);
+}
+
+.btn--primary {
+    background-color: var(--color-primario);
+    color: white;
+    width: 100%;
+    margin-top: var(--espacio-sm);
+}
+
+.btn--primary:hover {
+    background-color: var(--color-primario-oscuro);
+    box-shadow: var(--sombra-md);
+}
+
+.btn--secondary {
+    background-color: var(--fondo-gris);
+    color: var(--texto-medio);
+    border: 2px solid var(--borde-suave);
+}
+
+.btn--secondary:hover { background-color: var(--borde-suave); }
+
+.btn--admin-primary {
+    background-color: var(--color-admin);
+    color: white;
+    width: 100%;
+    margin-top: var(--espacio-sm);
+    padding: var(--espacio-sm) var(--espacio-lg);
+    border: none;
+    border-radius: var(--radio-full);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transicion);
+}
+
+.btn--admin-primary:hover { background-color: var(--color-admin-oscuro); }
+
+.btn--admin-secondary {
+    background-color: transparent;
+    color: var(--color-admin);
+    border: 2px solid var(--color-admin);
+    padding: var(--espacio-xs) var(--espacio-md);
+    border-radius: var(--radio-full);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transicion), color var(--transicion);
+}
+
+.btn--admin-secondary:hover { background-color: var(--color-admin); color: white; }
+
+
+/* USER INFO */
+.user-info {
     display: flex;
     flex-direction: column;
     gap: var(--espacio-sm);
 }
 
-/* Cada ítem: título a la izquierda, badge de estado a la derecha */
-.buscar-resultado__item {
+.user-info__item {
+    display: flex;
+    gap: var(--espacio-md);
+    padding: var(--espacio-sm) var(--espacio-md);
+    background: var(--fondo-gris);
+    border-radius: var(--radio-md);
+}
+
+.user-info__label {
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    min-width: 60px;
+}
+
+.user-info__value {
+    font-size: var(--texto-sm);
+    color: var(--texto-medio);
+}
+
+
+/* TABLA DE TAREAS */
+.tasks-section {
+    background: white;
+    border-radius: var(--radio-xl);
+    box-shadow: var(--sombra-md);
+    overflow: hidden;
+}
+
+.tasks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--espacio-lg) var(--espacio-xl);
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+.tasks-header__title {
+    font-size: var(--texto-lg);
+    font-weight: 700;
+    color: var(--texto-oscuro);
+}
+
+.tasks-header__count {
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--color-primario);
+    background: var(--color-primario-suave);
+    padding: var(--espacio-xs) var(--espacio-md);
+    border-radius: var(--radio-full);
+}
+
+.tasks-table-container { overflow-x: auto; }
+
+.tasks-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tasks-table__head { background-color: var(--fondo-gris); }
+
+.tasks-table__head th {
+    padding: var(--espacio-md) var(--espacio-lg);
+    text-align: left;
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    border-bottom: 2px solid var(--borde-suave);
+}
+
+.tasks-table tbody tr {
+    border-bottom: 1px solid var(--borde-suave);
+    transition: background-color var(--transicion);
+}
+
+.tasks-table tbody tr:hover { background-color: var(--fondo-gris); }
+
+.tasks-table tbody td {
+    padding: var(--espacio-md) var(--espacio-lg);
+    font-size: var(--texto-sm);
+    color: var(--texto-medio);
+    vertical-align: middle;
+}
+
+.tasks-table--admin .tasks-table__head { background-color: #e0f2fe; }
+.tasks-table--admin .tasks-table__head th { color: var(--color-admin-oscuro); }
+
+
+/* BADGES DE ESTADO */
+.status-badge {
+    display: inline-block;
+    padding: var(--espacio-xs) var(--espacio-md);
+    border-radius: var(--radio-full);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+}
+
+.status-pendiente   { background: #fef3c7; color: #92400e; }
+.status-en_progreso { background: #dbeafe; color: #1e40af; }
+.status-completada  { background: #d1fae5; color: #065f46; }
+
+
+/* ACCIONES EN LA TABLA */
+.task-actions {
+    display: flex;
+    gap: var(--espacio-sm);
+    align-items: center;
+}
+
+.btn-action {
+    padding: var(--espacio-xs) var(--espacio-sm);
+    border: none;
+    border-radius: var(--radio-md);
+    font-size: var(--texto-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color var(--transicion), transform var(--transicion);
+}
+
+.btn-action:hover { transform: scale(1.04); }
+
+.btn-action--edit   { background: #dbeafe; color: #1e40af; }
+.btn-action--edit:hover { background: #bfdbfe; }
+
+.btn-action--delete { background: #fee2e2; color: #991b1b; }
+.btn-action--delete:hover { background: #fecaca; }
+
+
+/* ESTADO VACÍO */
+.tasks-empty {
+    text-align: center;
+    padding: var(--espacio-2xl) var(--espacio-xl);
+    color: var(--texto-claro);
+}
+
+.tasks-empty__text {
+    font-size: var(--texto-lg);
+    font-weight: 600;
+    margin-bottom: var(--espacio-sm);
+}
+
+.tasks-empty__subtext { font-size: var(--texto-sm); }
+
+
+/* MODAL BASE (edición de tarea) */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: white;
+    border-radius: var(--radio-2xl);
+    padding: var(--espacio-xl);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--sombra-lg);
+    animation: slideIn 200ms ease;
+}
+
+.modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--espacio-lg);
+}
+
+.modal__title {
+    font-size: var(--texto-xl);
+    font-weight: 700;
+    color: var(--texto-oscuro);
+}
+
+.modal__close {
+    background: none;
+    border: none;
+    font-size: var(--texto-lg);
+    color: var(--texto-claro);
+    cursor: pointer;
+    padding: var(--espacio-xs);
+    border-radius: var(--radio-md);
+    transition: color var(--transicion);
+}
+
+.modal__close:hover { color: var(--texto-oscuro); }
+
+.modal__actions {
+    display: flex;
+    gap: var(--espacio-md);
+    justify-content: flex-end;
+    margin-top: var(--espacio-lg);
+}
+
+.modal__actions .btn { width: auto; margin-top: 0; }
+
+
+/* MODAL DINÁMICO DE USUARIO (reemplaza panel fijo y card estática de buscar) */
+/* Se abre al hacer "Ver/Asignar", al buscar usuario en admin, o al buscar en modo usuario */
+.modal-usuario-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 900;
+    animation: fadeOverlay 200ms ease;
+}
+
+.modal-usuario {
+    background: white;
+    border-radius: var(--radio-2xl);
+    padding: var(--espacio-xl);
+    width: 90%;
+    max-width: 600px;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    animation: slideIn 220ms ease;
+    position: relative;
+}
+
+.modal-usuario__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--espacio-lg);
+    gap: var(--espacio-md);
+}
+
+.modal-usuario__titulo {
+    font-size: var(--texto-xl);
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    flex: 1;
+}
+
+.modal-usuario__subtitulo {
+    font-size: var(--texto-sm);
+    color: var(--texto-medio);
+    margin-top: var(--espacio-xs);
+}
+
+.modal-usuario__cerrar {
+    background: none;
+    border: none;
+    font-size: var(--texto-xl);
+    color: var(--texto-claro);
+    cursor: pointer;
+    padding: var(--espacio-xs);
+    border-radius: var(--radio-md);
+    transition: color var(--transicion);
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.modal-usuario__cerrar:hover { color: var(--texto-oscuro); }
+
+/* Cuerpo del modal de usuario: dos columnas en admin, una en usuario */
+.modal-usuario__cuerpo {
+    display: flex;
+    gap: var(--espacio-xl);
+    flex-wrap: wrap;
+}
+
+.modal-usuario__tareas,
+.modal-usuario__asignar { flex: 1; min-width: 220px; }
+
+.modal-usuario__seccion-titulo {
+    font-size: var(--texto-md);
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    margin-bottom: var(--espacio-md);
+    padding-bottom: var(--espacio-xs);
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+/* Ítem de tarea dentro del modal */
+.modal-tarea-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: var(--espacio-sm) var(--espacio-md);
-    background: white;
-    border-radius: var(--radio-sm);
-    border: 1px solid var(--borde-suave);
-}
-
-/* Título de la tarea dentro del ítem */
-.buscar-resultado__tarea-titulo {
+    margin-bottom: var(--espacio-xs);
+    background: #f0f9ff;
+    border-radius: var(--radio-md);
     font-size: var(--texto-sm);
+    gap: var(--espacio-sm);
+}
+
+.modal-tarea-item span:first-child {
     color: var(--texto-oscuro);
+    font-weight: 500;
+    flex: 1;
+}
+
+/* Vacío dentro del modal */
+.modal-vacio {
+    color: var(--texto-claro);
+    font-size: var(--texto-sm);
+    padding: var(--espacio-md) 0;
+}
+
+/* Resultado de búsqueda en modo usuario (vista simple) */
+.modal-usuario__lista-tareas {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-sm);
+    margin-top: var(--espacio-md);
+}
+
+.modal-usuario__lista-tareas li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--espacio-sm) var(--espacio-md);
+    background: var(--fondo-gris);
+    border-radius: var(--radio-md);
+    font-size: var(--texto-sm);
+    gap: var(--espacio-sm);
+}
+
+.modal-usuario__lista-tareas li span:first-child {
+    color: var(--texto-oscuro);
+    font-weight: 500;
+    flex: 1;
 }
 
 
-/* ── RESPONSIVE: PANEL ADMIN Y BÚSQUEDA EN PANTALLA PEQUEÑA ── */
+/* CONTROLES DE FILTRO (admin) */
+.tasks-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-md);
+    padding: var(--espacio-lg);
+    background: #f0f9ff;
+    border-bottom: 1px solid var(--borde-suave);
+    align-items: flex-end;
+}
 
+.tasks-controls__grupo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-xs);
+}
+
+.tasks-controls__grupo--btn { justify-content: flex-end; }
+
+.tasks-controls__label {
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--color-admin-oscuro);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.tasks-controls__select,
+.tasks-controls__input {
+    padding: var(--espacio-sm) var(--espacio-md);
+    border: 1px solid #bae6fd;
+    border-radius: var(--radio-md);
+    font-size: var(--texto-sm);
+    font-family: var(--fuente);
+    color: var(--texto-oscuro);
+    background: white;
+    outline: none;
+    height: 2.1rem;
+}
+
+.tasks-controls__select { min-width: 130px; cursor: pointer; }
+.tasks-controls__input  { width: 160px; }
+
+.tasks-controls__select:focus,
+.tasks-controls__input:focus {
+    border-color: var(--color-admin);
+    box-shadow: 0 0 0 3px rgba(186, 230, 253, 0.5);
+}
+
+
+/* PANEL ADMIN — layout en fila */
+.admin-fila {
+    display: flex;
+    gap: var(--espacio-lg);
+    flex-wrap: wrap;
+}
+
+/* En admin solo mostramos la card de crear usuario (buscar se movió al header) */
+.admin-card {
+    flex: 1;
+    min-width: 300px;
+    background: white;
+    border-radius: var(--radio-xl);
+    padding: var(--espacio-xl);
+    box-shadow: var(--sombra-md);
+}
+
+.admin-card--full {
+    flex: none;
+    width: 100%;
+}
+
+.admin-card__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--espacio-lg);
+}
+
+.admin-card__titulo {
+    font-size: var(--texto-lg);
+    font-weight: 700;
+    color: var(--color-admin-oscuro);
+    margin-bottom: var(--espacio-md);
+}
+
+.admin-card__cabecera .admin-card__titulo { margin-bottom: 0; }
+
+
+/* FOOTER */
+.footer {
+    background: white;
+    padding: var(--espacio-lg);
+    text-align: center;
+    margin-top: auto;
+    border-radius: var(--radio-xl);
+    margin-top: var(--espacio-lg);
+}
+
+.footer__text {
+    font-size: var(--texto-sm);
+    color: var(--texto-claro);
+}
+
+.footer--admin {
+    background-color: var(--color-admin-oscuro);
+    border-radius: var(--radio-xl);
+}
+
+.footer--admin .footer__text { color: rgba(255,255,255,0.85); }
+
+
+/* SWEETALERT2 custom */
+.swal-popup {
+    border-radius: var(--radio-xl) !important;
+    border: 1px solid var(--color-primario) !important;
+    box-shadow: var(--sombra-lg) !important;
+}
+
+.swal-title {
+    color: var(--texto-oscuro) !important;
+    font-size: var(--texto-xl) !important;
+}
+
+.swal-btn-confirmar {
+    background-color: var(--color-primario) !important;
+    color: white !important;
+    border-radius: var(--radio-full) !important;
+    padding: var(--espacio-sm) var(--espacio-xl) !important;
+    font-weight: 600 !important;
+    transition: background-color var(--transicion) !important;
+}
+
+.swal-btn-confirmar:hover { background-color: var(--color-primario-oscuro) !important; }
+
+.swal-btn-cancelar {
+    background-color: white !important;
+    color: var(--color-primario) !important;
+    border: 2px solid var(--color-primario) !important;
+    border-radius: var(--radio-full) !important;
+    padding: var(--espacio-sm) var(--espacio-xl) !important;
+    font-weight: 600 !important;
+}
+
+.swal-eliminar .swal2-icon.swal2-warning {
+    color: var(--color-error) !important;
+    border-color: var(--color-error) !important;
+}
+
+
+/* ANIMACIONES */
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-14px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fadeOverlay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+
+/* RESPONSIVE */
 @media (max-width: 768px) {
+    body { padding: var(--espacio-md); }
 
-    /* El formulario del admin se apila en columna en móvil */
-    .admin-form {
-        flex-direction: column;
-    }
+    .inicio__accesos,
+    .admin-fila,
+    .modal-usuario__cuerpo { flex-direction: column; }
 
-    .admin-form__grupo {
-        flex: 1 1 100%;
-    }
+    .acceso-card { max-width: 100%; }
 
-    /* Los botones del header se apilan y se centran */
     .header__nav {
-        flex-direction: column;
-        align-items: center;
+        position: static;
+        transform: none;
+        margin-bottom: var(--espacio-sm);
     }
 
-    .btn--nav {
-        width: 100%;
-        max-width: 280px;
+    .header--usuario,
+    .header--admin { padding-top: var(--espacio-md); }
+
+    .admin-card__cabecera {
+        flex-direction: column;
+        gap: var(--espacio-sm);
+        align-items: flex-start;
     }
+
+    .tasks-controls { flex-direction: column; }
+
+    .tasks-controls__input { width: 100%; }
+
+    .modal__actions { flex-direction: column; }
+
+    .modal__actions .btn { width: 100%; }
+
+    .header__busqueda-admin { max-width: 100%; }
 }

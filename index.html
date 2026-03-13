@@ -3,426 +3,328 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Mensajes - Ejercicio DOM</title>
+    <title>Sistema de Gestion de Tareas - SENA</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <!-- Contenedor principal que agrupa toda la aplicación -->
-    <div class="container">
-        
-        <!--  SECCIÓN: ENCABEZADO  -->
-        <!-- Header semántico que contiene el título y descripción de la aplicación -->
-        <header class="header">
-            <!-- Título principal de nivel 1, representa el nombre de la aplicación -->
-            <h1 class="header__title">Sistema de Gestión de Tareas</h1>
-            
-            <!-- Párrafo descriptivo que explica el propósito de la aplicación -->
-            <p class="header__subtitle">Busca usuarios y registra tareas asociadas | Ejercicio DOM - SENA</p>
+<body data-modo="inicio">
 
-            <!-- Botones de navegación para cambiar entre las vistas principales -->
-            <div class="header__nav" id="headerNav">
-                <!-- Botón para mostrar el panel de administración de usuarios -->
-                <button type="button" class="btn btn--nav" id="btnAdmin"> Panel Admin</button>
-
-                <!-- Botón para mostrar la vista de búsqueda por documento -->
-                <button type="button" class="btn btn--nav" id="btnBuscar"> Buscar por Documento</button>
-            </div>
+    <!-- PANTALLA DE INICIO: dos botones de acceso -->
+    <div class="pantalla-inicio" id="pantallaInicio">
+        <header class="inicio__header">
+            <h1 class="inicio__titulo">Sistema de Gestion de Tareas</h1>
+            <p class="inicio__subtitulo">Ejercicio DOM · Transferencia del Conocimiento · SENA</p>
         </header>
 
-        <!--  SECCIÓN: BÚSQUEDA DE USUARIO  -->
-        <!-- Section semántico que agrupa el formulario de búsqueda de usuario -->
-        <section class="form-section">
-            <!-- Card contenedor para organizar visualmente el formulario -->
-            <div class="card">
-                <!-- Título secundario que identifica la sección de búsqueda -->
-                <h2 class="card__title">Buscar Usuario</h2>
-                
-                <!-- Formulario de búsqueda de usuario por documento -->
-                <!-- El atributo novalidate desactiva la validación HTML5 para usar validación personalizada en JavaScript -->
-                <form id="searchUserForm" class="form" novalidate>
-                    <!-- Grupo de campos del formulario para organizar label + input + mensaje de error -->
-                    <div class="form__group">
-                        <!-- Label asociado al input mediante el atributo 'for', mejora accesibilidad -->
-                        <label for="userDocument" class="form__label">
-                            Documento del Usuario
-                        </label>
-                        
-                        <!-- Input de tipo number para capturar el documento del usuario -->
-                        <!-- El aria-required se agregará dinámicamente desde JavaScript para control total de validación -->
-                        <input 
-                            type="text" 
-                            id="userDocument" 
-                            class="form__input" 
-                            placeholder="Ingresa el número de documento"
-                        >
-                        
-                        <!-- Span vacío que se llenará dinámicamente con mensajes de error desde JavaScript -->
-                        <span class="form__error" id="userDocumentError"></span>
-                    </div>
-
-                    <!-- Botón de tipo submit para enviar el formulario de búsqueda -->
-                    <button type="submit" class="btn btn--primary" id="searchBtn">
-                        <!-- Span para el texto del botón -->
-                        <span class="btn__text">Buscar Usuario</span>
-                        
-                        <!-- Span para el ícono visual del botón -->
-                        <span class="btn__icon">🔍</span>
-                    </button>
-                </form>
+        <div class="inicio__accesos">
+            <div class="acceso-card acceso-card--usuario">
+                <h2 class="acceso-card__titulo">Acceso Usuario</h2>
+                <p class="acceso-card__desc">
+                    Busca tus tareas asignadas por numero de documento,
+                    edita su estado y anade comentarios.
+                </p>
+                <button class="btn-acceso btn-acceso--usuario" id="btnAccesoUsuario">
+                    Ingresar como Usuario
+                </button>
             </div>
-        </section>
 
-        <!--  SECCIÓN: DATOS DEL USUARIO  -->
-        <!-- Section que muestra los datos del usuario encontrado -->
-        <!-- Esta sección está oculta por defecto y se muestra cuando se encuentra un usuario -->
-        <section class="user-data-section hidden" id="userDataSection">
-            <!-- Card contenedor para organizar visualmente los datos del usuario -->
-            <div class="card">
-                <!-- Título secundario que identifica la sección de datos del usuario -->
-                <h2 class="card__title">Datos del Usuario</h2>
-                
-                <!-- Div contenedor para organizar los datos del usuario en formato de información -->
-                <div class="user-info" id="userInfo">
-                    <!-- Párrafo para mostrar el ID del usuario -->
-                    <!-- El strong enfatiza visualmente la etiqueta -->
-                    <p class="user-info__item">
-                        <strong>ID:</strong> 
-                        <!-- Span que se llenará dinámicamente con el ID del usuario desde JavaScript -->
-                        <span id="userId"></span>
-                    </p>
-                    
-                    <!-- Párrafo para mostrar el nombre del usuario -->
-                    <p class="user-info__item">
-                        <strong>Nombre:</strong> 
-                        <!-- Span que se llenará dinámicamente con el nombre del usuario desde JavaScript -->
-                        <span id="userName"></span>
-                    </p>
-                    
-                    <!-- Párrafo para mostrar el email del usuario -->
-                    <p class="user-info__item">
-                        <strong>Email:</strong> 
-                        <!-- Span que se llenará dinámicamente con el email del usuario desde JavaScript -->
-                        <span id="userEmail"></span>
-                    </p>
+            <div class="acceso-card acceso-card--admin">
+                <h2 class="acceso-card__titulo">Acceso Administrador</h2>
+                <p class="acceso-card__desc">
+                    Crea usuarios, gestiona todas las tareas del sistema,
+                    filtra, ordena y exporta.
+                </p>
+                <button class="btn-acceso btn-acceso--admin" id="btnAccesoAdmin">
+                    Ingresar como Administrador
+                </button>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p class="footer__text">
+                Ejercicio de Manipulacion del DOM - Transferencia del Conocimiento |
+                SENA - Tecnico en Programacion de Software
+            </p>
+        </footer>
+    </div>
+
+
+    <!-- VISTA USUARIO -->
+    <div class="vista hidden" id="vistaUsuario">
+
+        <header class="header header--usuario">
+            <div class="header__nav">
+                <!-- Botón volver usuario: morado, flecha CSS + texto -->
+                <button class="btn-volver" id="btnVolverUsuario">Volver</button>
+            </div>
+            <h1 class="header__title">Mi Portal de Tareas</h1>
+            <p class="header__subtitle">Ingresa tu documento para ver y gestionar tus tareas asignadas</p>
+        </header>
+
+        <main class="contenido-vista">
+
+            <!-- Card: buscar por documento -->
+            <section class="form-section">
+                <div class="card">
+                    <h2 class="card__title">Buscar mis tareas</h2>
+                    <form id="searchUserForm" class="form" novalidate>
+                        <div class="form__group">
+                            <label for="userDocument" class="form__label">Numero de documento</label>
+                            <input
+                                type="text"
+                                id="userDocument"
+                                class="form__input"
+                                placeholder="Ej: 1097497124"
+                                autocomplete="off"
+                            >
+                            <span class="form__error" id="userDocumentError"></span>
+                        </div>
+                        <button type="submit" class="btn btn--primary">
+                            <span class="btn__text">Buscar mis tareas</span>
+                        </button>
+                    </form>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!--  SECCIÓN: REGISTRO DE TAREAS  -->
-        <!-- Section que contiene el formulario para registrar nuevas tareas -->
-        <!-- Esta sección está oculta por defecto y se habilita cuando se encuentra un usuario -->
-        <section class="form-section hidden" id="taskFormSection">
-            <!-- Card contenedor para organizar visualmente el formulario de tareas -->
-            <div class="card">
-                <!-- Título secundario que identifica la sección de registro de tareas -->
-                <h2 class="card__title">Registrar Nueva Tarea</h2>
-                
-                <!-- Formulario de registro de tareas -->
-                <!-- El atributo novalidate desactiva la validación HTML5 para usar validación personalizada en JavaScript -->
-                <form id="taskForm" class="form" novalidate>
-                    <!-- Grupo de campos para el título de la tarea -->
-                    <div class="form__group">
-                        <!-- Label asociado al input del título -->
-                        <label for="taskTitle" class="form__label">
-                            Título de la Tarea
-                        </label>
-                        
-                        <!-- Input de tipo text para capturar el título de la tarea -->
-                        <!-- El aria-required se agregará dinámicamente desde JavaScript -->
-                        <input 
-                            type="text" 
-                            id="taskTitle" 
-                            class="form__input" 
-                            placeholder="Ingresa el título de la tarea"
-                        >
-                        
-                        <!-- Span para mostrar mensajes de error de validación -->
-                        <span class="form__error" id="taskTitleError"></span>
+            <!-- Card datos usuario y tabla de tareas: se muestran desde tareasService.js -->
+            <section class="hidden" id="userDataSection">
+                <div class="card card--usuario-info">
+                    <h2 class="card__title">Datos del usuario</h2>
+                    <div class="user-info">
+                        <div class="user-info__item">
+                            <span class="user-info__label">ID</span>
+                            <span class="user-info__value" id="userId"></span>
+                        </div>
+                        <div class="user-info__item">
+                            <span class="user-info__label">Nombre</span>
+                            <span class="user-info__value" id="userName"></span>
+                        </div>
+                        <div class="user-info__item">
+                            <span class="user-info__label">Correo</span>
+                            <span class="user-info__value" id="userEmail"></span>
+                        </div>
                     </div>
+                </div>
+            </section>
 
-                    <!-- Grupo de campos para la descripción de la tarea -->
-                    <div class="form__group">
-                        <!-- Label asociado al textarea de la descripción -->
-                        <label for="taskDescription" class="form__label">
-                            Descripción
-                        </label>
-                        
-                        <!-- Textarea para capturar la descripción detallada de la tarea -->
-                        <!-- El atributo rows define la altura visual inicial del textarea -->
-                        <!-- El aria-required se agregará dinámicamente desde JavaScript -->
-                        <textarea 
-                            id="taskDescription" 
-                            class="form__input form__textarea" 
-                            placeholder="Describe la tarea..."
-                            rows="4"
-                        ></textarea>
-                        
-                        <!-- Span para mostrar mensajes de error de validación -->
-                        <span class="form__error" id="taskDescriptionError"></span>
-                    </div>
+            <section class="tasks-section hidden" id="tasksSection">
+                <div class="tasks-header">
+                    <h2 class="tasks-header__title">Mis tareas asignadas</h2>
+                    <span class="tasks-header__count" id="tasksCount">0 tareas</span>
+                </div>
+                <div class="tasks-table-container">
+                    <table class="tasks-table">
+                        <thead class="tasks-table__head">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Titulo</th>
+                                <th scope="col">Descripcion</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col">Comentario</th>
+                                <th scope="col">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tasksTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="tasks-empty" id="tasksEmptyState">
+                    <p class="tasks-empty__text">No tienes tareas asignadas</p>
+                    <p class="tasks-empty__subtext">El administrador te asignara tareas desde su panel</p>
+                </div>
+            </section>
 
-                    <!-- Grupo de campos para el estado de la tarea -->
-                    <div class="form__group">
-                        <!-- Label asociado al select del estado -->
-                        <label for="taskStatus" class="form__label">
-                            Estado de la Tarea
-                        </label>
-                        
-                        <!-- Select (lista desplegable) para seleccionar el estado de la tarea -->
-                        <!-- El aria-required se agregará dinámicamente desde JavaScript -->
-                        <select 
-                            id="taskStatus" 
-                            class="form__input"
-                        >
-                            <!-- Opción por defecto deshabilitada que funciona como placeholder -->
-                            <option value="" disabled selected>Selecciona un estado</option>
-                            
-                            <!-- Opciones de estado disponibles para la tarea -->
-                            <option value="pendiente">Pendiente</option>
-                            <option value="en_progreso">En Progreso</option>
-                            <option value="completada">Completada</option>
-                        </select>
-                        
-                        <!-- Span para mostrar mensajes de error de validación -->
-                        <span class="form__error" id="taskStatusError"></span>
-                    </div>
+        </main>
 
-                    <!-- Botón de tipo submit para enviar el formulario de tareas -->
-                    <button type="submit" class="btn btn--primary" id="taskSubmitBtn">
-                        <!-- Span para el texto del botón -->
-                        <span class="btn__text">Registrar Tarea</span>
-                    </button>
-                </form>
+        <footer class="footer">
+            <p class="footer__text">
+                Ejercicio de Manipulacion del DOM - Transferencia del Conocimiento |
+                SENA - Tecnico en Programacion de Software
+            </p>
+        </footer>
+    </div>
+
+
+    <!-- VISTA ADMIN -->
+    <div class="vista hidden" id="vistaAdmin">
+
+        <header class="header header--admin">
+            <div class="header__nav">
+                <!-- Botón volver admin: blanco con hover azul -->
+                <button class="btn-volver btn-volver--admin" id="btnVolverAdmin">Volver</button>
             </div>
-        </section>
+            <h1 class="header__title">Panel de Administracion</h1>
+            <p class="header__subtitle">Gestion completa de usuarios y tareas del sistema</p>
 
-        <!--  SECCIÓN: LISTA DE TAREAS  -->
-        <!-- Section que muestra la tabla de tareas registradas -->
-        <!-- Esta sección está oculta por defecto y se muestra cuando hay tareas registradas -->
-        <section class="tasks-section hidden" id="tasksSection">
-            <!-- Div contenedor del encabezado de la sección de tareas -->
-            <div class="tasks-header">
-                <!-- Título secundario que identifica la sección de tareas registradas -->
-                <h2 class="tasks-header__title">Tareas Registradas</h2>
-                
-                <!-- Span que muestra el contador de tareas -->
-                <!-- Se actualiza dinámicamente desde JavaScript -->
-                <span class="tasks-header__count" id="tasksCount">0 tareas</span>
+            <!-- Buscador de usuario integrado en el header del admin -->
+            <!-- Al buscar, abre el modal dinámico en lugar de un panel fijo -->
+            <form id="adminSearchUserForm" novalidate class="header__busqueda-admin">
+                <input
+                    type="text"
+                    id="adminUserDocument"
+                    placeholder="Buscar usuario por nombre, doc o ID..."
+                    autocomplete="off"
+                >
+                <button type="submit">Buscar</button>
+            </form>
+        </header>
+
+        <main class="contenido-vista contenido-vista--admin">
+
+            <!-- Fila superior: solo crear usuario (buscar se movió al header) -->
+            <div class="admin-fila">
+                <section class="admin-card">
+                    <h2 class="admin-card__titulo">Crear Usuario</h2>
+                    <form id="createUserForm" class="form" novalidate>
+                        <div class="form__group">
+                            <label for="newUserId" class="form__label">Numero de documento</label>
+                            <input type="text" id="newUserId" class="form__input" placeholder="Ej: 1097497124" autocomplete="off">
+                            <span class="form__error" id="newUserIdError"></span>
+                        </div>
+                        <div class="form__group">
+                            <label for="newUserName" class="form__label">Nombre completo</label>
+                            <input type="text" id="newUserName" class="form__input" placeholder="Ej: Karol Torres">
+                            <span class="form__error" id="newUserNameError"></span>
+                        </div>
+                        <div class="form__group">
+                            <label for="newUserEmail" class="form__label">Correo electronico</label>
+                            <input type="email" id="newUserEmail" class="form__input" placeholder="Ej: usuario@correo.com">
+                            <span class="form__error" id="newUserEmailError"></span>
+                        </div>
+                        <button type="submit" class="btn btn--admin-primary">
+                            <span class="btn__text">Crear Usuario</span>
+                        </button>
+                    </form>
+                </section>
             </div>
-            
-            <!-- Div contenedor para la tabla de tareas -->
-            <div class="tasks-table-container">
 
-                <!-- CONTROLES DE FILTRO, ORDEN Y EXPORTACION (RF01, RF02, RF04) -->
-                <!-- Estos elementos los usa Juan para conectar la logica desde tareasService.js -->
+            <!-- Tabla de usuarios con acciones -->
+            <section class="admin-card admin-card--full">
+                <div class="admin-card__cabecera">
+                    <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
+                    <button class="btn btn--admin-secondary" id="btnRefrescarUsuarios">Actualizar</button>
+                </div>
+                <div class="tasks-table-container">
+                    <table class="tasks-table tasks-table--admin">
+                        <thead class="tasks-table__head">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Documento</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Correo</th>
+                                <th scope="col">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Tabla de todas las tareas con filtros -->
+            <section class="admin-card admin-card--full">
+                <div class="admin-card__cabecera">
+                    <h2 class="admin-card__titulo">Todas las Tareas del Sistema</h2>
+                    <span id="adminTasksCount" class="tasks-header__count">0 tareas</span>
+                </div>
+
                 <div class="tasks-controls">
-
-                    <!-- RF01: Filtro por estado — Juan conecta el listener en manejarFiltro() -->
                     <div class="tasks-controls__grupo">
-                        <label for="filtroEstado" class="tasks-controls__label">Filtrar por estado:</label>
-                        <select id="filtroEstado" class="tasks-controls__select">
+                        <label for="adminFiltroEstado" class="tasks-controls__label">Estado</label>
+                        <select id="adminFiltroEstado" class="tasks-controls__select">
                             <option value="">Todos</option>
                             <option value="pendiente">Pendiente</option>
                             <option value="en_progreso">En Progreso</option>
                             <option value="completada">Completada</option>
                         </select>
                     </div>
-
-                    <!-- RF01: Filtro por ID de usuario — Juan conecta el listener en manejarFiltro() -->
                     <div class="tasks-controls__grupo">
-                        <label for="filtroUsuario" class="tasks-controls__label">Filtrar por usuario:</label>
-                        <input
-                            type="text"
-                            id="filtroUsuario"
-                            class="tasks-controls__input"
-                            placeholder="ID del usuario"
-                        />
+                        <label for="adminFiltroUsuario" class="tasks-controls__label">Usuario</label>
+                        <input type="text" id="adminFiltroUsuario" class="tasks-controls__input" placeholder="Nombre o documento">
                     </div>
-
-                    <!-- RF01: Boton para limpiar todos los filtros activos -->
-                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                        <button type="button" id="limpiarFiltros" class="btn btn--secondary">
-                            <span class="btn__text">Limpiar filtros</span>
-                        </button>
-                    </div>
-
-                    <!-- RF02: Selector de ordenamiento — Juan conecta el listener en manejarOrdenamiento() -->
                     <div class="tasks-controls__grupo">
-                        <label for="ordenSelect" class="tasks-controls__label">Ordenar por:</label>
-                        <select id="ordenSelect" class="tasks-controls__select">
-                            <option value="">Sin ordenar</option>
-                            <option value="titulo">Titulo A-Z</option>
-                            <option value="estado">Estado</option>
-                            <option value="fecha">Fecha de creacion</option>
+                        <label for="adminOrdenSelect" class="tasks-controls__label">Ordenar</label>
+                        <!-- Los valores coinciden con los criterios que acepta ordenarTareas() en ordenamiento.js -->
+                        <select id="adminOrdenSelect" class="tasks-controls__select">
+                            <option value="">Sin orden</option>
+                            <option value="titulo_asc">Titulo A-Z</option>
+                            <option value="titulo_desc">Titulo Z-A</option>
+                            <option value="estado">Por estado</option>
+                            <option value="usuario">Por usuario</option>
                         </select>
                     </div>
-
-                    <!-- RF04: Boton de exportacion — Juan conecta el listener en manejarExportacion() -->
                     <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                        <button type="button" id="exportarBtn" class="btn btn--secondary">
-                            <span class="btn__text">Exportar JSON</span>
-                        </button>
+                        <button class="btn btn--admin-primary" id="adminBtnAplicarFiltros">Aplicar</button>
                     </div>
-
+                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
+                        <button class="btn btn--admin-secondary" id="adminBtnLimpiarFiltros">Limpiar</button>
+                    </div>
+                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
+                        <button class="btn btn--admin-primary" id="adminBtnExportar">Exportar JSON</button>
+                    </div>
                 </div>
 
-                <!-- Tabla HTML para mostrar las tareas de forma estructurada -->
-                <!-- La tabla permite organizar datos en filas y columnas -->
-                <table class="tasks-table" id="tasksTable">
-                    <!-- Thead agrupa las filas de encabezado de la tabla -->
-                    <thead>
-                        <!-- Fila de encabezado que contiene los títulos de las columnas -->
-                        <tr>
-                            <!-- Cada th representa un encabezado de columna -->
-                            <!-- El scope="col" mejora la accesibilidad indicando que es encabezado de columna -->
-                            <th scope="col">#</th>
-                            <th scope="col">Título</th>
-                            <th scope="col">Descripción</th>
-                            <th scope="col">Estado</th>
-                            <th scope="col">Usuario</th>
-                            <!-- Columna nueva para los botones de editar y eliminar (RF-03 y RF-04) -->
-                            <th scope="col">Acciones</th>
-                        </tr>
-                    </thead>
-                    
-                    <!-- Tbody agrupa las filas de datos de la tabla -->
-                    <!-- Las filas de datos se crearán dinámicamente desde JavaScript -->
-                    <tbody id="tasksTableBody">
-                        <!-- Las filas de tareas se insertarán aquí dinámicamente -->
-                    </tbody>
-                </table>
-            </div>
+                <div class="tasks-table-container">
+                    <table class="tasks-table tasks-table--admin">
+                        <thead class="tasks-table__head">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Titulo</th>
+                                <th scope="col">Descripcion</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col">Usuario asignado</th>
+                                <th scope="col">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTasksTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
 
-            <!-- Div que se muestra cuando no hay tareas registradas -->
-            <!-- Estado vacío con mensaje informativo -->
-            <!-- El ícono se puede agregar dinámicamente desde JavaScript o usar un emoji directamente -->
-            <div class="tasks-empty" id="tasksEmptyState">
-                <!-- Emoji como ícono decorativo simple (alternativa al SVG) -->
-                <div class="tasks-empty__icon">📋</div>
-                
-                <!-- Párrafo con mensaje principal del estado vacío -->
-                <p class="tasks-empty__text">No hay tareas registradas</p>
-                
-                <!-- Párrafo con mensaje secundario que guía al usuario -->
-                <p class="tasks-empty__subtext">Busca un usuario y registra su primera tarea</p>
-            </div>
-        </section>
+        </main>
 
-        <!--  SECCIÓN: PANEL DE ADMINISTRACIÓN  -->
-        <!-- Oculta por defecto. Se muestra al hacer clic en "Panel Admin" -->
-        <!-- adminPanel.js monta aquí la tabla de usuarios y la lista de tareas -->
-        <section class="form-section hidden" id="adminSection">
-            <div id="adminPanelContenedor"></div>
-        </section>
-
-        <!--  SECCIÓN: BÚSQUEDA POR DOCUMENTO  -->
-        <!-- Oculta por defecto. Se muestra al hacer clic en "Buscar por Documento" -->
-        <!-- buscarUsuario.js monta aquí el formulario y los resultados -->
-        <section class="form-section hidden" id="buscarSection">
-            <div id="buscarContenedor"></div>
-        </section>
-        
-        <!--  SECCIÓN: PIE DE PÁGINA  -->
-        <!-- Footer semántico que contiene información institucional -->
-        <footer class="footer">
-            <!-- Párrafo con información del ejercicio y la institución -->
-            <p class="footer__text">Ejercicio de Manipulación del DOM - Transferencia del Conocimiento | SENA - Técnico en Programación de Software</p>
+        <footer class="footer footer--admin">
+            <p class="footer__text">
+                Panel de Administracion · Sistema de Gestion de Tareas |
+                SENA - Tecnico en Programacion de Software
+            </p>
         </footer>
     </div>
 
-    <!-- Script que enlaza el archivo JavaScript externo -->
-    <!-- Se coloca al final del body para asegurar que el DOM esté completamente cargado antes de ejecutar el script -->
 
-    <!--  MODAL DE EDICIÓN DE TAREAS (RF-03 - UPDATE)  -->
-    <!-- Este overlay oscuro cubre toda la pantalla cuando el modal está abierto -->
-    <!-- JavaScript lo muestra/oculta quitando y agregando la clase 'hidden' -->
+    <!-- MODAL DE EDICIÓN DE TAREA (modo usuario) -->
     <div class="modal-overlay hidden" id="editModal">
-        
-        <!-- Contenedor del modal propiamente dicho (la caja blanca al centro) -->
         <div class="modal">
-            
-            <!-- Encabezado del modal con título y botón de cerrar -->
             <div class="modal__header">
-                <!-- Título del modal que indica la acción a realizar -->
                 <h2 class="modal__title">Editar Tarea</h2>
-                
-                <!-- Botón X para cerrar el modal sin guardar cambios -->
-                <!-- Su handler se registra dinámicamente desde tareasService.js -->
                 <button class="modal__close" id="editCloseBtn" type="button">✕</button>
             </div>
-
-            <!-- Formulario de edición dentro del modal -->
-            <!-- novalidate desactiva la validación HTML5 para usar la nuestra en JS -->
             <form id="editTaskForm" class="form" novalidate>
-                
-                <!-- Campo oculto que guarda el ID de la tarea que se está editando -->
-                <!-- JavaScript lee este valor al enviar el PATCH para saber qué tarea actualizar -->
                 <input type="hidden" id="editTaskId">
-
-                <!-- Grupo de campos para el título de la tarea -->
                 <div class="form__group">
-                    <!-- Label asociado al input de título de edición -->
-                    <label for="editTaskTitle" class="form__label">
-                        Título de la Tarea
-                    </label>
-                    
-                    <!-- Input de texto precargado con el título actual de la tarea -->
-                    <!-- JavaScript llenará este campo con task.title al abrir el modal -->
-                    <input
-                        type="text"
-                        id="editTaskTitle"
-                        class="form__input"
-                        placeholder="Ingresa el nuevo título"
-                    >
+                    <label for="editTaskTitle" class="form__label">Titulo</label>
+                    <input type="text" id="editTaskTitle" class="form__input" placeholder="Nuevo titulo">
                 </div>
-
-                <!-- Grupo de campos para la descripción de la tarea -->
                 <div class="form__group">
-                    <!-- Label asociado al textarea de descripción de edición -->
-                    <label for="editTaskDescription" class="form__label">
-                        Descripción
-                    </label>
-                    
-                    <!-- Textarea precargado con la descripción actual de la tarea -->
-                    <!-- JavaScript llenará este campo con task.description al abrir el modal -->
-                    <textarea
-                        id="editTaskDescription"
-                        class="form__input form__textarea"
-                        placeholder="Ingresa la nueva descripción..."
-                        rows="4"
-                    ></textarea>
+                    <label for="editTaskDescription" class="form__label">Descripcion</label>
+                    <textarea id="editTaskDescription" class="form__input form__textarea" rows="3" placeholder="Nueva descripcion..."></textarea>
                 </div>
-
-                <!-- Grupo de campos para el estado de la tarea -->
                 <div class="form__group">
-                    <!-- Label asociado al select de estado de edición -->
-                    <label for="editTaskStatus" class="form__label">
-                        Estado de la Tarea
-                    </label>
-                    
-                    <!-- Select precargado con el estado actual de la tarea -->
-                    <!-- JavaScript seleccionará la opción correspondiente al estado actual -->
+                    <label for="editTaskStatus" class="form__label">Estado</label>
                     <select id="editTaskStatus" class="form__input">
-                        <!-- Opción por defecto deshabilitada que funciona como placeholder -->
                         <option value="" disabled>Selecciona un estado</option>
-                        
-                        <!-- Las mismas opciones que el formulario de creación -->
                         <option value="pendiente">Pendiente</option>
                         <option value="en_progreso">En Progreso</option>
                         <option value="completada">Completada</option>
                     </select>
                 </div>
-
-                <!-- Contenedor de los botones de acción del modal -->
+                <div class="form__group">
+                    <label for="editTaskComment" class="form__label">
+                        Comentario <span class="form__label--opcional">(opcional)</span>
+                    </label>
+                    <textarea id="editTaskComment" class="form__input form__textarea" rows="2" placeholder="Agrega o edita el comentario..."></textarea>
+                </div>
                 <div class="modal__actions">
-                    <!-- Botón para cancelar la edición y cerrar el modal sin guardar -->
-                    <!-- type="button" evita que dispare el submit del formulario -->
                     <button type="button" class="btn btn--secondary" id="editCancelBtn">
                         <span class="btn__text">Cancelar</span>
                     </button>
-                    
-                    <!-- Botón para guardar los cambios enviando el formulario -->
-                    <!-- type="submit" dispara el evento submit del form al hacer clic -->
                     <button type="submit" class="btn btn--primary">
                         <span class="btn__text">Guardar Cambios</span>
                     </button>

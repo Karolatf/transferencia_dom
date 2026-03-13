@@ -1,174 +1,225 @@
 // MÓDULO: ui/buscarUsuario.js
 // CAPA: UI (manipulación visual de la interfaz)
 
-// Responsabilidad única: montar la vista de búsqueda de usuario por documento.
-// Cualquier persona puede escribir un número de documento y ver las tareas
-// asignadas a ese usuario. No requiere ser administrador.
+// Responsabilidad única: montar la vista de búsqueda de usuario para el modo usuario.
+// El usuario escribe su número de documento y ve sus tareas asignadas en una lista.
+// Este módulo NO maneja edición ni eliminación de tareas — eso es responsabilidad
+// de tareasService.js que usa la tabla fija del HTML con botones Editar y Eliminar.
 
-// Se importa la función de búsqueda de tareasApi.js (ya corregida en Tarea 1)
+// Todo el DOM se construye con createElement y appendChild.
+// Ninguna línea de este archivo usa innerHTML ni atributos style en JS.
+
+// Se importa la función de búsqueda de usuario por documento desde tareasApi.js
 import { buscarUsuarioPorDocumento } from '../api/tareasApi.js';
 
-// Se importa la URL base para hacer la petición de tareas
+// Se importa la URL base para construir las peticiones de tareas del usuario
 import { API_BASE_URL } from '../utils/config.js';
 
 // Función principal que monta la vista de búsqueda en el contenedor recibido
 // Parámetro: contenedor — el elemento HTML donde se renderiza la vista
 export function montarBuscarUsuario(contenedor) {
 
-    // Se limpia el contenedor antes de renderizar para evitar duplicados
-    contenedor.innerHTML = '';
+    // Se vacía el contenedor con removeChild para no usar innerHTML
+    while (contenedor.firstChild) contenedor.removeChild(contenedor.firstChild);
 
-    // Se crea la tarjeta que agrupa toda la vista de búsqueda
+    // Tarjeta principal que envuelve toda la vista de búsqueda
     const card = document.createElement('div');
     card.className = 'card';
 
-    // Se agrega el título de la sección
+    // Título de la sección de búsqueda
     const titulo = document.createElement('h2');
-    titulo.className = 'card__title';
-    titulo.textContent = 'Buscar Usuario por Documento';
+    titulo.className   = 'card__title';
+    titulo.textContent = 'Buscar mis tareas';
     card.appendChild(titulo);
 
-    // Se construye el formulario de búsqueda con un input y un botón
+    // Formulario de búsqueda: contiene el input de documento y el botón buscar
     const formulario = document.createElement('form');
     formulario.className = 'form';
+    // noValidate desactiva la validación nativa del navegador para manejarla manualmente
     formulario.noValidate = true;
-    formulario.innerHTML = `
-        <div class="form__group">
-            <label for="buscar-input-doc" class="form__label">
-                Número de documento
-            </label>
-            <input
-                type="text"
-                id="buscar-input-doc"
-                class="form__input"
-                placeholder="Ingresa el número de documento"
-            >
-        </div>
-        <button type="submit" class="btn btn--primary">
-            <span class="btn__text">Buscar Usuario</span>
-            <span class="btn__icon">🔍</span>
-        </button>
-    `;
+
+    // Grupo del campo de documento (label + input + span de error)
+    const grupo = document.createElement('div');
+    grupo.className = 'form__group';
+
+    // Etiqueta del campo de documento
+    const label = document.createElement('label');
+    label.setAttribute('for', 'buscar-input-doc');
+    label.className   = 'form__label';
+    label.textContent = 'Numero de documento';
+    grupo.appendChild(label);
+
+    // Input de texto donde el usuario escribe su número de documento
+    const input = document.createElement('input');
+    input.type        = 'text';
+    input.id          = 'buscar-input-doc';
+    input.className   = 'form__input';
+    input.placeholder = 'Ingresa tu numero de documento';
+    grupo.appendChild(input);
+
+    // Span donde se mostrará el mensaje de error si el campo queda vacío
+    const errorSpan = document.createElement('span');
+    errorSpan.className = 'form__error';
+    errorSpan.id        = 'buscar-input-error';
+    grupo.appendChild(errorSpan);
+
+    formulario.appendChild(grupo);
+
+    // Botón de submit del formulario de búsqueda
+    const boton = document.createElement('button');
+    boton.type      = 'submit';
+    boton.className = 'btn btn--primary';
+
+    // El span interior es requerido por la clase btn del proyecto (ver styles.css)
+    const textoBoton = document.createElement('span');
+    textoBoton.className   = 'btn__text';
+    textoBoton.textContent = 'Buscar mis tareas';
+    boton.appendChild(textoBoton);
+    formulario.appendChild(boton);
+
     card.appendChild(formulario);
 
-    // Se crea el área donde aparecerán los resultados
-    // Empieza oculta con la clase 'hidden' del proyecto
+    // Área de resultado que empieza oculta con la clase 'hidden'
+    // Se revela cuando hay un resultado de búsqueda para mostrar
     const areaResultado = document.createElement('div');
-    areaResultado.id = 'buscar-resultado';
+    areaResultado.id        = 'buscar-resultado';
     areaResultado.className = 'buscar-resultado hidden';
     card.appendChild(areaResultado);
 
-    // Se inserta la tarjeta en el contenedor
     contenedor.appendChild(card);
 
-    // Se registra el evento submit del formulario de búsqueda
-    formulario.addEventListener('submit', async function (event) {
+    // Listener que limpia el error del campo mientras el usuario escribe
+    // Mejora la UX: el error desaparece en cuanto el usuario empieza a corregir
+    input.addEventListener('input', function() {
+        errorSpan.textContent = '';
+        input.classList.remove('error');
+    });
 
-        // Se previene el comportamiento nativo (recarga de página)
+    // Listener del submit del formulario de búsqueda
+    formulario.addEventListener('submit', async function(event) {
+        // Se previene el comportamiento nativo que recargaría la página
         event.preventDefault();
 
-        // Se lee el valor del campo y se limpia de espacios
-        const documento = document.getElementById('buscar-input-doc').value.trim();
+        const documento = input.value.trim();
 
-        // Si el campo está vacío se detiene la búsqueda
-        if (!documento) return;
-
-        // Se muestra mensaje de carga mientras espera la respuesta
-        areaResultado.classList.remove('hidden');
-        areaResultado.innerHTML = '<p>Buscando...</p>';
-
-        // Se llama a la API para buscar el usuario por su número de documento
-        const usuario = await buscarUsuarioPorDocumento(documento);
-
-        // Si no se encontró el usuario se muestra un mensaje de error
-        if (!usuario) {
-            areaResultado.innerHTML = `
-                <p class="buscar-resultado__no-encontrado">
-                    No se encontró ningún usuario con el documento: <strong>${documento}</strong>
-                </p>
-            `;
+        // Se valida que el campo no esté vacío antes de hacer la petición
+        if (!documento) {
+            errorSpan.textContent = 'Ingresa tu numero de documento';
+            input.classList.add('error');
             return;
         }
 
-        // Si se encontró el usuario se obtienen sus tareas desde el backend
-        let tareas = [];
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/tasks`);
-            if (response.ok) {
-                const todasLasTareas = await response.json();
-                // Se filtran solo las tareas donde el id del usuario está en assignedUsers
-                tareas = todasLasTareas.filter(function (tarea) {
-                    return tarea.assignedUsers && tarea.assignedUsers.includes(usuario.id);
-                });
-            }
-        } catch (error) {
-            console.error('❌ Error al obtener las tareas del usuario:', error);
+        // Se revela el área de resultado y se muestra un mensaje de carga
+        areaResultado.classList.remove('hidden');
+        // Se vacía el resultado anterior con removeChild para no usar innerHTML
+        while (areaResultado.firstChild) areaResultado.removeChild(areaResultado.firstChild);
+
+        // Párrafo de carga mientras espera la respuesta del servidor
+        const cargando = document.createElement('p');
+        cargando.textContent = 'Buscando...';
+        areaResultado.appendChild(cargando);
+
+        // Se busca el usuario en el servidor por su número de documento
+        const usuario = await buscarUsuarioPorDocumento(documento);
+
+        // Se vacía el mensaje de carga antes de mostrar el resultado
+        while (areaResultado.firstChild) areaResultado.removeChild(areaResultado.firstChild);
+
+        // Si no se encontró ningún usuario se muestra el mensaje correspondiente
+        if (!usuario) {
+            const noEncontrado = document.createElement('p');
+            noEncontrado.className   = 'buscar-resultado__no-encontrado';
+            noEncontrado.textContent = `No se encontro ningun usuario con el documento: ${documento}`;
+            areaResultado.appendChild(noEncontrado);
+            return;
         }
 
-        // Se construye y muestra el resultado con los datos del usuario y sus tareas
+        // Se obtienen las tareas del usuario filtrando por su id interno
+        // El campo userId en las tareas guarda el id numérico, no el documento
+        let tareas = [];
+        try {
+            const response = await fetch(`${API_BASE_URL}/tasks?userId=${usuario.id}`);
+            if (response.ok) {
+                tareas = await response.json();
+            }
+        } catch (error) {
+            console.error('Error al obtener las tareas del usuario:', error);
+        }
+
+        // Se pinta el resultado con los datos del usuario y su lista de tareas
         renderizarResultadoBusqueda(areaResultado, usuario, tareas);
     });
 }
 
-// Función que construye el HTML del resultado y lo inserta en el área
+// Construye y muestra el resultado de búsqueda con los datos del usuario y sus tareas
 // Parámetros:
 //   area    — el div donde se inserta el resultado
-//   usuario — el objeto del usuario encontrado
-//   tareas  — el arreglo de tareas asignadas a ese usuario
+//   usuario — objeto del usuario encontrado
+//   tareas  — arreglo de tareas asignadas a ese usuario
 function renderizarResultadoBusqueda(area, usuario, tareas) {
 
-    // Se limpia el área antes de renderizar el resultado nuevo
-    area.innerHTML = '';
+    // Se vacía el área antes de pintar el nuevo resultado
+    while (area.firstChild) area.removeChild(area.firstChild);
 
-    // Se muestra el nombre del usuario encontrado como título del resultado
+    // Título con el nombre del usuario encontrado
     const tituloUsuario = document.createElement('h3');
-    tituloUsuario.className = 'buscar-resultado__titulo';
-    tituloUsuario.textContent = `Usuario encontrado: ${usuario.name}`;
+    tituloUsuario.className   = 'buscar-resultado__titulo';
+    tituloUsuario.textContent = `Usuario: ${usuario.name}`;
     area.appendChild(tituloUsuario);
 
-    // Si el usuario no tiene tareas se muestra un mensaje informativo
+    // Si no tiene tareas se muestra un mensaje informativo y se termina
     if (tareas.length === 0) {
         const sinTareas = document.createElement('p');
-        sinTareas.className = 'buscar-resultado__sin-tareas';
-        sinTareas.textContent = 'Este usuario no tiene tareas asignadas.';
+        sinTareas.className   = 'buscar-resultado__sin-tareas';
+        sinTareas.textContent = 'No tienes tareas asignadas.';
         area.appendChild(sinTareas);
         return;
     }
 
-    // Se muestra el número de tareas encontradas
+    // Párrafo con el contador de tareas encontradas
     const contador = document.createElement('p');
-    contador.className = 'buscar-resultado__contador';
+    contador.className   = 'buscar-resultado__contador';
     contador.textContent = `Tareas asignadas: ${tareas.length}`;
     area.appendChild(contador);
 
-    // Se crea la lista de tareas sin viñetas
+    // Lista de tareas con título y badge de estado por cada una
     const lista = document.createElement('ul');
     lista.className = 'buscar-resultado__lista';
 
-    // Se recorre el arreglo de tareas y se crea un elemento por cada una
-    tareas.forEach(function (tarea) {
+    tareas.forEach(function(tarea) {
 
+        // Elemento de lista que contiene el título y el badge de estado
         const item = document.createElement('li');
         item.className = 'buscar-resultado__item';
 
-        // Se formatea el estado para mostrarlo de forma legible
-        const estadoFormateado = formatearEstado(tarea.status);
+        // Span con el título de la tarea
+        const tituloTarea = document.createElement('span');
+        tituloTarea.className   = 'buscar-resultado__tarea-titulo';
+        tituloTarea.textContent = tarea.title;
 
-        item.innerHTML = `
-            <span class="buscar-resultado__tarea-titulo">${tarea.title}</span>
-            <span class="status-badge status-${tarea.status}">${estadoFormateado}</span>
-        `;
+        // Badge coloreado con el estado de la tarea
+        // classList.add acepta múltiples clases: la base y la dinámica de color
+        const badge = document.createElement('span');
+        badge.classList.add('status-badge', `status-${tarea.status}`);
+        badge.textContent = formatearEstado(tarea.status);
 
+        item.appendChild(tituloTarea);
+        item.appendChild(badge);
         lista.appendChild(item);
     });
 
     area.appendChild(lista);
 }
 
-// Función auxiliar que convierte el valor técnico del estado a texto legible
+// Convierte el valor técnico del estado a texto legible en español
+// Se usa para los badges de la lista de tareas de este módulo
+// Parámetro: estado — valor del campo status (pendiente, en_progreso, completada)
 function formatearEstado(estado) {
-    if (estado === 'pendiente')   return 'Pendiente';
-    if (estado === 'en_progreso') return 'En Progreso';
-    if (estado === 'completada')  return 'Completada';
-    return estado;
+    const mapa = {
+        pendiente:   'Pendiente',
+        en_progreso: 'En Progreso',
+        completada:  'Completada'
+    };
+    // Si el estado no existe en el mapa se retorna el valor original como fallback
+    return mapa[estado] || estado;
 }
