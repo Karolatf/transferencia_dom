@@ -48,11 +48,12 @@
     </div>
 
 
-    <!-- VISTA USUARIO: buscar mis tareas y gestionarlas -->
+    <!-- VISTA USUARIO -->
     <div class="vista hidden" id="vistaUsuario">
 
         <header class="header header--usuario">
             <div class="header__nav">
+                <!-- Botón volver usuario: morado, flecha CSS + texto -->
                 <button class="btn-volver" id="btnVolverUsuario">Volver</button>
             </div>
             <h1 class="header__title">Mi Portal de Tareas</h1>
@@ -84,7 +85,7 @@
                 </div>
             </section>
 
-            <!-- Card: datos del usuario encontrado (oculta por defecto) -->
+            <!-- Card datos usuario y tabla de tareas: se muestran desde tareasService.js -->
             <section class="hidden" id="userDataSection">
                 <div class="card card--usuario-info">
                     <h2 class="card__title">Datos del usuario</h2>
@@ -105,9 +106,6 @@
                 </div>
             </section>
 
-            <!-- Tabla de tareas del usuario (oculta por defecto) -->
-            <!-- El usuario solo edita el estado y comentario de sus tareas asignadas -->
-            <!-- Las tareas son creadas y asignadas por el administrador -->
             <section class="tasks-section hidden" id="tasksSection">
                 <div class="tasks-header">
                     <h2 class="tasks-header__title">Mis tareas asignadas</h2>
@@ -145,23 +143,34 @@
     </div>
 
 
-    <!-- VISTA ADMIN: gestion completa del sistema -->
+    <!-- VISTA ADMIN -->
     <div class="vista hidden" id="vistaAdmin">
 
         <header class="header header--admin">
             <div class="header__nav">
+                <!-- Botón volver admin: blanco con hover azul -->
                 <button class="btn-volver btn-volver--admin" id="btnVolverAdmin">Volver</button>
             </div>
             <h1 class="header__title">Panel de Administracion</h1>
             <p class="header__subtitle">Gestion completa de usuarios y tareas del sistema</p>
+
+            <!-- Buscador de usuario integrado en el header del admin -->
+            <!-- Al buscar, abre el modal dinámico en lugar de un panel fijo -->
+            <form id="adminSearchUserForm" novalidate class="header__busqueda-admin">
+                <input
+                    type="text"
+                    id="adminUserDocument"
+                    placeholder="Buscar usuario por nombre, doc o ID..."
+                    autocomplete="off"
+                >
+                <button type="submit">Buscar</button>
+            </form>
         </header>
 
         <main class="contenido-vista contenido-vista--admin">
 
-            <!-- Fila superior: crear usuario + buscar usuario -->
+            <!-- Fila superior: solo crear usuario (buscar se movió al header) -->
             <div class="admin-fila">
-
-                <!-- Card: crear nuevo usuario -->
                 <section class="admin-card">
                     <h2 class="admin-card__titulo">Crear Usuario</h2>
                     <form id="createUserForm" class="form" novalidate>
@@ -185,82 +194,9 @@
                         </button>
                     </form>
                 </section>
-
-                <!-- Card: buscar usuario en el sistema -->
-                <section class="admin-card">
-                    <h2 class="admin-card__titulo">Buscar Usuario</h2>
-                    <form id="adminSearchUserForm" class="form" novalidate>
-                        <div class="form__group">
-                            <label for="adminUserDocument" class="form__label">Documento, nombre o ID</label>
-                            <input
-                                type="text"
-                                id="adminUserDocument"
-                                class="form__input"
-                                placeholder="Ingresa documento, nombre o ID"
-                                autocomplete="off"
-                            >
-                        </div>
-                        <button type="submit" class="btn btn--admin-primary">
-                            <span class="btn__text">Buscar</span>
-                        </button>
-                    </form>
-                </section>
-
             </div>
 
-            <!-- Panel dinamico del usuario seleccionado (oculto por defecto) -->
-            <!-- Aparece al crear un usuario o al buscarlo y permite asignarle tareas -->
-            <section class="admin-card admin-card--full hidden" id="adminUserPanel">
-                <div class="admin-panel__cabecera">
-                    <h2 class="admin-card__titulo" id="adminPanelUserName">Usuario</h2>
-                </div>
-
-                <!-- Inputs ocultos que guardan el id interno y el nombre del usuario activo -->
-                <!-- adminPanelUserId: id numerico asignado por json-server -->
-                <!-- adminPanelUserNameHidden: nombre completo para guardarlo en la tarea -->
-                <input type="hidden" id="adminPanelUserId">
-                <input type="hidden" id="adminPanelUserNameHidden">
-
-                <div class="admin-panel__cuerpo">
-
-                    <!-- Lista de tareas actuales del usuario -->
-                    <div class="admin-panel__tareas">
-                        <h3 class="admin-panel__subtitulo">Tareas asignadas</h3>
-                        <div id="adminPanelTareasList"></div>
-                    </div>
-
-                    <!-- Formulario para asignar nueva tarea al usuario -->
-                    <div class="admin-panel__asignar">
-                        <h3 class="admin-panel__subtitulo">Asignar nueva tarea</h3>
-                        <form id="adminAsignarTareaForm" class="form" novalidate>
-                            <div class="form__group">
-                                <label for="adminTareaTitulo" class="form__label">Titulo</label>
-                                <input type="text" id="adminTareaTitulo" class="form__input" placeholder="Titulo de la tarea">
-                            </div>
-                            <div class="form__group">
-                                <label for="adminTareaDesc" class="form__label">
-                                    Descripcion <span class="form__label--opcional">(opcional)</span>
-                                </label>
-                                <textarea id="adminTareaDesc" class="form__input form__textarea" rows="2" placeholder="Descripcion..."></textarea>
-                            </div>
-                            <div class="form__group">
-                                <label for="adminTareaEstado" class="form__label">Estado</label>
-                                <select id="adminTareaEstado" class="form__input">
-                                    <option value="" disabled selected>Selecciona un estado</option>
-                                    <option value="pendiente">Pendiente</option>
-                                    <option value="en_progreso">En Progreso</option>
-                                    <option value="completada">Completada</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn--admin-primary">
-                                <span class="btn__text">Asignar Tarea</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Card: tabla de todos los usuarios con acciones -->
+            <!-- Tabla de usuarios con acciones -->
             <section class="admin-card admin-card--full">
                 <div class="admin-card__cabecera">
                     <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
@@ -282,14 +218,13 @@
                 </div>
             </section>
 
-            <!-- Card: tabla de todas las tareas con filtros -->
+            <!-- Tabla de todas las tareas con filtros -->
             <section class="admin-card admin-card--full">
                 <div class="admin-card__cabecera">
                     <h2 class="admin-card__titulo">Todas las Tareas del Sistema</h2>
                     <span id="adminTasksCount" class="tasks-header__count">0 tareas</span>
                 </div>
 
-                <!-- Controles de filtro y orden -->
                 <div class="tasks-controls">
                     <div class="tasks-controls__grupo">
                         <label for="adminFiltroEstado" class="tasks-controls__label">Estado</label>
@@ -306,6 +241,7 @@
                     </div>
                     <div class="tasks-controls__grupo">
                         <label for="adminOrdenSelect" class="tasks-controls__label">Ordenar</label>
+                        <!-- Los valores coinciden con los criterios que acepta ordenarTareas() en ordenamiento.js -->
                         <select id="adminOrdenSelect" class="tasks-controls__select">
                             <option value="">Sin orden</option>
                             <option value="titulo_asc">Titulo A-Z</option>
@@ -353,12 +289,12 @@
     </div>
 
 
-    <!-- MODAL DE EDICION (disponible en modo usuario) -->
+    <!-- MODAL DE EDICIÓN DE TAREA (modo usuario) -->
     <div class="modal-overlay hidden" id="editModal">
         <div class="modal">
             <div class="modal__header">
                 <h2 class="modal__title">Editar Tarea</h2>
-                <button class="modal__close" id="editCloseBtn" type="button">X</button>
+                <button class="modal__close" id="editCloseBtn" type="button">✕</button>
             </div>
             <form id="editTaskForm" class="form" novalidate>
                 <input type="hidden" id="editTaskId">

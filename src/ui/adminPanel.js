@@ -3,35 +3,37 @@
 
 // Responsabilidad única: montar y gestionar el panel de administración.
 // El panel tiene dos secciones:
-//   1. Lista de usuarios con opción de crear y eliminar
+//   1. Lista de usuarios con formulario de creación y opción de eliminar
 //   2. Lista de todas las tareas del sistema
 
 // Este módulo importa de api/ y de utils/. No importa de services/.
+// Todo el DOM se construye con createElement y appendChild.
+// Ninguna línea de este archivo usa innerHTML ni atributos style en JS.
 
-// Se importan las funciones de la capa API para usuarios
+// Se importan las funciones de la capa API para operaciones CRUD de usuarios
 import { obtenerTodosLosUsuarios, crearUsuario, eliminarUsuario } from '../api/usuariosApi.js';
 
-// Se importa la URL base para hacer peticiones directas de tareas
+// Se importa la URL base para construir las peticiones de tareas
 import { API_BASE_URL } from '../utils/config.js';
 
 // Se importa SweetAlert2 para los diálogos de confirmación y notificaciones
-// Ya está disponible en el proyecto (lo usa tareasService.js)
+// Ya está instalado en el proyecto como dependencia en package.json
 import Swal from 'sweetalert2';
 
 // Función principal que monta el panel de administración en el contenedor recibido
-// Parámetro: contenedor — el elemento HTML donde se renderiza el panel
+// Parámetro: contenedor — el elemento HTML donde se renderiza todo el panel
 export async function montarAdminPanel(contenedor) {
 
-    // Se limpia el contenedor antes de renderizar para evitar duplicados
-    contenedor.innerHTML = '';
+    // Se vacía el contenedor con removeChild en lugar de innerHTML = '' para respetar la regla
+    while (contenedor.firstChild) contenedor.removeChild(contenedor.firstChild);
 
     // Se crea el título principal del panel
     const titulo = document.createElement('h2');
-    titulo.className = 'card__title';
+    titulo.className   = 'card__title';
     titulo.textContent = 'Panel de Administración';
     contenedor.appendChild(titulo);
 
-    // Se crean y montan las dos secciones del panel
+    // Se crean y montan las dos secciones del panel en orden
     await montarSeccionUsuarios(contenedor);
     await montarSeccionTareas(contenedor);
 }
@@ -41,21 +43,21 @@ export async function montarAdminPanel(contenedor) {
 // Parámetro: contenedor — el elemento padre donde se inserta esta sección
 async function montarSeccionUsuarios(contenedor) {
 
-    // Se crea el contenedor de la sección con las clases del proyecto
+    // Contenedor de la sección con las clases de card del proyecto
     const seccion = document.createElement('div');
     seccion.className = 'card admin-seccion';
 
-    // Se agrega el título de la sección
+    // Título de la sección de usuarios
     const tituloSeccion = document.createElement('h3');
-    tituloSeccion.className = 'admin-seccion__titulo';
+    tituloSeccion.className   = 'admin-seccion__titulo';
     tituloSeccion.textContent = 'Usuarios del Sistema';
     seccion.appendChild(tituloSeccion);
 
-    // Se construye el formulario de creación de usuario
+    // Se construye el formulario de creación llamando a la función dedicada
     const formulario = construirFormularioUsuario();
     seccion.appendChild(formulario);
 
-    // Se crea el contenedor donde se renderizará la tabla de usuarios
+    // Div donde se renderizará la tabla de usuarios
     const contenedorTabla = document.createElement('div');
     contenedorTabla.id = 'admin-tabla-usuarios';
     seccion.appendChild(contenedorTabla);
@@ -63,25 +65,28 @@ async function montarSeccionUsuarios(contenedor) {
     // Se inserta la sección completa en el panel
     contenedor.appendChild(seccion);
 
-    // Se registra el evento submit del formulario de creación
-    formulario.addEventListener('submit', async function (event) {
+    // Se registra el evento submit del formulario de creación de usuario
+    formulario.addEventListener('submit', async function(event) {
 
-        // Se previene el comportamiento nativo del formulario (recarga de página)
+        // Se previene el comportamiento nativo que recargaría la página
         event.preventDefault();
 
-        // Se leen los valores de los campos del formulario
+        // Se leen los valores actuales de los tres campos del formulario
         const documento = document.getElementById('admin-input-documento').value.trim();
-        const name = document.getElementById('admin-input-name').value.trim();
-        const email = document.getElementById('admin-input-email').value.trim();
+        const name      = document.getElementById('admin-input-name').value.trim();
+        const email     = document.getElementById('admin-input-email').value.trim();
 
-        // Se valida que ninguno de los tres campos esté vacío
+        // Se valida que ningún campo esté vacío antes de enviar al servidor
         if (!documento || !name || !email) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Campos incompletos',
                 text: 'Todos los campos son obligatorios',
-                customClass: { popup: 'swal-popup', title: 'swal-title',
-                               confirmButton: 'swal-btn-confirmar' }
+                customClass: {
+                    popup:         'swal-popup',
+                    title:         'swal-title',
+                    confirmButton: 'swal-btn-confirmar'
+                }
             });
             return;
         }
@@ -92,10 +97,10 @@ async function montarSeccionUsuarios(contenedor) {
         // Si la creación fue exitosa se recarga la tabla y se limpia el formulario
         if (usuarioCreado) {
             Swal.fire({
-                icon: 'success',
-                title: 'Usuario creado',
-                text: `${name} fue agregado correctamente`,
-                timer: 2000,
+                icon:              'success',
+                title:             'Usuario creado',
+                text:              `${name} fue agregado correctamente`,
+                timer:             2000,
                 showConfirmButton: false,
                 customClass: { popup: 'swal-popup' }
             });
@@ -103,10 +108,13 @@ async function montarSeccionUsuarios(contenedor) {
             await renderizarTablaUsuarios(contenedorTabla);
         } else {
             Swal.fire({
-                icon: 'error',
+                icon:  'error',
                 title: 'Error',
-                text: 'No se pudo crear el usuario',
-                customClass: { popup: 'swal-popup', confirmButton: 'swal-btn-confirmar' }
+                text:  'No se pudo crear el usuario',
+                customClass: {
+                    popup:         'swal-popup',
+                    confirmButton: 'swal-btn-confirmar'
+                }
             });
         }
     });
@@ -116,44 +124,86 @@ async function montarSeccionUsuarios(contenedor) {
 }
 
 // Función que construye y devuelve el formulario de creación de usuario
-// Tiene tres campos: documento, nombre y correo
+// Tiene tres campos: documento, nombre y correo electrónico
+// No recibe parámetros y retorna el elemento form completo listo para insertar
 function construirFormularioUsuario() {
 
-    // Se crea el elemento form
+    // Elemento form contenedor del formulario
     const form = document.createElement('form');
     form.className = 'admin-form';
 
-    // Se crea el campo de documento
+    // GRUPO DOCUMENTO
     const grupoDoc = document.createElement('div');
     grupoDoc.className = 'form__group admin-form__grupo';
-    grupoDoc.innerHTML = `
-        <label for="admin-input-documento" class="form__label">Número de documento</label>
-        <input type="text" id="admin-input-documento" class="form__input" placeholder="Ej: 1097497124">
-    `;
 
-    // Se crea el campo de nombre
+    // Etiqueta del campo documento
+    const labelDoc = document.createElement('label');
+    labelDoc.setAttribute('for', 'admin-input-documento');
+    labelDoc.className   = 'form__label';
+    labelDoc.textContent = 'Número de documento';
+
+    // Input de texto para el número de documento
+    const inputDoc = document.createElement('input');
+    inputDoc.type        = 'text';
+    inputDoc.id          = 'admin-input-documento';
+    inputDoc.className   = 'form__input';
+    inputDoc.placeholder = 'Ej: 1097497124';
+
+    grupoDoc.appendChild(labelDoc);
+    grupoDoc.appendChild(inputDoc);
+
+    // GRUPO NOMBRE
     const grupoNombre = document.createElement('div');
     grupoNombre.className = 'form__group admin-form__grupo';
-    grupoNombre.innerHTML = `
-        <label for="admin-input-name" class="form__label">Nombre completo</label>
-        <input type="text" id="admin-input-name" class="form__input" placeholder="Ej: María López">
-    `;
 
-    // Se crea el campo de correo
+    // Etiqueta del campo nombre
+    const labelNombre = document.createElement('label');
+    labelNombre.setAttribute('for', 'admin-input-name');
+    labelNombre.className   = 'form__label';
+    labelNombre.textContent = 'Nombre completo';
+
+    // Input de texto para el nombre del usuario
+    const inputNombre = document.createElement('input');
+    inputNombre.type        = 'text';
+    inputNombre.id          = 'admin-input-name';
+    inputNombre.className   = 'form__input';
+    inputNombre.placeholder = 'Ej: María López';
+
+    grupoNombre.appendChild(labelNombre);
+    grupoNombre.appendChild(inputNombre);
+
+    // GRUPO EMAIL
     const grupoEmail = document.createElement('div');
     grupoEmail.className = 'form__group admin-form__grupo';
-    grupoEmail.innerHTML = `
-        <label for="admin-input-email" class="form__label">Correo electrónico</label>
-        <input type="email" id="admin-input-email" class="form__input" placeholder="Ej: maria@correo.com">
-    `;
 
-    // Se crea el botón de submit
+    // Etiqueta del campo correo
+    const labelEmail = document.createElement('label');
+    labelEmail.setAttribute('for', 'admin-input-email');
+    labelEmail.className   = 'form__label';
+    labelEmail.textContent = 'Correo electrónico';
+
+    // Input de tipo email — activa la validación nativa del navegador para el formato
+    const inputEmail = document.createElement('input');
+    inputEmail.type        = 'email';
+    inputEmail.id          = 'admin-input-email';
+    inputEmail.className   = 'form__input';
+    inputEmail.placeholder = 'Ej: maria@correo.com';
+
+    grupoEmail.appendChild(labelEmail);
+    grupoEmail.appendChild(inputEmail);
+
+    // BOTÓN SUBMIT
     const boton = document.createElement('button');
-    boton.type = 'submit';
+    boton.type      = 'submit';
     boton.className = 'btn btn--primary';
-    boton.innerHTML = '<span class="btn__text">Crear Usuario</span>';
 
-    // Se ensamblan todos los elementos dentro del formulario
+    // El span interior es requerido por la clase btn del proyecto (ver styles.css)
+    const spanBoton = document.createElement('span');
+    spanBoton.className   = 'btn__text';
+    spanBoton.textContent = 'Crear Usuario';
+    boton.appendChild(spanBoton);
+
+    // Se ensamblan todos los grupos y el botón dentro del form
     form.appendChild(grupoDoc);
     form.appendChild(grupoNombre);
     form.appendChild(grupoEmail);
@@ -162,137 +212,164 @@ function construirFormularioUsuario() {
     return form;
 }
 
-// Función que obtiene los usuarios del backend y renderiza la tabla
+// Función que obtiene los usuarios del backend y renderiza la tabla de usuarios
 // Se llama al montar el panel y después de crear o eliminar un usuario
-// Parámetro: contenedor — el div donde se inserta la tabla
+// Parámetro: contenedor — el div donde se inserta la tabla renderizada
 async function renderizarTablaUsuarios(contenedor) {
 
-    // Se vacía el contenedor para evitar duplicar filas
-    contenedor.innerHTML = '';
+    // Se vacía el contenedor con removeChild para no usar innerHTML
+    while (contenedor.firstChild) contenedor.removeChild(contenedor.firstChild);
 
-    // Se obtienen todos los usuarios desde el backend
+    // Se pide la lista de usuarios al servidor usando la capa API
     const usuarios = await obtenerTodosLosUsuarios();
 
-    // Si no hay usuarios o hubo error se muestra un mensaje
+    // Si no hay usuarios o hubo error se muestra un párrafo indicativo
     if (!usuarios || usuarios.length === 0) {
-        contenedor.innerHTML = '<p class="admin-vacio">No hay usuarios registrados.</p>';
+        const parrafoVacio = document.createElement('p');
+        parrafoVacio.className   = 'admin-vacio';
+        parrafoVacio.textContent = 'No hay usuarios registrados.';
+        contenedor.appendChild(parrafoVacio);
         return;
     }
 
-    // Se crea la tabla HTML reutilizando la clase tasks-table del proyecto
+    // Se crea la tabla reutilizando la clase tasks-table definida en styles.css
     const tabla = document.createElement('table');
     tabla.className = 'tasks-table admin-tabla';
 
-    // Se crea el encabezado de la tabla con las columnas
-    tabla.innerHTML = `
-        <thead>
-            <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Documento</th>
-                <th scope="col">Nombre</th>
-                <th scope="col">Correo</th>
-                <th scope="col">Acciones</th>
-            </tr>
-        </thead>
-    `;
+    // THEAD de la tabla de usuarios
+    const thead    = document.createElement('thead');
+    const filaHead = document.createElement('tr');
 
-    // Se crea el tbody donde se insertarán las filas
+    // Se crea cada th del encabezado — scope="col" mejora la accesibilidad de la tabla
+    ['ID', 'Documento', 'Nombre', 'Correo', 'Acciones'].forEach(function(texto) {
+        const th = document.createElement('th');
+        th.setAttribute('scope', 'col');
+        th.textContent = texto;
+        filaHead.appendChild(th);
+    });
+
+    thead.appendChild(filaHead);
+    tabla.appendChild(thead);
+
+    // TBODY de la tabla de usuarios
     const tbody = document.createElement('tbody');
 
-    // Se recorre el arreglo de usuarios y se crea una fila por cada uno
-    usuarios.forEach(function (usuario) {
+    // Se recorre el arreglo de usuarios y se construye una fila por cada uno
+    usuarios.forEach(function(usuario) {
 
         const fila = document.createElement('tr');
 
-        // Se rellena la fila con los datos del usuario
-        fila.innerHTML = `
-            <td>${usuario.id}</td>
-            <td>${usuario.documento}</td>
-            <td>${usuario.name}</td>
-            <td>${usuario.email}</td>
-            <td>
-                <div class="task-actions">
-                    <button
-                        type="button"
-                        class="btn-action btn-action--delete"
-                        data-id="${usuario.id}"
-                        data-nombre="${usuario.name}">
-                        🗑 Eliminar
-                    </button>
-                </div>
-            </td>
-        `;
+        // Celda con el ID interno del usuario
+        const celdaId = document.createElement('td');
+        celdaId.textContent = usuario.id;
 
+        // Celda con el número de documento
+        const celdaDoc = document.createElement('td');
+        celdaDoc.textContent = usuario.documento;
+
+        // Celda con el nombre completo
+        const celdaNombre = document.createElement('td');
+        celdaNombre.textContent = usuario.name;
+
+        // Celda con el correo electrónico
+        const celdaEmail = document.createElement('td');
+        celdaEmail.textContent = usuario.email;
+
+        // Celda de acciones con el botón eliminar
+        const celdaAcciones = document.createElement('td');
+        const divAcciones   = document.createElement('div');
+        divAcciones.className = 'task-actions';
+
+        // Botón eliminar — data-id y data-nombre permiten leerlos desde el listener delegado
+        const btnEliminar = document.createElement('button');
+        btnEliminar.type        = 'button';
+        btnEliminar.className   = 'btn-action btn-action--delete';
+        btnEliminar.textContent = '🗑 Eliminar';
+        btnEliminar.dataset.id     = usuario.id;
+        btnEliminar.dataset.nombre = usuario.name;
+
+        divAcciones.appendChild(btnEliminar);
+        celdaAcciones.appendChild(divAcciones);
+
+        fila.appendChild(celdaId);
+        fila.appendChild(celdaDoc);
+        fila.appendChild(celdaNombre);
+        fila.appendChild(celdaEmail);
+        fila.appendChild(celdaAcciones);
         tbody.appendChild(fila);
     });
 
     tabla.appendChild(tbody);
     contenedor.appendChild(tabla);
 
-    // Se registra un solo listener en el tbody para manejar todos los botones eliminar
-    tbody.addEventListener('click', async function (event) {
+    // Listener delegado en el tbody: maneja todos los botones eliminar de una vez
+    // Se evita registrar un listener individual por cada botón
+    tbody.addEventListener('click', async function(event) {
 
-        // Se busca el botón de eliminar más cercano al elemento clicado
+        // closest('[data-id]') sube desde el elemento clicado hasta el botón con data-id
         const boton = event.target.closest('[data-id]');
         if (!boton) return;
 
-        // Se leen el id y el nombre del usuario desde los atributos del botón
-        const userId = boton.dataset.id;
+        const userId        = boton.dataset.id;
         const nombreUsuario = boton.dataset.nombre;
 
-        // Se pide confirmación antes de eliminar usando SweetAlert2
+        // Se pide confirmación con SweetAlert2 antes de eliminar
+        // buttonsStyling: false es necesario para que customClass funcione en los botones
         const resultado = await Swal.fire({
-            icon: 'warning',
-            title: '¿Eliminar usuario?',
-            text: `"${nombreUsuario}" será eliminado permanentemente.`,
-            showCancelButton: true,
+            icon:              'warning',
+            title:             '¿Eliminar usuario?',
+            text:              `"${nombreUsuario}" será eliminado permanentemente.`,
+            showCancelButton:  true,
             confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar',
+            cancelButtonText:  'Cancelar',
+            buttonsStyling:    false,
             customClass: {
-                popup: 'swal-popup swal-eliminar',
-                title: 'swal-title',
+                popup:         'swal-popup swal-eliminar',
+                title:         'swal-title',
                 confirmButton: 'swal-btn-confirmar',
-                cancelButton: 'swal-btn-cancelar'
+                cancelButton:  'swal-btn-cancelar'
             }
         });
 
         if (!resultado.isConfirmed) return;
 
-        // Se llama a la API para eliminar el usuario
+        // Se llama a la capa API para eliminar el usuario del servidor
         const exitoso = await eliminarUsuario(userId);
 
         if (exitoso) {
             Swal.fire({
-                icon: 'success',
-                title: 'Usuario eliminado',
-                timer: 1500,
+                icon:              'success',
+                title:             'Usuario eliminado',
+                timer:             1500,
                 showConfirmButton: false,
                 customClass: { popup: 'swal-popup' }
             });
-            // Se recarga la tabla para reflejar el cambio
             await renderizarTablaUsuarios(contenedor);
         } else {
             Swal.fire({
-                icon: 'error',
+                icon:  'error',
                 title: 'Error al eliminar',
-                customClass: { popup: 'swal-popup', confirmButton: 'swal-btn-confirmar' }
+                customClass: {
+                    popup:         'swal-popup',
+                    confirmButton: 'swal-btn-confirmar'
+                }
             });
         }
     });
 }
 
-// Función que construye la sección de lista de todas las tareas
-// Muestra una tabla con título, estado y usuarios asignados de cada tarea
+// Función que construye la sección de lista de todas las tareas del sistema
+// Muestra una tabla con título, estado y usuario asignado de cada tarea
 // Parámetro: contenedor — el elemento padre donde se inserta esta sección
 async function montarSeccionTareas(contenedor) {
 
-    // Se crea el contenedor de la sección de tareas
+    // Contenedor de la sección de tareas con las clases de card del proyecto
     const seccion = document.createElement('div');
     seccion.className = 'card admin-seccion';
 
-    // Se agrega el título de la sección
+    // Título de la sección de tareas
     const tituloSeccion = document.createElement('h3');
-    tituloSeccion.className = 'admin-seccion__titulo';
+    tituloSeccion.className   = 'admin-seccion__titulo';
     tituloSeccion.textContent = 'Todas las Tareas del Sistema';
     seccion.appendChild(tituloSeccion);
 
@@ -304,56 +381,67 @@ async function montarSeccionTareas(contenedor) {
             tareas = await response.json();
         }
     } catch (error) {
-        console.error('❌ Error al obtener tareas para el panel admin:', error);
+        console.error('Error al obtener tareas para el panel admin:', error);
     }
 
-    // Si no hay tareas se muestra un mensaje
+    // Si no hay tareas se muestra un párrafo indicativo y se termina la función
     if (tareas.length === 0) {
         const mensaje = document.createElement('p');
-        mensaje.className = 'admin-vacio';
+        mensaje.className   = 'admin-vacio';
         mensaje.textContent = 'No hay tareas registradas en el sistema.';
         seccion.appendChild(mensaje);
         contenedor.appendChild(seccion);
         return;
     }
 
-    // Se crea la tabla de tareas reutilizando la clase tasks-table del proyecto
+    // Se crea la tabla reutilizando la clase tasks-table del proyecto
     const tabla = document.createElement('table');
     tabla.className = 'tasks-table admin-tabla';
 
-    // Se agrega el encabezado de la tabla
-    tabla.innerHTML = `
-        <thead>
-            <tr>
-                <th scope="col">Título</th>
-                <th scope="col">Estado</th>
-                <th scope="col">Usuarios asignados</th>
-            </tr>
-        </thead>
-    `;
+    // THEAD de la tabla de tareas
+    const thead    = document.createElement('thead');
+    const filaHead = document.createElement('tr');
 
-    // Se crea el tbody para las filas de tareas
+    // Se crean los tres th del encabezado
+    ['Título', 'Estado', 'Usuarios asignados'].forEach(function(texto) {
+        const th = document.createElement('th');
+        th.setAttribute('scope', 'col');
+        th.textContent = texto;
+        filaHead.appendChild(th);
+    });
+
+    thead.appendChild(filaHead);
+    tabla.appendChild(thead);
+
+    // TBODY de la tabla de tareas
     const tbody = document.createElement('tbody');
 
-    // Se recorre el arreglo de tareas y se crea una fila por cada una
-    tareas.forEach(function (tarea) {
+    // Se recorre el arreglo de tareas y se construye una fila por cada una
+    tareas.forEach(function(tarea) {
 
         const fila = document.createElement('tr');
 
-        // Se formatea el estado para mostrarlo de forma legible
-        const estadoFormateado = formatearEstado(tarea.status);
+        // Celda con el título de la tarea
+        const celdaTitulo = document.createElement('td');
+        celdaTitulo.textContent = tarea.title;
 
-        // Se convierte el arreglo de ids de usuarios a texto legible
-        const usuariosTexto = tarea.assignedUsers && tarea.assignedUsers.length > 0
+        // Celda con el badge de estado coloreado
+        const celdaEstado = document.createElement('td');
+        const badge = document.createElement('span');
+        badge.classList.add('status-badge', `status-${tarea.status}`);
+        badge.textContent = formatearEstado(tarea.status);
+        celdaEstado.appendChild(badge);
+
+        // Celda con los usuarios asignados
+        // Si assignedUsers existe y tiene elementos se unen con coma
+        const celdaUsuarios = document.createElement('td');
+        celdaUsuarios.textContent = tarea.assignedUsers && tarea.assignedUsers.length > 0
             ? tarea.assignedUsers.join(', ')
             : 'Sin asignar';
 
-        fila.innerHTML = `
-            <td>${tarea.title}</td>
-            <td><span class="status-badge status-${tarea.status}">${estadoFormateado}</span></td>
-            <td>${usuariosTexto}</td>
-        `;
-
+        fila.appendChild(celdaTitulo);
+        fila.appendChild(celdaEstado);
+        fila.appendChild(celdaUsuarios);
         tbody.appendChild(fila);
     });
 
@@ -362,8 +450,9 @@ async function montarSeccionTareas(contenedor) {
     contenedor.appendChild(seccion);
 }
 
-// Función auxiliar que convierte el valor técnico del estado a texto legible
-// Parámetro: estado — el valor del campo status (pendiente, en_progreso, completada)
+// Convierte el valor técnico del estado a texto legible en español
+// Se usa en la tabla de tareas del panel admin
+// Parámetro: estado — valor del campo status (pendiente, en_progreso, completada)
 function formatearEstado(estado) {
     if (estado === 'pendiente')   return 'Pendiente';
     if (estado === 'en_progreso') return 'En Progreso';
