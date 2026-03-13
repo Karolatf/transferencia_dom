@@ -142,49 +142,6 @@ export async function manejarBusquedaUsuario(event) {
     // Se guarda el usuario encontrado en el estado local del service
     usuarioActual = usuario;
 
-<<<<<<< HEAD
-    // ----- PASO 4: VALIDAR EL FORMULARIO -----
-    // validarFormularioTareas() verifica todos los campos y muestra errores.
-    // Si algún campo falla, retorna false y detenemos la ejecución.
-    const esValido = validarFormularioTareas(
-        inputTitulo, inputDesc, selectEst,
-        errorTitulo, errorDesc, errorEst
-    );
-    if (!esValido) return;
-
-    // ----- PASO 5: CONSTRUIR EL OBJETO DE TAREA -----
-    // trim() elimina espacios accidentales en los campos de texto
-    const datosTarea = {
-        title:       inputTitulo.value.trim(),
-        description: inputDesc.value.trim(),
-        status:      selectEst.value,
-        userId:      usuarioActual.documento,  // ← antes era usuarioActual.id
-        userName:    usuarioActual.name,
-        completed:   selectEst.value === 'completada'
-    };
-
-    // ----- PASO 6: LLAMAR A LA CAPA API -----
-    const tareaCreada = await registrarTarea(datosTarea);
-
-    // ----- PASO 7: PROCESAR EL RESULTADO -----
-    if (tareaCreada) {
-
-        // REGISTRO EXITOSO
-        tareasRegistradas.push(tareaCreada); // Guardamos en el estado local
-        contadorTareas++;
-        limpiarFormularioTareas();
-
-        // RF01+RF02: refrescamos la tabla para que los filtros y el orden activos
-        // se apliquen también sobre la tarea recién agregada
-        refrescarTabla();
-
-        mostrarNotificacion('Tarea registrada exitosamente', 'exito');
-
-    } else {
-
-        // ERROR EN EL REGISTRO
-        mostrarNotificacion('Error al registrar la tarea. Por favor, intenta nuevamente.', 'error');
-=======
     // Se obtienen las tareas del usuario del servidor filtrando por su id interno
     let tareas = [];
     try {
@@ -195,7 +152,6 @@ export async function manejarBusquedaUsuario(event) {
         contadorTareas    = tareas.length;
     } catch (err) {
         console.error('Error cargando tareas del usuario:', err);
->>>>>>> upstream/release
     }
 
     // Se muestra el bloque de datos del usuario debajo del formulario
