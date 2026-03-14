@@ -803,11 +803,37 @@ export function registrarEventosNavegacion() {
                 inputDoc.classList.add('error');
                 valido = false;
             }
+            // Se valida que el documento contenga solo dígitos
+           // Esto rechaza letras, guiones, espacios y cualquier símbolo
+            // Solo se ejecuta si el campo tiene contenido (el if de vacío ya lo cubrió)
+           if (inputDoc.value.trim() && !/^\d+$/.test(inputDoc.value.trim())) {
+         // Se asigna el mensaje de error de formato en el span correspondiente del HTML
+         if (errorDoc) errorDoc.textContent = 'El documento solo puede contener números';
+             // Se agrega la clase error para que el input muestre borde rojo (styles.css)
+               inputDoc.classList.add('error');
+             // Se bloquea el envío del formulario al servidor
+               valido = false;
+            }
             if (!inputNombre.value.trim()) {
                 if (errorNombre) errorNombre.textContent = 'El nombre es obligatorio';
                 inputNombre.classList.add('error');
                 valido = false;
             }
+            // Se valida que el nombre contenga solo letras, tildes, ñ y espacios
+// La expresión regular cubre el español completo:
+//   a-zA-Z       → letras sin tilde
+//   áéíóúÁÉÍÓÚ   → vocales con tilde
+//   üÜ            → diéresis para nombres como "Güeris"
+//   \s            → espacios (para nombres compuestos como "María José")
+// El + exige al menos un carácter del conjunto
+if (inputNombre.value.trim() && !/^[a-zA-ZáéíóúüñÜ\s]+$/.test(inputNombre.value.trim())) {
+    // Se asigna el mensaje de error de formato en el span correspondiente del HTML
+    if (errorNombre) errorNombre.textContent = 'El nombre solo puede contener letras y espacios';
+    // Se aplica la clase error para mostrar el borde rojo del input (styles.css)
+    inputNombre.classList.add('error');
+    // Se bloquea el envío del formulario al servidor
+    valido = false;
+}
             if (!inputEmail.value.trim()) {
                 if (errorEmail) errorEmail.textContent = 'El correo es obligatorio';
                 inputEmail.classList.add('error');
