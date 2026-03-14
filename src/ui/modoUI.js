@@ -739,7 +739,19 @@ export function registrarEventosNavegacion() {
                 );
 
                 if (!encontrado) {
-                    alert('Usuario no encontrado');
+                    await Swal.fire({
+                        icon:  'warning',
+                        title: 'Usuario no encontrado',
+                        // Se muestra el término buscado para que el admin sepa qué ingresó
+                        text:  `No se encontró ningún usuario con: "${input.value.trim()}"`,
+                        // buttonsStyling false permite que customClass aplique los estilos del proyecto
+                        buttonsStyling: false,
+                        customClass: {
+                            popup:         'swal-popup',
+                            title:         'swal-title',
+                            confirmButton: 'swal-btn-confirmar'
+                        }
+                    });
                     return;
                 }
 
