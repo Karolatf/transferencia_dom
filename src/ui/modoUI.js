@@ -843,8 +843,22 @@ export function registrarEventosNavegacion() {
                 abrirModalUsuario(usuarioCreado);
 
             } catch (err) {
+                // Se registra el error técnico en consola para diagnóstico del desarrollador
                 console.error('Error creando usuario:', err);
-                alert('No se pudo crear el usuario. Verifica que el servidor esté activo.');
+                // Se notifica al admin con SweetAlert2 en lugar del alert() nativo
+                // Se usa icon error porque el servidor no respondió correctamente
+                await Swal.fire({
+                    icon:  'error',
+                    title: 'Error al crear usuario',
+                    // Se orienta al admin sobre la causa más común del problema
+                    text:  'No se pudo crear el usuario. Verifica que el servidor esté activo en localhost:3000',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup:         'swal-popup',
+                        title:         'swal-title',
+                        confirmButton: 'swal-btn-confirmar'
+                    }
+                });
             }
         });
     }
