@@ -64,11 +64,14 @@ body {
     color: var(--texto-medio);
     line-height: 1.6;
     min-height: 100vh;
-    padding: var(--espacio-lg);
+    /* Se quita el padding general para que la pantalla de inicio ocupe todo   */
+    /* el viewport sin borde. Las otras vistas tienen su propio espaciado.     */
+    padding: 0;
 }
 
 /* FONDOS POR MODO */
-body[data-modo="inicio"]  { background-color: #f8edf5; }
+/* En modo inicio no hay padding ni fondo de color, la imagen lo cubre todo   */
+body[data-modo="inicio"]  { background: linear-gradient(135deg, #a25be9 0%, #c7e9f9 100%); padding: 0; }body[data-modo="admin"]   { background-color: #e0f2fe; padding: var(--espacio-lg); }
 body[data-modo="usuario"] { background-color: #f3e8ff; }
 body[data-modo="admin"]   { background-color: #e0f2fe; }
 
@@ -996,4 +999,95 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     .modal__actions .btn { width: 100%; }
 
     .header__busqueda-admin { max-width: 100%; }
+}
+
+
+/* REDISEÑO PANTALLA DE INICIO — Layout de dos columnas con efecto glass      */
+/* Estos estilos extienden el comportamiento de .pantalla-inicio              */
+
+/* Se sobreescribe el layout de .pantalla-inicio para usar dos columnas       */
+/* flex-direction: row divide la pantalla en columna izquierda y derecha      */
+.pantalla-inicio {
+    flex-direction: row;
+    padding: 0;
+    gap: 0;
+    min-height: 100vh;
+    align-items: stretch;
+}
+
+/* Columna izquierda: ocupa la mitad de la pantalla con la imagen de fondo    */
+/* background-size: cover escala la imagen para cubrir todo el área           */
+/* background-position: center centra la imagen en el contenedor              */
+.inicio__columna-imagen {
+    flex: 1;
+    min-height: 100vh;
+    background-image: url('/bg-inicio.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Columna derecha: degradado suave con colores del proyecto                  */
+/* Necesita tener color de fondo para que el glass card se vea transparente   */
+/* Columna derecha: sin fondo propio, hereda el degradado del body             */
+.inicio__columna-panel {
+    flex: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--espacio-xl);
+}
+
+
+/* Card glass: muy transparente sobre el degradado del body                   */
+/* Con el fondo colorido detrás el blur y la transparencia se ven reales   background: rgba(255, 255, 255, 0.25);   */
+.inicio__glass-card {
+    width: 100%;
+    max-width: 480px;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 2rem;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 40px rgba(123, 45, 139, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    padding: var(--espacio-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-lg);
+}
+
+/* Se redefine el header dentro de la card glass para que sea centrado        */
+.inicio__glass-card .inicio__header {
+    text-align: center;
+}
+
+/* Nota al pie dentro de la card glass                                        */
+.inicio__nota {
+    text-align: center;
+    font-size: var(--texto-sm);
+    color: var(--texto-claro);
+    margin-top: var(--espacio-sm);
+}
+
+
+/* RESPONSIVE — Pantalla de inicio en móvil (menos de 768px)                  */
+/* En móvil la imagen se oculta y el panel ocupa toda la pantalla             */
+@media (max-width: 768px) {
+    /* En móvil volvemos a la columna única                                   */
+    .pantalla-inicio {
+        flex-direction: column;
+    }
+
+    /* La columna de imagen se oculta en móvil para dar espacio al contenido  */
+    .inicio__columna-imagen {
+        display: none;
+    }
+
+    /* El panel ocupa toda la pantalla en móvil                               */
+    .inicio__columna-panel {
+        min-height: 100vh;
+        padding: var(--espacio-lg);
+    }
 }
