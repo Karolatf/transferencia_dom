@@ -587,7 +587,18 @@ export async function abrirModalUsuario(usuario) {
 
         // Se valida que los campos obligatorios estén completos antes de enviar
         if (!titulo || !estado) {
-            alert('El titulo y el estado son obligatorios');
+            await Swal.fire({
+                icon:  'warning',
+                title: 'Campos incompletos',
+                // Se especifica cuáles campos son requeridos para orientar al admin
+                text:  'El título y el estado de la tarea son obligatorios',
+                buttonsStyling: false,
+                customClass: {
+                    popup:         'swal-popup',
+                    title:         'swal-title',
+                    confirmButton: 'swal-btn-confirmar'
+                }
+            });
             return;
         }
 
