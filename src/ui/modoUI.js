@@ -587,7 +587,18 @@ export async function abrirModalUsuario(usuario) {
 
         // Se valida que los campos obligatorios estén completos antes de enviar
         if (!titulo || !estado) {
-            alert('El titulo y el estado son obligatorios');
+            await Swal.fire({
+                icon:  'warning',
+                title: 'Campos incompletos',
+                // Se especifica cuáles campos son requeridos para orientar al admin
+                text:  'El título y el estado de la tarea son obligatorios',
+                buttonsStyling: false,
+                customClass: {
+                    popup:         'swal-popup',
+                    title:         'swal-title',
+                    confirmButton: 'swal-btn-confirmar'
+                }
+            });
             return;
         }
 
@@ -739,7 +750,19 @@ export function registrarEventosNavegacion() {
                 );
 
                 if (!encontrado) {
-                    alert('Usuario no encontrado');
+                    await Swal.fire({
+                        icon:  'warning',
+                        title: 'Usuario no encontrado',
+                        // Se muestra el término buscado para que el admin sepa qué ingresó
+                        text:  `No se encontró ningún usuario con: "${input.value.trim()}"`,
+                        // buttonsStyling false permite que customClass aplique los estilos del proyecto
+                        buttonsStyling: false,
+                        customClass: {
+                            popup:         'swal-popup',
+                            title:         'swal-title',
+                            confirmButton: 'swal-btn-confirmar'
+                        }
+                    });
                     return;
                 }
 
@@ -820,8 +843,22 @@ export function registrarEventosNavegacion() {
                 abrirModalUsuario(usuarioCreado);
 
             } catch (err) {
+                // Se registra el error técnico en consola para diagnóstico del desarrollador
                 console.error('Error creando usuario:', err);
-                alert('No se pudo crear el usuario. Verifica que el servidor esté activo.');
+                // Se notifica al admin con SweetAlert2 en lugar del alert() nativo
+                // Se usa icon error porque el servidor no respondió correctamente
+                await Swal.fire({
+                    icon:  'error',
+                    title: 'Error al crear usuario',
+                    // Se orienta al admin sobre la causa más común del problema
+                    text:  'No se pudo crear el usuario. Verifica que el servidor esté activo en localhost:3000',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup:         'swal-popup',
+                        title:         'swal-title',
+                        confirmButton: 'swal-btn-confirmar'
+                    }
+                });
             }
         });
     }
