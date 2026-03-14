@@ -803,6 +803,17 @@ export function registrarEventosNavegacion() {
                 inputDoc.classList.add('error');
                 valido = false;
             }
+            // Se valida que el documento contenga solo dígitos
+           // Esto rechaza letras, guiones, espacios y cualquier símbolo
+            // Solo se ejecuta si el campo tiene contenido (el if de vacío ya lo cubrió)
+           if (inputDoc.value.trim() && !/^\d+$/.test(inputDoc.value.trim())) {
+         // Se asigna el mensaje de error de formato en el span correspondiente del HTML
+         if (errorDoc) errorDoc.textContent = 'El documento solo puede contener números';
+             // Se agrega la clase error para que el input muestre borde rojo (styles.css)
+               inputDoc.classList.add('error');
+             // Se bloquea el envío del formulario al servidor
+               valido = false;
+            }
             if (!inputNombre.value.trim()) {
                 if (errorNombre) errorNombre.textContent = 'El nombre es obligatorio';
                 inputNombre.classList.add('error');
