@@ -71,7 +71,7 @@ body {
 
 /* FONDOS POR MODO */
 /* En modo inicio no hay padding ni fondo de color, la imagen lo cubre todo   */
-body[data-modo="inicio"]  { background: linear-gradient(135deg, #a25be9 0%, #c7e9f9 100%); padding: 0; }body[data-modo="admin"]   { background-color: #e0f2fe; padding: var(--espacio-lg); }
+body[data-modo="inicio"]  { background: linear-gradient(135deg, #c794f9 0%, #b9f9e6 100%); padding: 0; }body[data-modo="admin"]   { background-color: #e0f2fe; padding: var(--espacio-lg); }
 body[data-modo="usuario"] { background-color: #f3e8ff; }
 body[data-modo="admin"]   { background-color: #e0f2fe; }
 
@@ -999,6 +999,18 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     .modal__actions .btn { width: 100%; }
 
     .header__busqueda-admin { max-width: 100%; }
+
+    /* Fix responsividad de tablas del admin en móvil                             */
+    /* min-width evita que las columnas se compriman demasiado y rompan el layout */
+    .tasks-table--admin {
+        min-width: 600px;
+    }
+
+    /* overflow-x: auto permite scroll horizontal cuando la tabla es más ancha    */
+    /* que la pantalla, en lugar de desbordarse fuera del viewport                */
+    .tasks-table-container {
+        overflow-x: auto;
+    }
 }
 
 
