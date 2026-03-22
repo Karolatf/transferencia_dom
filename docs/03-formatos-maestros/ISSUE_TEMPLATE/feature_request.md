@@ -2,9 +2,8 @@
 name: "🛠️ Requerimiento Técnico"
 about: Plantilla para la creación de nuevas funcionalidades o tareas del proyecto.
 title: "[FEAT]: "
-labels: enhancement, sena-recomienda
+labels: enhancement
 assignees: ''
-
 ---
 
 ## Descripción del Requerimiento
@@ -18,16 +17,16 @@ assignees: ''
 *Estos son los puntos que el Líder verificará para aprobar tu Pull Request:*
 - [ ] La funcionalidad cumple con el diseño responsivo (Móvil/Desktop).
 - [ ] No existen errores en la consola del navegador.
-- [ ] El código sigue la estructura de carpetas definida en el `README.md`.
-- [ ] Se ha probado la persistencia de datos (si aplica).
+- [ ] El código respeta la estructura de capas definida en el `README.md` (api / services / ui / utils).
+- [ ] Se ha probado la persistencia de datos con el servidor local (json-server o backend).
 
 ---
 
 ## Tareas Técnicas (Albañilería)
 *Divide el requerimiento en pasos pequeños:*
-1. [ ] Crear el componente visual en `src/components/`.
-2. [ ] Implementar la lógica de eventos en JavaScript.
-3. [ ] Estilizar usando las variables de color globales.
+1. [ ] Identificar en qué capa(s) impacta el cambio (api / services / ui / utils).
+2. [ ] Implementar la lógica en la capa correspondiente.
+3. [ ] Actualizar la UI si es necesario (sin usar innerHTML).
 4. [ ] Realizar pruebas locales en el navegador.
 
 ---
@@ -36,4 +35,4 @@ assignees: ''
 *Adjunta capturas de pantalla o enlaces a la guía de aprendizaje si es necesario.*
 
 ---
-**Recuerda:** Al terminar esta tarea, debes abrir un Pull Request y vincularlo usando la frase `Closes #ID_DE_ESTA_ISSUE`.
+**Recuerda:** Al terminar esta tarea, debes abrir un Pull Request hacia `release` y vincularlo usando la frase `Closes #ID_DE_ESTA_ISSUE`.

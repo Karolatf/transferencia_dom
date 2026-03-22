@@ -13,14 +13,14 @@
 ---
 
 ## Checklist de Calidad Universal
-- [ ] [cite_start]**Sincronización:** He actualizado mi rama con `origin/develop` y resolví conflictos[cite: 19].
+- [ ] **Sincronización:** He actualizado mi rama con `release` del repo principal y resolví conflictos.
 - [ ] **Limpieza:** Sin `console.log`, comentarios de prueba o archivos `.env`.
 - [ ] **Estándares:** Uso de JSDoc para funciones y nombres de variables en camelCase.
 
 ### Validación FRONTEND (Si aplica)
 - [ ] **Responsive:** Probado en resoluciones de móvil y escritorio.
-- [ ] **Assets:** Las imágenes están optimizadas y en la carpeta `public/assets`.
-- [ ] **Componentización:** El código se separó en componentes reutilizables (si aplica).
+- [ ] **Assets:** Las imágenes están optimizadas y en la carpeta `public/`.
+- [ ] **Componentización:** El código respeta la estructura de capas (api / services / ui / utils).
 
 ### Validación BACKEND (Si aplica)
 - [ ] **Endpoints:** He probado las rutas en Postman/Thunder Client y retornan el código HTTP correcto.
