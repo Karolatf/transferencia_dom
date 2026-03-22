@@ -21,11 +21,12 @@ assignees: ''
 - **Lo que pasa actualmente:** *La aplicación se detiene (crash) y el proceso de Node.js se cierra por completo.*
 
 ## Entorno de Desarrollo
-**Ejemplo:**
-- **Sistema Operativo:** Windows 11 / Linux Ubuntu 22.04.
-- **Versión de Node.js:** v20.11.0.
-- **Base de Datos:** MySQL 8.0.
+- **Sistema Operativo:** Windows 11 / Linux Ubuntu 22.04
+- **Versión de Node.js:** v20.x.x
+- **Navegador (si aplica):** Chrome / Firefox
 
 ## Evidencia (Opcional)
+*Adjunta capturas de pantalla o el mensaje exacto de error en consola.*
+
 ---
 > *Recuerda: Un bug bien reportado ahorra horas de frustración al equipo.*
