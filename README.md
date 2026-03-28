@@ -207,9 +207,9 @@ En la industria, el software que no está publicado no existe. Esto vincula el r
 
 ## DIRECCIÓN DEL PROYECTO
 
-- **Instructor:** [Tu Nombre Aquí]  
+- **Instructor:** John Becerra  
 - **Institución:** Servicio Nacional de Aprendizaje (SENA)  
-- **Centro:** [Nombre de tu Centro de Formación]  
+- **Centro:** CIMI (Centro Industrial de Mantenimiento Integral)
 - **Programa:** Análisis y Desarrollo de Software  
 
 ---

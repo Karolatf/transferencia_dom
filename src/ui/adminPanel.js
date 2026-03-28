@@ -16,9 +16,10 @@ import { obtenerTodosLosUsuarios, crearUsuario, eliminarUsuario } from '../api/u
 // Se importa la URL base para construir las peticiones de tareas
 import { API_BASE_URL } from '../utils/config.js';
 
-// Se importa SweetAlert2 para los diálogos de confirmación y notificaciones
-// Ya está instalado en el proyecto como dependencia en package.json
-import Swal from 'sweetalert2';
+// Se importan las funciones centralizadas de notificaciones.
+// adminPanel.js no debe importar Swal directamente; toda notificación
+// visual debe pasar por notificaciones.js según la guía 3 del proyecto.
+import { mostrarNotificacion, mostrarConfirmacion } from '../utils/notificaciones.js';
 
 // Función principal que monta el panel de administración en el contenedor recibido
 // Parámetro: contenedor — el elemento HTML donde se renderiza todo el panel
@@ -78,16 +79,8 @@ async function montarSeccionUsuarios(contenedor) {
 
         // Se valida que ningún campo esté vacío antes de enviar al servidor
         if (!documento || !name || !email) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Campos incompletos',
-                text: 'Todos los campos son obligatorios',
-                customClass: {
-                    popup:         'swal-popup',
-                    title:         'swal-title',
-                    confirmButton: 'swal-btn-confirmar'
-                }
-            });
+            // Se usa mostrarNotificacion centralizado en lugar de Swal directo.
+            await mostrarNotificacion('Todos los campos son obligatorios', 'advertencia');
             return;
         }
 
@@ -96,26 +89,13 @@ async function montarSeccionUsuarios(contenedor) {
 
         // Si la creación fue exitosa se recarga la tabla y se limpia el formulario
         if (usuarioCreado) {
-            Swal.fire({
-                icon:              'success',
-                title:             'Usuario creado',
-                text:              `${name} fue agregado correctamente`,
-                timer:             2000,
-                showConfirmButton: false,
-                customClass: { popup: 'swal-popup' }
-            });
+            // Se notifica el éxito usando el módulo centralizado de notificaciones.
+            await mostrarNotificacion(`${name} fue agregado correctamente`, 'exito');
             formulario.reset();
             await renderizarTablaUsuarios(contenedorTabla);
         } else {
-            Swal.fire({
-                icon:  'error',
-                title: 'Error',
-                text:  'No se pudo crear el usuario',
-                customClass: {
-                    popup:         'swal-popup',
-                    confirmButton: 'swal-btn-confirmar'
-                }
-            });
+            // Se notifica el error usando el módulo centralizado.
+            await mostrarNotificacion('No se pudo crear el usuario', 'error');
         }
     });
 
@@ -315,45 +295,24 @@ async function renderizarTablaUsuarios(contenedor) {
 
         // Se pide confirmación con SweetAlert2 antes de eliminar
         // buttonsStyling: false es necesario para que customClass funcione en los botones
-        const resultado = await Swal.fire({
-            icon:              'warning',
-            title:             '¿Eliminar usuario?',
-            text:              `"${nombreUsuario}" será eliminado permanentemente.`,
-            showCancelButton:  true,
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText:  'Cancelar',
-            buttonsStyling:    false,
-            customClass: {
-                popup:         'swal-popup swal-eliminar',
-                title:         'swal-title',
-                confirmButton: 'swal-btn-confirmar',
-                cancelButton:  'swal-btn-cancelar'
-            }
-        });
+        // Se usa mostrarConfirmacion centralizado en lugar de Swal directo.
+        const confirmado = await mostrarConfirmacion(
+            '¿Eliminar usuario?',
+            `"${nombreUsuario}" será eliminado permanentemente.`,
+            'Sí, eliminar'
+        );
 
-        if (!resultado.isConfirmed) return;
+        if (!confirmado) return;
 
         // Se llama a la capa API para eliminar el usuario del servidor
         const exitoso = await eliminarUsuario(userId);
 
         if (exitoso) {
-            Swal.fire({
-                icon:              'success',
-                title:             'Usuario eliminado',
-                timer:             1500,
-                showConfirmButton: false,
-                customClass: { popup: 'swal-popup' }
-            });
+            // Se notifica el éxito de la eliminación con el módulo centralizado.
+            await mostrarNotificacion('Usuario eliminado correctamente', 'exito');
             await renderizarTablaUsuarios(contenedor);
         } else {
-            Swal.fire({
-                icon:  'error',
-                title: 'Error al eliminar',
-                customClass: {
-                    popup:         'swal-popup',
-                    confirmButton: 'swal-btn-confirmar'
-                }
-            });
+            await mostrarNotificacion('Error al eliminar el usuario', 'error');
         }
     });
 }
