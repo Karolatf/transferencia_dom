@@ -1,22 +1,17 @@
 // MÓDULO: services/tareasService.js
-// CAPA: Services — lógica intermedia entre API y UI
-// Responsabilidad: coordinar operaciones de búsqueda, edición y eliminación
-// de tareas en el MODO USUARIO.
+// CAPA:   Services
+
+// Coordina las operaciones del MODO USUARIO:
+// búsqueda de usuario, carga de sus tareas, edición y eliminación.
+// Es el intermediario entre la capa API y la capa UI para este flujo.
 
 import {
     buscarUsuarioPorDocumento,
     obtenerTareasDeUsuario,
     actualizarTarea,
-    eliminarTarea
+    eliminarTarea,
 } from '../api/tareasApi.js';
 
-// ✅ CORRECCIÓN 1: import corregido de '../ui/tareasUI.js' → '../ui/tareasUi.js'
-//
-// ¿Por qué fallaba?
-// El archivo en disco se llama 'tareasUi.js' (la 'i' es minúscula).
-// En Linux (y en Vite) el sistema de archivos distingue mayúsculas.
-// 'tareasUI.js' y 'tareasUi.js' son archivos distintos para el sistema.
-// El import con mayúscula no encontraba el archivo → pantalla en blanco.
 import {
     ocultarDatosUsuario,
     agregarTareaATabla,
@@ -24,48 +19,42 @@ import {
     eliminarFilaTarea,
     mostrarModalEdicion,
     ocultarModalEdicion,
-    mostrarEstadoVacio
-} from '../ui/tareasUi.js';
+    mostrarEstadoVacio,
+    mostrarSeccionTareas,
+    ocultarEstadoVacio,
+} from '../ui/tareasUI.js';
 
 import {
     validarFormularioBusqueda,
     mostrarError,
-    limpiarError
+    limpiarError,
 } from '../utils/validaciones.js';
 
 import {
     mostrarNotificacion,
-    mostrarConfirmacion
+    mostrarConfirmacion,
 } from '../utils/notificaciones.js';
 
 import { filtrarTareas }  from '../utils/filtros.js';
 import { ordenarTareas }  from '../utils/ordenamiento.js';
+import { registrarEventosNavegacion, activarModoInicio } from '../ui/modoUI.js';
 
-import {
-    registrarEventosNavegacion,
-    activarModoInicio
-} from '../ui/modoUI.js';
-
-// ─────────────────────────────────────────────
-// Estado local del módulo
-// ─────────────────────────────────────────────
+// ── ESTADO LOCAL (modo usuario) ───────────────────────────────────────────────
 
 let usuarioActual     = null;
 let tareasRegistradas = [];
-let contadorTareas    = 0;
 
+// Filtros activos en el modo usuario (no hay controles en el HTML actual,
+// pero la infraestructura queda lista para agregarlos)
 let filtroEstadoActivo  = '';
 let filtroUsuarioActivo = '';
 let criterioOrdenActivo = '';
 
-// ─────────────────────────────────────────────
-// Funciones privadas
-// ─────────────────────────────────────────────
+// ── FUNCIONES PRIVADAS ────────────────────────────────────────────────────────
 
 function reiniciarVistaModoUsuario() {
     usuarioActual     = null;
     tareasRegistradas = [];
-    contadorTareas    = 0;
 
     ocultarDatosUsuario();
 
@@ -94,68 +83,43 @@ function refrescarTabla() {
     if (!tbody) return;
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
+    if (tareasOrdenadas.length === 0) {
+        mostrarEstadoVacio();
+        return;
+    }
+
+    ocultarEstadoVacio();
+    mostrarSeccionTareas();
+
     tareasOrdenadas.forEach(function(tarea, indice) {
         agregarTareaATabla(tarea, indice);
     });
 }
 
-// ─────────────────────────────────────────────
-// RF-01: Buscar usuario por documento
-// ─────────────────────────────────────────────
+// ── RF-01: BUSCAR USUARIO POR DOCUMENTO ──────────────────────────────────────
 
 export async function manejarBusquedaUsuario(event) {
     event.preventDefault();
 
-    // ✅ CORRECCIÓN 2: se obtienen los elementos del DOM correctamente
-    //    para pasarlos a validarFormularioBusqueda y mostrarError.
-    //
-    // ¿Por qué fallaba antes?
-    // El código original hacía:
-    //   const esValido = validarFormularioBusqueda(inputDocumento.value.trim());
-    //
-    // Pero la firma de validarFormularioBusqueda en validaciones.js es:
-    //   validarFormularioBusqueda(documentoInput, documentoError)
-    //   → recibe los ELEMENTOS del DOM, no el valor string.
-    //
-    // Al pasarle un string en lugar del elemento, la función intentaba hacer
-    // inputDocumento.value sobre un string → retornaba undefined → la validación
-    // siempre devolvía false → el formulario nunca avanzaba, se bloqueaba silenciosamente.
-    //
-    // Solución: pasar el elemento <input> y el elemento <span de error> directamente.
     const inputDocumento = document.getElementById('userDocument');
     const errorDocumento = document.getElementById('userDocumentError');
 
-    // Ahora la llamada es correcta: recibe (elementoInput, elementoError)
     const esValido = validarFormularioBusqueda(inputDocumento, errorDocumento);
     if (!esValido) return;
 
+    // Se guarda el valor ANTES de reiniciar porque reiniciarVistaModoUsuario()
+    // limpia el input y el valor quedaría vacío al llamar buscarUsuarioPorDocumento
+    const documentoABuscar = inputDocumento.value.trim();
+
     reiniciarVistaModoUsuario();
 
-    // Se busca el usuario por el valor del input (no por el elemento)
-    const usuario = await buscarUsuarioPorDocumento(inputDocumento.value.trim());
+    const usuario = await buscarUsuarioPorDocumento(documentoABuscar);
 
     if (!usuario) {
-        // ✅ CORRECCIÓN 3: orden de parámetros corregido en mostrarError
-        //
-        // ¿Por qué fallaba antes?
-        // El código original llamaba:
-        //   mostrarError(errorDocumento, inputDocumento, 'No se encontro...')
-        //
-        // Pero la firma de mostrarError en validaciones.js es:
-        //   mostrarError(elementoError, elementoInput, mensaje)
-        //   → primer parámetro: el SPAN de error
-        //   → segundo parámetro: el INPUT
-        //
-        // Casualmente el orden era correcto aquí, pero en otros lugares del
-        // código original los parámetros estaban invertidos, causando que
-        // el mensaje de error se mostrara en el input y el borde rojo
-        // se aplicara al span — visualmente no se veía nada.
-        //
-        // Ahora todos los llamados siguen el orden: (spanError, inputElement, mensaje)
         mostrarError(
             errorDocumento,
             inputDocumento,
-            'No se encontro ningun usuario con ese documento'
+            'No se encontró ningún usuario con ese documento'
         );
         return;
     }
@@ -164,11 +128,8 @@ export async function manejarBusquedaUsuario(event) {
 
     let tareas = [];
     try {
-        // Se obtienen las tareas del usuario usando su id interno de MySQL
-        // (usuario.id = 1, 2, 3...) — NO el número de documento
         tareas            = await obtenerTareasDeUsuario(usuario.id);
         tareasRegistradas = tareas;
-        contadorTareas    = tareas.length;
     } catch (err) {
         console.error('Error cargando tareas del usuario:', err);
         tareas = [];
@@ -177,29 +138,23 @@ export async function manejarBusquedaUsuario(event) {
     mostrarResultadoUsuarioFijo(usuario, tareas);
 }
 
-// Construye y muestra el bloque de resultado de búsqueda en la vista usuario
 function mostrarResultadoUsuarioFijo(usuario, tareas) {
-
-    // Se revela la sección de datos del usuario
+    // Mostrar sección de datos del usuario
     const seccionDatos = document.getElementById('userDataSection');
     if (seccionDatos) seccionDatos.classList.remove('hidden');
 
-    // Se llenan los spans con los datos del usuario encontrado
     const spanId     = document.getElementById('userId');
     const spanNombre = document.getElementById('userName');
     const spanEmail  = document.getElementById('userEmail');
 
-    // Se muestra el documento (número de cédula) como identificador visible,
-    // no el id interno de MySQL
     if (spanId)     spanId.textContent     = usuario.documento || usuario.id;
     if (spanNombre) spanNombre.textContent = usuario.name;
     if (spanEmail)  spanEmail.textContent  = usuario.email;
 
-    // Se revela la sección de la tabla de tareas
+    // Mostrar sección de tareas
     const seccionTareas = document.getElementById('tasksSection');
     if (seccionTareas) seccionTareas.classList.remove('hidden');
 
-    // Se actualiza el contador visual de tareas
     const contadorEl = document.getElementById('tasksCount');
     if (contadorEl) {
         contadorEl.textContent = `${tareas.length} ${tareas.length === 1 ? 'tarea' : 'tareas'}`;
@@ -217,15 +172,12 @@ function mostrarResultadoUsuarioFijo(usuario, tareas) {
     const estadoVacio = document.getElementById('tasksEmptyState');
     if (estadoVacio) estadoVacio.classList.add('hidden');
 
-    // Se dibuja una fila por cada tarea del usuario
     tareas.forEach(function(tarea, indice) {
         agregarTareaATabla(tarea, indice);
     });
 }
 
-// ─────────────────────────────────────────────
-// RF-03: Editar tarea
-// ─────────────────────────────────────────────
+// ── RF-03: EDITAR TAREA ───────────────────────────────────────────────────────
 
 export function manejarEdicionTarea(tarea) {
     mostrarModalEdicion(tarea);
@@ -247,7 +199,6 @@ export function manejarEdicionTarea(tarea) {
             description: descripcion,
             status:      estado,
             comment:     comentario,
-            completed:   estado === 'completada'
         };
 
         const tareaActualizada = await actualizarTarea(tareaId, datosActualizados);
@@ -258,17 +209,19 @@ export function manejarEdicionTarea(tarea) {
             );
 
             if (indice !== -1) {
+                // El backend devuelve el comment correctamente; se guarda el local
+                // como respaldo por si el backend aún no lo incluye en la respuesta
                 tareasRegistradas[indice] = {
                     ...tareaActualizada,
-                    comment: comentario
+                    comment: comentario,
                 };
             }
 
             refrescarTabla();
             ocultarModalEdicion();
-            mostrarNotificacion('Tarea actualizada exitosamente', 'exito');
+            await mostrarNotificacion('Tarea actualizada exitosamente', 'exito');
         } else {
-            mostrarNotificacion('Error al actualizar la tarea', 'error');
+            await mostrarNotificacion('Error al actualizar la tarea', 'error');
         }
 
         formulario.removeEventListener('submit', manejarGuardadoEdicion);
@@ -277,15 +230,13 @@ export function manejarEdicionTarea(tarea) {
     formulario.addEventListener('submit', manejarGuardadoEdicion);
 }
 
-// ─────────────────────────────────────────────
-// RF-04: Eliminar tarea
-// ─────────────────────────────────────────────
+// ── RF-04: ELIMINAR TAREA ─────────────────────────────────────────────────────
 
 export async function manejarEliminacionTarea(tarea) {
     const confirmado = await mostrarConfirmacion(
-        `Eliminar la tarea "${tarea.title}"?`,
-        'Esta accion no se puede deshacer.',
-        'Si, eliminar'
+        `¿Eliminar la tarea "${tarea.title}"?`,
+        'Esta acción no se puede deshacer.',
+        'Sí, eliminar'
     );
     if (!confirmado) return;
 
@@ -295,18 +246,15 @@ export async function manejarEliminacionTarea(tarea) {
         tareasRegistradas = tareasRegistradas.filter(
             t => t.id.toString() !== tarea.id.toString()
         );
-        contadorTareas--;
         eliminarFilaTarea(tarea.id);
         refrescarTabla();
-        mostrarNotificacion('Tarea eliminada exitosamente', 'exito');
+        await mostrarNotificacion('Tarea eliminada exitosamente', 'exito');
     } else {
-        mostrarNotificacion('Error al eliminar la tarea', 'error');
+        await mostrarNotificacion('Error al eliminar la tarea', 'error');
     }
 }
 
-// ─────────────────────────────────────────────
-// Delegación de eventos en la tabla del modo usuario
-// ─────────────────────────────────────────────
+// ── DELEGACIÓN DE EVENTOS EN LA TABLA ────────────────────────────────────────
 
 function manejarClicEnTabla(event) {
     const botonAccion = event.target.closest('[data-action]');
@@ -322,46 +270,38 @@ function manejarClicEnTabla(event) {
     if (accion === 'delete') manejarEliminacionTarea(tarea);
 }
 
-// ─────────────────────────────────────────────
-// Registro de event listeners (llamado desde main.js)
-// ─────────────────────────────────────────────
+// ── REGISTRO DE LISTENERS (llamado desde main.js) ─────────────────────────────
 
 export function registrarEventListeners() {
 
-    // Formulario de búsqueda por documento del modo usuario
+    // Formulario de búsqueda modo usuario
     const formBusqueda = document.getElementById('searchUserForm');
     if (formBusqueda) {
         formBusqueda.addEventListener('submit', manejarBusquedaUsuario);
     }
 
-    // Limpieza del error del campo documento mientras el usuario escribe
-    const inputDoc   = document.getElementById('userDocument');
-    const errorDoc   = document.getElementById('userDocumentError');
+    // Limpiar error mientras el usuario escribe
+    const inputDoc = document.getElementById('userDocument');
+    const errorDoc = document.getElementById('userDocumentError');
     if (inputDoc && errorDoc) {
         inputDoc.addEventListener('input', function() {
-            // ✅ Orden correcto: (spanError, inputElement)
             limpiarError(errorDoc, inputDoc);
         });
     }
 
-    // Delegación de eventos en el tbody — maneja Editar y Eliminar de todas las filas
+    // Delegación de clicks en tabla de tareas del modo usuario
     const tbody = document.getElementById('tasksTableBody');
     if (tbody) {
         tbody.addEventListener('click', manejarClicEnTabla);
     }
 
-    // Botón X del modal de edición
+    // Botones del modal de edición
     const btnCerrarModal = document.getElementById('editCloseBtn');
-    if (btnCerrarModal) {
-        btnCerrarModal.addEventListener('click', ocultarModalEdicion);
-    }
+    if (btnCerrarModal) btnCerrarModal.addEventListener('click', ocultarModalEdicion);
 
-    // Botón Cancelar del modal de edición
     const btnCancelarModal = document.getElementById('editCancelBtn');
-    if (btnCancelarModal) {
-        btnCancelarModal.addEventListener('click', ocultarModalEdicion);
-    }
+    if (btnCancelarModal) btnCancelarModal.addEventListener('click', ocultarModalEdicion);
 
-    // Eventos de navegación (botones de inicio, volver, admin, etc.)
+    // Todos los eventos de navegación y del panel admin
     registrarEventosNavegacion();
 }

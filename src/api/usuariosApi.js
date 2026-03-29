@@ -1,174 +1,108 @@
 // MÓDULO: api/usuariosApi.js
-// CAPA: API (comunicación exclusiva con el servidor)
+// CAPA:   API
 
-// Responsabilidad única: centralizar todas las peticiones HTTP
-// relacionadas con usuarios al backend Express (servidor_backend_parejas).
-
-// Este módulo usa la API Fetch nativa del navegador.
+// Centraliza todas las peticiones HTTP de usuarios al backend Express + MySQL.
 // NUNCA manipula el DOM ni conoce la interfaz.
-// Solo envía peticiones y retorna respuestas.
+//
+// Endpoints cubiertos:
+//   GET    /api/users              -> obtenerTodosLosUsuarios
+//   GET    /api/users/:id          -> obtenerUsuarioPorId
+//   GET    /api/users/:userId/tasks -> obtenerTareasDeUsuarioById
+//   POST   /api/users              -> crearUsuario
+//   PUT    /api/users/:id          -> actualizarUsuario
+//   DELETE /api/users/:id          -> eliminarUsuario
 
-// Endpoints que cubre este módulo:
-//   GET    /api/users       -> obtenerTodosLosUsuarios
-//   GET    /api/users/:id   -> obtenerUsuarioPorId
-//   POST   /api/users       -> crearUsuario
-//   PUT    /api/users/:id   -> actualizarUsuario
-//   DELETE /api/users/:id   -> eliminarUsuario
-
-// Importamos la URL base y el prefijo de rutas desde config.js.
-// Si el servidor cambia de puerto o prefijo, solo se edita ese archivo.
 import { API_BASE_URL, API_PREFIX } from '../utils/config.js';
 
-// OBTENER TODOS LOS USUARIOS (GET)
-
-// Obtiene el arreglo completo de usuarios del sistema.
-// Retorna: arreglo de usuarios, o null si hubo error.
+// ── OBTENER TODOS LOS USUARIOS ────────────────────────────────────────────────
 export async function obtenerTodosLosUsuarios() {
     try {
-        // Resultado: 'http://localhost:3000/api/users'
         const url = `${API_BASE_URL}${API_PREFIX}/users`;
-
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error('Error al obtener los usuarios');
-        }
-
-        const usuarios = await response.json();
-        return usuarios;
-
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Error al obtener los usuarios');
+        return await response.json();
     } catch (error) {
-        console.error('Error en obtenerTodosLosUsuarios:', error);
+        console.error('obtenerTodosLosUsuarios:', error);
         return null;
     }
 }
 
-// OBTENER USUARIO POR ID (GET)
-
-// Busca un usuario específico usando su id interno (no el documento).
-// El backend expone GET /api/users/:id para esto.
-// Parámetro: id — el id numérico del usuario (1, 2, 3...).
-// Retorna: objeto del usuario encontrado, o null si no existe o hay error.
+// ── OBTENER USUARIO POR ID ────────────────────────────────────────────────────
 export async function obtenerUsuarioPorId(id) {
     try {
-        // Resultado: 'http://localhost:3000/api/users/1'
         const url = `${API_BASE_URL}${API_PREFIX}/users/${id}`;
-
         const response = await fetch(url);
-
-        // El backend responde 404 si el usuario no existe.
-        if (!response.ok) {
-            throw new Error(`Usuario con id ${id} no encontrado`);
-        }
-
-        const usuario = await response.json();
-        return usuario;
-
+        if (!response.ok) throw new Error(`Usuario ${id} no encontrado`);
+        return await response.json();
     } catch (error) {
-        console.error('Error en obtenerUsuarioPorId:', error);
+        console.error('obtenerUsuarioPorId:', error);
         return null;
     }
 }
 
-// CREAR USUARIO (POST)
+// ── OBTENER TAREAS DE UN USUARIO POR ID (endpoint propio de users) ────────────
+// GET /api/users/:userId/tasks
+// Alternativa al filtro de tareas; devuelve el mismo resultado.
+export async function obtenerTareasDeUsuarioById(userId) {
+    try {
+        const url = `${API_BASE_URL}${API_PREFIX}/users/${userId}/tasks`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Error al obtener tareas del usuario ${userId}`);
+        return await response.json();
+    } catch (error) {
+        console.error('obtenerTareasDeUsuarioById:', error);
+        return [];
+    }
+}
 
-// Crea un usuario nuevo en el backend.
-// El backend asigna el id automáticamente (AUTO_INCREMENT en MySQL).
-// Parámetro: datosUsuario — objeto con documento, name y email.
-// Retorna: el usuario creado con su id asignado por MySQL, o null si hubo error.
+// ── CREAR USUARIO ─────────────────────────────────────────────────────────────
+// POST /api/users
+// Cuerpo: { documento, name, email }
 export async function crearUsuario(datosUsuario) {
     try {
-        // Resultado: 'http://localhost:3000/api/users'
         const url = `${API_BASE_URL}${API_PREFIX}/users`;
-
-        const opciones = {
+        const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(datosUsuario)
-        };
-
-        const response = await fetch(url, opciones);
-
-        // El backend responde 201 Created cuando el usuario se crea correctamente.
-        if (!response.ok) {
-            throw new Error('Error al crear el usuario');
-        }
-
-        const usuarioCreado = await response.json();
-        return usuarioCreado;
-
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datosUsuario),
+        });
+        if (!response.ok) throw new Error('Error al crear el usuario');
+        return await response.json();
     } catch (error) {
-        console.error('Error en crearUsuario:', error);
+        console.error('crearUsuario:', error);
         return null;
     }
 }
 
-// ACTUALIZAR USUARIO (PUT)
-
-// Actualiza los datos de un usuario existente en el backend.
-// El backend solo permite actualizar: documento, name, email.
-// Parámetros:
-//   id           — id numérico del usuario a actualizar.
-//   datosUsuario — objeto con los campos a modificar.
-// Retorna: el usuario con los datos actualizados, o null si hubo error.
+// ── ACTUALIZAR USUARIO ────────────────────────────────────────────────────────
+// PUT /api/users/:id
+// Solo permite actualizar: documento, name, email (el modelo ignora el resto)
 export async function actualizarUsuario(id, datosUsuario) {
     try {
-        // Resultado: 'http://localhost:3000/api/users/1'
         const url = `${API_BASE_URL}${API_PREFIX}/users/${id}`;
-
-        const opciones = {
+        const response = await fetch(url, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(datosUsuario)
-        };
-
-        const response = await fetch(url, opciones);
-
-        // El backend responde 404 si el usuario no existe.
-        if (!response.ok) {
-            throw new Error(`Error al actualizar el usuario con id ${id}`);
-        }
-
-        const usuarioActualizado = await response.json();
-        return usuarioActualizado;
-
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datosUsuario),
+        });
+        if (!response.ok) throw new Error(`Error al actualizar usuario ${id}`);
+        return await response.json();
     } catch (error) {
-        console.error('Error en actualizarUsuario:', error);
+        console.error('actualizarUsuario:', error);
         return null;
     }
 }
 
-// ELIMINAR USUARIO (DELETE)
-
-// Elimina un usuario del backend.
-// El método DELETE no necesita cuerpo en la petición.
-// Parámetro: id — el id numérico del usuario a eliminar.
-// Retorna: true si fue exitoso, o false si hubo error.
+// ── ELIMINAR USUARIO ──────────────────────────────────────────────────────────
+// DELETE /api/users/:id
 export async function eliminarUsuario(id) {
     try {
-        // Resultado: 'http://localhost:3000/api/users/1'
         const url = `${API_BASE_URL}${API_PREFIX}/users/${id}`;
-
-        // DELETE solo necesita el método; no lleva body.
-        const opciones = {
-            method: 'DELETE'
-        };
-
-        const response = await fetch(url, opciones);
-
-        // El backend responde 404 si el usuario no existe.
-        if (!response.ok) {
-            throw new Error(`Error al eliminar el usuario con id ${id}`);
-        }
-
+        const response = await fetch(url, { method: 'DELETE' });
+        if (!response.ok) throw new Error(`Error al eliminar usuario ${id}`);
         return true;
-
     } catch (error) {
-        console.error('Error en eliminarUsuario:', error);
+        console.error('eliminarUsuario:', error);
         return false;
     }
 }

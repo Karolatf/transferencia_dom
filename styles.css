@@ -1103,3 +1103,54 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
         padding: var(--espacio-lg);
     }
 }
+/* ══════════════════════════════════════════════════
+   DASHBOARD DE ESTADÍSTICAS (panel admin)
+   GET /api/tasks/dashboard → { total, pendientes, enProgreso, completadas }
+══════════════════════════════════════════════════ */
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--espacio-md);
+    margin-bottom: var(--espacio-lg);
+}
+
+.stat-card {
+    background: white;
+    border-radius: var(--radio-xl);
+    padding: var(--espacio-lg) var(--espacio-xl);
+    box-shadow: var(--sombra-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-xs);
+    border-left: 4px solid var(--borde-suave);
+    transition: box-shadow var(--transicion);
+}
+
+.stat-card:hover { box-shadow: var(--sombra-md); }
+
+.stat-card--pendiente  { border-left-color: var(--color-pendiente); }
+.stat-card--progreso   { border-left-color: var(--color-progreso); }
+.stat-card--completada { border-left-color: var(--color-completada); }
+
+.stat-card__label {
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--texto-claro);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-card__valor {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    line-height: 1;
+}
+
+.stat-card--pendiente  .stat-card__valor { color: #92400e; }
+.stat-card--progreso   .stat-card__valor { color: #1e40af; }
+.stat-card--completada .stat-card__valor { color: #065f46; }
+
+@media (max-width: 768px) {
+    .dashboard-stats { grid-template-columns: 1fr 1fr; }
+}

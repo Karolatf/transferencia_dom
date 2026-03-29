@@ -14,7 +14,7 @@
 import { obtenerTodosLosUsuarios, crearUsuario, eliminarUsuario } from '../api/usuariosApi.js';
 
 // Se importa la URL base para construir las peticiones de tareas
-import { API_BASE_URL } from '../utils/config.js';
+import { obtenerTodasLasTareas } from '../api/tareasApi.js';
 
 // Se importan las funciones centralizadas de notificaciones.
 // adminPanel.js no debe importar Swal directamente; toda notificación
@@ -335,10 +335,7 @@ async function montarSeccionTareas(contenedor) {
     // Se obtienen todas las tareas desde el backend
     let tareas = [];
     try {
-        const response = await fetch(`${API_BASE_URL}/api/tasks`);
-        if (response.ok) {
-            tareas = await response.json();
-        }
+        tareas = await obtenerTodasLasTareas();
     } catch (error) {
         console.error('Error al obtener tareas para el panel admin:', error);
     }
