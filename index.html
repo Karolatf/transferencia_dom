@@ -8,35 +8,18 @@
 </head>
 <body data-modo="inicio">
 
-<!-- PANTALLA DE INICIO: layout de dos columnas (imagen + panel de acceso) -->
-<!-- La columna izquierda muestra la imagen de fondo del proyecto -->
-<!-- La columna derecha muestra la card glass con los accesos -->
+<!-- PANTALLA DE INICIO -->
 <div class="pantalla-inicio" id="pantallaInicio">
+    <div class="inicio__columna-imagen"></div>
 
-    <!-- Columna izquierda: imagen ilustrativa del proyecto -->
-    <!-- La imagen se define como background-image en CSS para mejor control -->
-    <div class="inicio__columna-imagen">
-        <!-- El contenido visual de esta columna lo gestiona styles.css -->
-        <!-- No se pone img aquí para respetar separación HTML/CSS -->
-    </div>
-
-    <!-- Columna derecha: panel de acceso con efecto glass -->
     <div class="inicio__columna-panel">
-
-        <!-- Card con efecto glass: fondo semi-transparente y blur -->
-        <!-- Contiene el encabezado y las dos tarjetas de acceso -->
         <div class="inicio__glass-card">
-
-            <!-- Encabezado del sistema dentro de la card glass -->
             <header class="inicio__header">
                 <h1 class="inicio__titulo">Sistema de Gestion de Tareas</h1>
                 <p class="inicio__subtitulo">Ejercicio DOM · Transferencia del Conocimiento · SENA</p>
             </header>
 
-            <!-- Contenedor de las dos tarjetas de acceso -->
             <div class="inicio__accesos">
-
-                <!-- Tarjeta de acceso como usuario -->
                 <div class="acceso-card acceso-card--usuario">
                     <h2 class="acceso-card__titulo">Acceso Usuario</h2>
                     <p class="acceso-card__desc">
@@ -48,7 +31,6 @@
                     </button>
                 </div>
 
-                <!-- Tarjeta de acceso como administrador -->
                 <div class="acceso-card acceso-card--admin">
                     <h2 class="acceso-card__titulo">Acceso Administrador</h2>
                     <p class="acceso-card__desc">
@@ -59,305 +41,315 @@
                         Ingresar como Administrador
                     </button>
                 </div>
-
             </div>
-            <!-- Fin inicio__accesos -->
 
-            <!-- Nota al pie dentro de la card glass -->
             <p class="inicio__nota">*Solo personal autorizado.*</p>
         </div>
-        <!-- Fin inicio__glass-card -->
     </div>
-    <!-- Fin inicio__columna-panel -->
 </div>
-<!-- Fin pantallaInicio -->
 
 
-    <!-- VISTA USUARIO -->
-    <div class="vista hidden" id="vistaUsuario">
+<!-- VISTA USUARIO -->
+<div class="vista hidden" id="vistaUsuario">
 
-        <header class="header header--usuario">
-            <div class="header__nav">
-                <!-- Botón volver usuario: morado, flecha CSS + texto -->
-                <button class="btn-volver" id="btnVolverUsuario">Volver</button>
+    <header class="header header--usuario">
+        <div class="header__nav">
+            <button class="btn-volver" id="btnVolverUsuario">Volver</button>
+        </div>
+        <h1 class="header__title">Mi Portal de Tareas</h1>
+        <p class="header__subtitle">Ingresa tu documento para ver y gestionar tus tareas asignadas</p>
+    </header>
+
+    <main class="contenido-vista">
+
+        <!-- Buscar por documento -->
+        <section class="form-section">
+            <div class="card">
+                <h2 class="card__title">Buscar mis tareas</h2>
+                <form id="searchUserForm" class="form" novalidate>
+                    <div class="form__group">
+                        <label for="userDocument" class="form__label">Numero de documento</label>
+                        <input
+                            type="text"
+                            id="userDocument"
+                            class="form__input"
+                            placeholder="Ej: 1097497124"
+                            autocomplete="off"
+                        >
+                        <span class="form__error" id="userDocumentError"></span>
+                    </div>
+                    <button type="submit" class="btn btn--primary">
+                        <span class="btn__text">Buscar mis tareas</span>
+                    </button>
+                </form>
             </div>
-            <h1 class="header__title">Mi Portal de Tareas</h1>
-            <p class="header__subtitle">Ingresa tu documento para ver y gestionar tus tareas asignadas</p>
-        </header>
+        </section>
 
-        <main class="contenido-vista">
-
-            <!-- Card: buscar por documento -->
-            <section class="form-section">
-                <div class="card">
-                    <h2 class="card__title">Buscar mis tareas</h2>
-                    <form id="searchUserForm" class="form" novalidate>
-                        <div class="form__group">
-                            <label for="userDocument" class="form__label">Numero de documento</label>
-                            <input
-                                type="text"
-                                id="userDocument"
-                                class="form__input"
-                                placeholder="Ej: 1097497124"
-                                autocomplete="off"
-                            >
-                            <span class="form__error" id="userDocumentError"></span>
-                        </div>
-                        <button type="submit" class="btn btn--primary">
-                            <span class="btn__text">Buscar mis tareas</span>
-                        </button>
-                    </form>
-                </div>
-            </section>
-
-            <!-- Card datos usuario y tabla de tareas: se muestran desde tareasService.js -->
-            <section class="hidden" id="userDataSection">
-                <div class="card card--usuario-info">
-                    <h2 class="card__title">Datos del usuario</h2>
-                    <div class="user-info">
-                        <div class="user-info__item">
-                            <span class="user-info__label">ID</span>
-                            <span class="user-info__value" id="userId"></span>
-                        </div>
-                        <div class="user-info__item">
-                            <span class="user-info__label">Nombre</span>
-                            <span class="user-info__value" id="userName"></span>
-                        </div>
-                        <div class="user-info__item">
-                            <span class="user-info__label">Correo</span>
-                            <span class="user-info__value" id="userEmail"></span>
-                        </div>
+        <!-- Datos del usuario encontrado -->
+        <section class="hidden" id="userDataSection">
+            <div class="card card--usuario-info">
+                <h2 class="card__title">Datos del usuario</h2>
+                <div class="user-info">
+                    <div class="user-info__item">
+                        <span class="user-info__label">ID</span>
+                        <span class="user-info__value" id="userId"></span>
+                    </div>
+                    <div class="user-info__item">
+                        <span class="user-info__label">Nombre</span>
+                        <span class="user-info__value" id="userName"></span>
+                    </div>
+                    <div class="user-info__item">
+                        <span class="user-info__label">Correo</span>
+                        <span class="user-info__value" id="userEmail"></span>
                     </div>
                 </div>
-            </section>
-
-            <section class="tasks-section hidden" id="tasksSection">
-                <div class="tasks-header">
-                    <h2 class="tasks-header__title">Mis tareas asignadas</h2>
-                    <span class="tasks-header__count" id="tasksCount">0 tareas</span>
-                </div>
-                <div class="tasks-table-container">
-                    <table class="tasks-table">
-                        <thead class="tasks-table__head">
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Titulo</th>
-                                <th scope="col">Descripcion</th>
-                                <th scope="col">Estado</th>
-                                <th scope="col">Comentario</th>
-                                <th scope="col">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tasksTableBody"></tbody>
-                    </table>
-                </div>
-                <div class="tasks-empty" id="tasksEmptyState">
-                    <p class="tasks-empty__text">No tienes tareas asignadas</p>
-                    <p class="tasks-empty__subtext">El administrador te asignara tareas desde su panel</p>
-                </div>
-            </section>
-
-        </main>
-
-        <footer class="footer">
-            <p class="footer__text">
-                Ejercicio de Manipulacion del DOM - Transferencia del Conocimiento |
-                SENA - Tecnico en Programacion de Software
-            </p>
-        </footer>
-    </div>
-
-
-    <!-- VISTA ADMIN -->
-    <div class="vista hidden" id="vistaAdmin">
-
-        <header class="header header--admin">
-            <div class="header__nav">
-                <!-- Botón volver admin: blanco con hover azul -->
-                <button class="btn-volver btn-volver--admin" id="btnVolverAdmin">Volver</button>
             </div>
-            <h1 class="header__title">Panel de Administracion</h1>
-            <p class="header__subtitle">Gestion completa de usuarios y tareas del sistema</p>
+        </section>
 
-            <!-- Buscador de usuario integrado en el header del admin -->
-            <!-- Al buscar, abre el modal dinámico en lugar de un panel fijo -->
-            <form id="adminSearchUserForm" novalidate class="header__busqueda-admin">
-                <input
-                    type="text"
-                    id="adminUserDocument"
-                    placeholder="Buscar usuario por nombre, doc o ID..."
-                    autocomplete="off"
-                >
-                <button type="submit">Buscar</button>
-            </form>
-        </header>
+        <!-- Tabla de tareas del usuario -->
+        <section class="tasks-section hidden" id="tasksSection">
+            <div class="tasks-header">
+                <h2 class="tasks-header__title">Mis tareas asignadas</h2>
+                <span class="tasks-header__count" id="tasksCount">0 tareas</span>
+            </div>
+            <div class="tasks-table-container">
+                <table class="tasks-table">
+                    <thead class="tasks-table__head">
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Titulo</th>
+                            <th scope="col">Descripcion</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Comentario</th>
+                            <th scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tasksTableBody"></tbody>
+                </table>
+            </div>
+            <div class="tasks-empty" id="tasksEmptyState">
+                <p class="tasks-empty__text">No tienes tareas asignadas</p>
+                <p class="tasks-empty__subtext">El administrador te asignara tareas desde su panel</p>
+            </div>
+        </section>
 
-        <main class="contenido-vista contenido-vista--admin">
+    </main>
 
-            <!-- Fila superior: solo crear usuario (buscar se movió al header) -->
-            <div class="admin-fila">
-                <section class="admin-card">
-                    <h2 class="admin-card__titulo">Crear Usuario</h2>
-                    <form id="createUserForm" class="form" novalidate>
-                        <div class="form__group">
-                            <label for="newUserId" class="form__label">Numero de documento</label>
-                            <input type="text" id="newUserId" class="form__input" placeholder="Ej: 1097497124" autocomplete="off">
-                            <span class="form__error" id="newUserIdError"></span>
-                        </div>
-                        <div class="form__group">
-                            <label for="newUserName" class="form__label">Nombre completo</label>
-                            <input type="text" id="newUserName" class="form__input" placeholder="Ej: Karol Torres">
-                            <span class="form__error" id="newUserNameError"></span>
-                        </div>
-                        <div class="form__group">
-                            <label for="newUserEmail" class="form__label">Correo electronico</label>
-                            <input type="email" id="newUserEmail" class="form__input" placeholder="Ej: usuario@correo.com">
-                            <span class="form__error" id="newUserEmailError"></span>
-                        </div>
-                        <button type="submit" class="btn btn--admin-primary">
-                            <span class="btn__text">Crear Usuario</span>
-                        </button>
-                    </form>
-                </section>
+    <footer class="footer">
+        <p class="footer__text">
+            Ejercicio de Manipulacion del DOM - Transferencia del Conocimiento |
+            SENA - Tecnico en Programacion de Software
+        </p>
+    </footer>
+</div>
+
+
+<!-- VISTA ADMIN -->
+<div class="vista hidden" id="vistaAdmin">
+
+    <header class="header header--admin">
+        <div class="header__nav">
+            <button class="btn-volver btn-volver--admin" id="btnVolverAdmin">Volver</button>
+        </div>
+        <h1 class="header__title">Panel de Administracion</h1>
+        <p class="header__subtitle">Gestion completa de usuarios y tareas del sistema</p>
+
+        <form id="adminSearchUserForm" novalidate class="header__busqueda-admin">
+            <input
+                type="text"
+                id="adminUserDocument"
+                placeholder="Buscar usuario por nombre, doc o ID..."
+                autocomplete="off"
+            >
+            <button type="submit">Buscar</button>
+        </form>
+    </header>
+
+    <main class="contenido-vista contenido-vista--admin">
+
+        <!-- Dashboard de estadísticas -->
+        <section class="dashboard-stats">
+            <div class="stat-card">
+                <span class="stat-card__label">Total tareas</span>
+                <span class="stat-card__valor" id="dashboardTotal">—</span>
+            </div>
+            <div class="stat-card stat-card--pendiente">
+                <span class="stat-card__label">Pendientes</span>
+                <span class="stat-card__valor" id="dashboardPendiente">—</span>
+            </div>
+            <div class="stat-card stat-card--progreso">
+                <span class="stat-card__label">En Progreso</span>
+                <span class="stat-card__valor" id="dashboardProgreso">—</span>
+            </div>
+            <div class="stat-card stat-card--completada">
+                <span class="stat-card__label">Completadas</span>
+                <span class="stat-card__valor" id="dashboardCompletada">—</span>
+            </div>
+        </section>
+
+        <!-- Crear usuario -->
+        <div class="admin-fila">
+            <section class="admin-card">
+                <h2 class="admin-card__titulo">Crear Usuario</h2>
+                <form id="createUserForm" class="form" novalidate>
+                    <div class="form__group">
+                        <label for="newUserId" class="form__label">Numero de documento</label>
+                        <input type="text" id="newUserId" class="form__input" placeholder="Ej: 1097497124" autocomplete="off">
+                        <span class="form__error" id="newUserIdError"></span>
+                    </div>
+                    <div class="form__group">
+                        <label for="newUserName" class="form__label">Nombre completo</label>
+                        <input type="text" id="newUserName" class="form__input" placeholder="Ej: Karol Torres">
+                        <span class="form__error" id="newUserNameError"></span>
+                    </div>
+                    <div class="form__group">
+                        <label for="newUserEmail" class="form__label">Correo electronico</label>
+                        <input type="email" id="newUserEmail" class="form__input" placeholder="Ej: usuario@correo.com">
+                        <span class="form__error" id="newUserEmailError"></span>
+                    </div>
+                    <button type="submit" class="btn btn--admin-primary">
+                        <span class="btn__text">Crear Usuario</span>
+                    </button>
+                </form>
+            </section>
+        </div>
+
+        <!-- Tabla de usuarios -->
+        <section class="admin-card admin-card--full">
+            <div class="admin-card__cabecera">
+                <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
+                <button class="btn btn--admin-secondary" id="btnRefrescarUsuarios">Actualizar</button>
+            </div>
+            <div class="tasks-table-container">
+                <table class="tasks-table tasks-table--admin">
+                    <thead class="tasks-table__head">
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Documento</th>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Correo</th>
+                            <th scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Tabla de tareas con filtros -->
+        <section class="admin-card admin-card--full">
+            <div class="admin-card__cabecera">
+                <h2 class="admin-card__titulo">Todas las Tareas del Sistema</h2>
+                <span id="adminTasksCount" class="tasks-header__count">0 tareas</span>
             </div>
 
-            <!-- Tabla de usuarios con acciones -->
-            <section class="admin-card admin-card--full">
-                <div class="admin-card__cabecera">
-                    <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
-                    <button class="btn btn--admin-secondary" id="btnRefrescarUsuarios">Actualizar</button>
-                </div>
-                <div class="tasks-table-container">
-                    <table class="tasks-table tasks-table--admin">
-                        <thead class="tasks-table__head">
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Documento</th>
-                                <th scope="col">Nombre</th>
-                                <th scope="col">Correo</th>
-                                <th scope="col">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTableBody"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Tabla de todas las tareas con filtros -->
-            <section class="admin-card admin-card--full">
-                <div class="admin-card__cabecera">
-                    <h2 class="admin-card__titulo">Todas las Tareas del Sistema</h2>
-                    <span id="adminTasksCount" class="tasks-header__count">0 tareas</span>
-                </div>
-
-                <div class="tasks-controls">
-                    <div class="tasks-controls__grupo">
-                        <label for="adminFiltroEstado" class="tasks-controls__label">Estado</label>
-                        <select id="adminFiltroEstado" class="tasks-controls__select">
-                            <option value="">Todos</option>
-                            <option value="pendiente">Pendiente</option>
-                            <option value="en_progreso">En Progreso</option>
-                            <option value="completada">Completada</option>
-                        </select>
-                    </div>
-                    <div class="tasks-controls__grupo">
-                        <label for="adminFiltroUsuario" class="tasks-controls__label">Usuario</label>
-                        <input type="text" id="adminFiltroUsuario" class="tasks-controls__input" placeholder="Nombre o documento">
-                    </div>
-                    <div class="tasks-controls__grupo">
-                        <label for="adminOrdenSelect" class="tasks-controls__label">Ordenar</label>
-                        <!-- Los valores coinciden con los criterios que acepta ordenarTareas() en ordenamiento.js -->
-                        <select id="adminOrdenSelect" class="tasks-controls__select">
-                            <option value="">Sin orden</option>
-                            <option value="titulo_asc">Titulo A-Z</option>
-                            <option value="titulo_desc">Titulo Z-A</option>
-                            <option value="estado">Por estado</option>
-                            <option value="usuario">Por usuario</option>
-                        </select>
-                    </div>
-                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                        <button class="btn btn--admin-primary" id="adminBtnAplicarFiltros">Aplicar</button>
-                    </div>
-                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                        <button class="btn btn--admin-secondary" id="adminBtnLimpiarFiltros">Limpiar</button>
-                    </div>
-                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                        <button class="btn btn--admin-primary" id="adminBtnExportar">Exportar JSON</button>
-                    </div>
-                </div>
-
-                <div class="tasks-table-container">
-                    <table class="tasks-table tasks-table--admin">
-                        <thead class="tasks-table__head">
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Titulo</th>
-                                <th scope="col">Descripcion</th>
-                                <th scope="col">Estado</th>
-                                <th scope="col">Usuario asignado</th>
-                                <th scope="col">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminTasksTableBody"></tbody>
-                    </table>
-                </div>
-            </section>
-
-        </main>
-
-        <footer class="footer footer--admin">
-            <p class="footer__text">
-                Panel de Administracion · Sistema de Gestion de Tareas |
-                SENA - Tecnico en Programacion de Software
-            </p>
-        </footer>
-    </div>
-
-
-    <!-- MODAL DE EDICIÓN DE TAREA (modo usuario) -->
-    <div class="modal-overlay hidden" id="editModal">
-        <div class="modal">
-            <div class="modal__header">
-                <h2 class="modal__title">Editar Tarea</h2>
-                <button class="modal__close" id="editCloseBtn" type="button">✕</button>
-            </div>
-            <form id="editTaskForm" class="form" novalidate>
-                <input type="hidden" id="editTaskId">
-                <div class="form__group">
-                    <label for="editTaskTitle" class="form__label">Titulo</label>
-                    <input type="text" id="editTaskTitle" class="form__input" placeholder="Nuevo titulo">
-                </div>
-                <div class="form__group">
-                    <label for="editTaskDescription" class="form__label">Descripcion</label>
-                    <textarea id="editTaskDescription" class="form__input form__textarea" rows="3" placeholder="Nueva descripcion..."></textarea>
-                </div>
-                <div class="form__group">
-                    <label for="editTaskStatus" class="form__label">Estado</label>
-                    <select id="editTaskStatus" class="form__input">
-                        <option value="" disabled>Selecciona un estado</option>
+            <div class="tasks-controls">
+                <div class="tasks-controls__grupo">
+                    <label for="adminFiltroEstado" class="tasks-controls__label">Estado</label>
+                    <select id="adminFiltroEstado" class="tasks-controls__select">
+                        <option value="">Todos</option>
                         <option value="pendiente">Pendiente</option>
                         <option value="en_progreso">En Progreso</option>
                         <option value="completada">Completada</option>
                     </select>
                 </div>
-                <div class="form__group">
-                    <label for="editTaskComment" class="form__label">
-                        Comentario <span class="form__label--opcional">(opcional)</span>
-                    </label>
-                    <textarea id="editTaskComment" class="form__input form__textarea" rows="2" placeholder="Agrega o edita el comentario..."></textarea>
+                <div class="tasks-controls__grupo">
+                    <label for="adminFiltroUsuario" class="tasks-controls__label">Usuario</label>
+                    <input type="text" id="adminFiltroUsuario" class="tasks-controls__input" placeholder="Nombre del usuario">
                 </div>
-                <div class="modal__actions">
-                    <button type="button" class="btn btn--secondary" id="editCancelBtn">
-                        <span class="btn__text">Cancelar</span>
-                    </button>
-                    <button type="submit" class="btn btn--primary">
-                        <span class="btn__text">Guardar Cambios</span>
-                    </button>
+                <div class="tasks-controls__grupo">
+                    <label for="adminOrdenSelect" class="tasks-controls__label">Ordenar</label>
+                    <select id="adminOrdenSelect" class="tasks-controls__select">
+                        <option value="">Sin orden</option>
+                        <option value="titulo_asc">Titulo A-Z</option>
+                        <option value="titulo_desc">Titulo Z-A</option>
+                        <option value="estado">Por estado</option>
+                        <option value="usuario">Por usuario</option>
+                    </select>
                 </div>
-            </form>
-        </div>
-    </div>
+                <div class="tasks-controls__grupo tasks-controls__grupo--btn">
+                    <button class="btn btn--admin-primary" id="adminBtnAplicarFiltros">Aplicar</button>
+                </div>
+                <div class="tasks-controls__grupo tasks-controls__grupo--btn">
+                    <button class="btn btn--admin-secondary" id="adminBtnLimpiarFiltros">Limpiar</button>
+                </div>
+                <div class="tasks-controls__grupo tasks-controls__grupo--btn">
+                    <button class="btn btn--admin-primary" id="adminBtnExportar">Exportar JSON</button>
+                </div>
+            </div>
 
-    <script type="module" src="/src/main.js"></script>
+            <div class="tasks-table-container">
+                <table class="tasks-table tasks-table--admin">
+                    <thead class="tasks-table__head">
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Titulo</th>
+                            <th scope="col">Descripcion</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Usuario asignado</th>
+                            <th scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTasksTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer footer--admin">
+        <p class="footer__text">
+            Panel de Administracion · Sistema de Gestion de Tareas |
+            SENA - Tecnico en Programacion de Software
+        </p>
+    </footer>
+</div>
+
+
+<!-- MODAL EDICIÓN DE TAREA -->
+<div class="modal-overlay hidden" id="editModal">
+    <div class="modal">
+        <div class="modal__header">
+            <h2 class="modal__title">Editar Tarea</h2>
+            <button class="modal__close" id="editCloseBtn" type="button">✕</button>
+        </div>
+        <form id="editTaskForm" class="form" novalidate>
+            <input type="hidden" id="editTaskId">
+            <div class="form__group">
+                <label for="editTaskTitle" class="form__label">Titulo</label>
+                <input type="text" id="editTaskTitle" class="form__input" placeholder="Nuevo titulo">
+            </div>
+            <div class="form__group">
+                <label for="editTaskDescription" class="form__label">Descripcion</label>
+                <textarea id="editTaskDescription" class="form__input form__textarea" rows="3" placeholder="Nueva descripcion..."></textarea>
+            </div>
+            <div class="form__group">
+                <label for="editTaskStatus" class="form__label">Estado</label>
+                <select id="editTaskStatus" class="form__input">
+                    <option value="" disabled>Selecciona un estado</option>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="en_progreso">En Progreso</option>
+                    <option value="completada">Completada</option>
+                </select>
+            </div>
+            <div class="form__group">
+                <label for="editTaskComment" class="form__label">
+                    Comentario <span class="form__label--opcional">(opcional)</span>
+                </label>
+                <textarea id="editTaskComment" class="form__input form__textarea" rows="2" placeholder="Agrega o edita el comentario..."></textarea>
+            </div>
+            <div class="modal__actions">
+                <button type="button" class="btn btn--secondary" id="editCancelBtn">
+                    <span class="btn__text">Cancelar</span>
+                </button>
+                <button type="submit" class="btn btn--primary">
+                    <span class="btn__text">Guardar Cambios</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
 </body>
 </html>

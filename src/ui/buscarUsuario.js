@@ -10,10 +10,10 @@
 // Ninguna línea de este archivo usa innerHTML ni atributos style en JS.
 
 // Se importa la función de búsqueda de usuario por documento desde tareasApi.js
-import { buscarUsuarioPorDocumento } from '../api/tareasApi.js';
-
-// Se importa la URL base para construir las peticiones de tareas del usuario
-import { API_BASE_URL } from '../utils/config.js';
+import {
+    buscarUsuarioPorDocumento,
+    obtenerTareasDeUsuario
+} from '../api/tareasApi.js';
 
 // Función principal que monta la vista de búsqueda en el contenedor recibido
 // Parámetro: contenedor — el elemento HTML donde se renderiza la vista
@@ -138,10 +138,7 @@ export function montarBuscarUsuario(contenedor) {
         // El campo userId en las tareas guarda el id numérico, no el documento
         let tareas = [];
         try {
-            const response = await fetch(`${API_BASE_URL}/tasks?userId=${usuario.id}`);
-            if (response.ok) {
-                tareas = await response.json();
-            }
+            tareas = await obtenerTareasDeUsuario(usuario.id);
         } catch (error) {
             console.error('Error al obtener las tareas del usuario:', error);
         }

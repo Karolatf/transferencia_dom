@@ -1,211 +1,201 @@
 // MÓDULO: api/tareasApi.js
-// CAPA:   API (Comunicación exclusiva con el servidor)
+// CAPA:   API
 
-// Responsabilidad ÚNICA: centralizar TODAS las peticiones HTTP
-// que la aplicación hace al servidor (json-server).
+// Centraliza todas las peticiones HTTP de tareas al backend Express + MySQL.
+// NUNCA manipula el DOM ni conoce la interfaz.
+//
+// Endpoints cubiertos:
+//   GET    /api/tasks                        -> obtenerTodasLasTareas
+//   GET    /api/tasks/filter?status=&userId= -> filtrarTareasRemoto (no usado por defecto, el filtro es local)
+//   GET    /api/tasks/dashboard              -> obtenerDashboard
+//   GET    /api/tasks/filter?userId=         -> obtenerTareasDeUsuario
+//   POST   /api/tasks                        -> registrarTarea
+//   PUT    /api/tasks/:id                    -> actualizarTarea
+//   PATCH  /api/tasks/:id/status             -> cambiarEstadoTarea
+//   DELETE /api/tasks/:id                    -> eliminarTarea
+//   POST   /api/tasks/:taskId/assign         -> asignarUsuariosATarea
+//   GET    /api/tasks/:taskId/users          -> obtenerUsuariosAsignados
+//   DELETE /api/tasks/:taskId/users/:userId  -> quitarUsuarioDeTarea
 
-// Este módulo usa la API Fetch nativa del navegador.
-// NUNCA manipula el DOM ni conoce la existencia de la interfaz.
-// NUNCA contiene lógica de validación ni lógica de negocio.
-// Solo envía peticiones y retorna respuestas.
+import { API_BASE_URL, API_PREFIX } from '../utils/config.js';
 
-// Ventaja: si cambia la fuente de datos (otra API, otra URL),
-// solo se modifica ESTE archivo sin tocar handlers ni UI.
-
-// RF-01 READ   -> buscarUsuarioPorDocumento (GET  /users)
-// RF-02 CREATE -> registrarTarea            (POST /tasks)
-// RF-03 UPDATE -> actualizarTarea           (PATCH /tasks/:id)
-// RF-04 DELETE -> eliminarTarea             (DELETE /tasks/:id)
-
-// Dependencias: utils/config.js (solo para la URL base)
-
-// Importamos la URL base desde la capa de utils/configuración
-// Así si el puerto cambia, se actualiza en un solo lugar
-import { API_BASE_URL } from '../utils/config.js';
-
-// RF-01 – BUSCAR USUARIO (READ / GET)
-
-// Busca un usuario en el servidor filtrando por su número de documento
-// Usa el método HTTP GET al endpoint /users
-// Parámetro: documentoId - El número de documento ingresado en el formulario
-// Retorna: Promesa con el objeto del usuario encontrado, o null si no existe o hay error
-export async function buscarUsuarioPorDocumento(documentoId) {
+// ── OBTENER TODAS LAS TAREAS ──────────────────────────────────────────────────
+// GET /api/tasks
+// El modelo del backend resuelve assignedUsers (array IDs) a assignedUsersDisplay
+// (string con nombres), así que la respuesta ya viene lista para pintar la tabla.
+export async function obtenerTodasLasTareas() {
     try {
-        // ----- PASO 1: CONSTRUIR LA URL -----
-        // Template literal para construir la URL completa del endpoint
-        // Resultado: http://localhost:3000/users
-        const url = `${API_BASE_URL}/users`;
-
-        // ----- PASO 2: REALIZAR LA PETICIÓN GET -----
-        // fetch() realiza GET por defecto (no necesita opciones adicionales)
-        // 'await' pausa la ejecución hasta que el servidor responda
-        const response = await fetch(url);
-
-        // ----- PASO 3: VERIFICAR SI LA RESPUESTA ES EXITOSA -----
-        // response.ok es true solo para códigos HTTP entre 200 y 299
-        if (!response.ok) {
-            // Si el servidor devolvió error (400, 500, etc.), lanzamos un error
-            // Esto hace que la ejecución salte al bloque catch()
-            throw new Error('Error al consultar el servidor');
-        }
-
-        // ----- PASO 4: CONVERTIR LA RESPUESTA A JSON -----
-        // response.json() analiza el cuerpo y lo convierte en array de objetos
-        // 'await' pausa hasta que la conversión termine (es asíncrona)
-        const usuarios = await response.json();
-
-        // ----- PASO 5: BUSCAR EL USUARIO EN EL ARREGLO -----
-        // find() recorre el arreglo y retorna el primero que cumpla la condición
-        // Convertimos ambos a string para evitar errores de tipo (número vs string)
-        const usuario = usuarios.find(u => u.documento.toString() === documentoId.toString());
-        // ----- PASO 6: RETORNAR EL RESULTADO -----
-        // Si find() encontró el usuario, retornamos ese objeto
-        // Si no lo encontró, find() retorna undefined; el operador || lo convierte a null
-        return usuario || null;
-
+        const url = `${API_BASE_URL}${API_PREFIX}/tasks`;
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Error al obtener todas las tareas');
+        return await response.json();
     } catch (error) {
-        // ----- MANEJO DE ERRORES -----
-        // Capturamos cualquier error (red caída, servidor inaccesible, error lanzado)
-        // para no romper la aplicación con un error no controlado
-        console.error('❌ Error al buscar usuario:', error);
-        // Retornamos null para que el service sepa que la operación falló
+        console.error('obtenerTodasLasTareas:', error);
+        return [];
+    }
+}
+
+// ── OBTENER DASHBOARD ─────────────────────────────────────────────────────────
+// GET /api/tasks/dashboard
+// Retorna { total, pendientes, enProgreso, completadas }
+export async function obtenerDashboard() {
+    try {
+        const url = `${API_BASE_URL}${API_PREFIX}/tasks/dashboard`;
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Error al obtener el dashboard');
+        return await response.json();
+    } catch (error) {
+        console.error('obtenerDashboard:', error);
         return null;
     }
 }
 
-// RF-02 – REGISTRAR TAREA (CREATE / POST)
+// ── OBTENER TAREAS DE UN USUARIO ──────────────────────────────────────────────
+// GET /api/tasks/filter?userId=:id
+// Retorna las tareas cuyo assignedUsers incluye el userId dado.
+export async function obtenerTareasDeUsuario(userId) {
+    try {
+        const url = `${API_BASE_URL}${API_PREFIX}/tasks/filter?userId=${userId}`;
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Error al obtener tareas del usuario ${userId}`);
+        return await response.json();
+    } catch (error) {
+        console.error('obtenerTareasDeUsuario:', error);
+        return [];
+    }
+}
 
-// Registra una nueva tarea en el servidor enviando sus datos en el cuerpo
-// Usa el método HTTP POST al endpoint /tasks
-// Parámetro: datosTarea - Objeto JavaScript con todos los campos de la tarea
-// Retorna: Promesa con el objeto de la tarea creada (incluye ID generado), o null si hay error
+// ── OBTENER TAREA POR ID ──────────────────────────────────────────────────────
+// GET /api/tasks/:id
+export async function obtenerTareaPorId(id) {
+    try {
+        const url = `${API_BASE_URL}${API_PREFIX}/tasks/${id}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Tarea ${id} no encontrada`);
+        return await response.json();
+    } catch (error) {
+        console.error('obtenerTareaPorId:', error);
+        return null;
+    }
+}
+
+// ── REGISTRAR TAREA ───────────────────────────────────────────────────────────
+// POST /api/tasks
+// Cuerpo: { title, description, status, assignedUsers, comment }
 export async function registrarTarea(datosTarea) {
     try {
-        // ----- PASO 1: CONSTRUIR LA URL -----
-        // Resultado: http://localhost:3000/tasks
-        const url = `${API_BASE_URL}/tasks`;
-
-        // ----- PASO 2: CONFIGURAR LAS OPCIONES DE LA PETICIÓN POST -----
-        // A diferencia del GET, el POST necesita opciones para enviar datos
-        const opciones = {
-            method: 'POST', // Indicamos que es una petición de tipo POST (crear recurso)
-            headers: {
-                // Le decimos al servidor que el cuerpo viene en formato JSON
-                'Content-Type': 'application/json'
-            },
-            // JSON.stringify() convierte el objeto JavaScript a string JSON para enviarlo
-            // El cuerpo de la petición siempre debe ser un string, no un objeto
-            body: JSON.stringify(datosTarea)
-        };
-
-        // ----- PASO 3: REALIZAR LA PETICIÓN POST -----
-        // 'await' pausa hasta que el servidor procese y responda
-        const response = await fetch(url, opciones);
-
-        // ----- PASO 4: VERIFICAR SI LA RESPUESTA ES EXITOSA -----
-        if (!response.ok) {
-            throw new Error('Error al registrar la tarea');
-        }
-
-        // ----- PASO 5: CONVERTIR LA RESPUESTA A JSON -----
-        // El servidor retorna el objeto de la tarea recién creada, incluyendo el ID generado
-        const tareaCreada = await response.json();
-
-        // ----- PASO 6: RETORNAR LA TAREA CREADA -----
-        // El service usará este objeto para actualizar el DOM y el estado local
-        return tareaCreada;
-
+        const url = `${API_BASE_URL}${API_PREFIX}/tasks`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datosTarea),
+        });
+        if (!response.ok) throw new Error('Error al registrar la tarea');
+        return await response.json();
     } catch (error) {
-        console.error('❌ Error al registrar tarea:', error);
-        // Retornamos null para que el service informe el error al usuario
+        console.error('registrarTarea:', error);
         return null;
     }
 }
 
-// RF-03 – ACTUALIZAR TAREA (UPDATE / PATCH)
-
-// Actualiza una tarea existente en el servidor enviando solo los campos modificados
-// Usa PATCH (no PUT) porque modifica parcialmente el recurso, no lo reemplaza completo
-// Parámetros:
-//   tareaId    - ID de la tarea a actualizar (para construir la URL con el recurso exacto)
-//   datosTarea - Objeto con los campos que se desean modificar
-// Retorna: Promesa con el objeto de la tarea actualizada, o null si hubo error
+// ── ACTUALIZAR TAREA (PUT completo) ───────────────────────────────────────────
+// PUT /api/tasks/:id
+// Acepta: { title, description, status, assignedUsers, comment }
 export async function actualizarTarea(tareaId, datosTarea) {
     try {
-        // ----- PASO 1: CONSTRUIR LA URL DEL RECURSO ESPECÍFICO -----
-        // El ID de la tarea forma parte de la URL para identificar exactamente cuál actualizar
-        // Resultado: http://localhost:3000/tasks/5
-        const url = `${API_BASE_URL}/tasks/${tareaId}`;
-
-        // ----- PASO 2: CONFIGURAR LA PETICIÓN PATCH -----
-        const opciones = {
-            method: 'PATCH', // Actualización parcial del recurso (RF-03)
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            // Solo enviamos los campos que cambian, no el recurso completo
-            body: JSON.stringify(datosTarea)
-        };
-
-        // ----- PASO 3: REALIZAR LA PETICIÓN PATCH -----
-        // 'await' pausa hasta recibir la respuesta del servidor
-        const response = await fetch(url, opciones);
-
-        // ----- PASO 4: VERIFICAR SI LA RESPUESTA ES EXITOSA -----
-        // response.ok es true para códigos 200-299 (200 = OK en este caso)
-        if (!response.ok) {
-            throw new Error(`Error al actualizar la tarea con ID ${tareaId}`);
-        }
-
-        // ----- PASO 5: CONVERTIR LA RESPUESTA A JSON -----
-        // El servidor devuelve la tarea con los datos ya actualizados
-        const tareaActualizada = await response.json();
-
-        // ----- PASO 6: RETORNAR LA TAREA ACTUALIZADA -----
-        // El service usará este objeto para actualizar el DOM y el estado local
-        return tareaActualizada;
-
+        const url = `${API_BASE_URL}${API_PREFIX}/tasks/${tareaId}`;
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datosTarea),
+        });
+        if (!response.ok) throw new Error(`Error al actualizar tarea ${tareaId}`);
+        return await response.json();
     } catch (error) {
-        console.error('❌ Error al actualizar tarea:', error);
+        console.error('actualizarTarea:', error);
         return null;
     }
 }
 
-// RF-04 – ELIMINAR TAREA (DELETE)
+// ── CAMBIAR SOLO EL ESTADO ────────────────────────────────────────────────────
+// PATCH /api/tasks/:id/status
+// Cuerpo: { status: 'pendiente' | 'en_progreso' | 'completada' }
+export async function cambiarEstadoTarea(tareaId, status) {
+    try {
+        const url = `${API_BASE_URL}${API_PREFIX}/tasks/${tareaId}/status`;
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+        });
+        if (!response.ok) throw new Error(`Error al cambiar estado de tarea ${tareaId}`);
+        return await response.json();
+    } catch (error) {
+        console.error('cambiarEstadoTarea:', error);
+        return null;
+    }
+}
 
-// Elimina una tarea del servidor usando su ID en la URL
-// El método DELETE no requiere cuerpo (body) en la petición
-// Parámetro: tareaId - ID único de la tarea a eliminar
-// Retorna: Promesa que resuelve con true si fue exitoso, o false si hubo error
+// ── ELIMINAR TAREA ────────────────────────────────────────────────────────────
+// DELETE /api/tasks/:id
 export async function eliminarTarea(tareaId) {
     try {
-        // ----- PASO 1: CONSTRUIR LA URL DEL RECURSO A ELIMINAR -----
-        // Resultado: http://localhost:3000/tasks/5
-        const url = `${API_BASE_URL}/tasks/${tareaId}`;
-
-        // ----- PASO 2: CONFIGURAR LA PETICIÓN DELETE -----
-        // DELETE solo necesita el método HTTP; no lleva body ni Content-Type
-        const opciones = {
-            method: 'DELETE' // Indica al servidor que debe borrar este recurso (RF-04)
-        };
-
-        // ----- PASO 3: REALIZAR LA PETICIÓN DELETE -----
-        // 'await' pausa hasta que el servidor confirme la eliminación
-        const response = await fetch(url, opciones);
-
-        // ----- PASO 4: VERIFICAR SI LA ELIMINACIÓN FUE EXITOSA -----
-        // json-server devuelve 200 OK al eliminar correctamente
-        if (!response.ok) {
-            throw new Error(`Error al eliminar la tarea con ID ${tareaId}`);
-        }
-
-        // ----- PASO 5: RETORNAR CONFIRMACIÓN -----
-        // Retornamos true para indicar que la operación fue exitosa
+        const url = `${API_BASE_URL}${API_PREFIX}/tasks/${tareaId}`;
+        const response = await fetch(url, { method: 'DELETE' });
+        if (!response.ok) throw new Error(`Error al eliminar tarea ${tareaId}`);
         return true;
-
     } catch (error) {
-        console.error('❌ Error al eliminar tarea:', error);
-        // Retornamos false para que el service informe al usuario sobre el fallo
+        console.error('eliminarTarea:', error);
         return false;
+    }
+}
+
+// ── ASIGNAR USUARIOS A TAREA ──────────────────────────────────────────────────
+// POST /api/tasks/:taskId/assign
+// Cuerpo: { userIds: [1, 2, 3] }
+export async function asignarUsuariosATarea(taskId, userIds) {
+    try {
+        const url = `${API_BASE_URL}${API_PREFIX}/tasks/${taskId}/assign`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userIds }),
+        });
+        if (!response.ok) throw new Error(`Error al asignar usuarios a tarea ${taskId}`);
+        return await response.json();
+    } catch (error) {
+        console.error('asignarUsuariosATarea:', error);
+        return null;
+    }
+}
+
+// ── QUITAR USUARIO DE TAREA ───────────────────────────────────────────────────
+// DELETE /api/tasks/:taskId/users/:userId
+export async function quitarUsuarioDeTarea(taskId, userId) {
+    try {
+        const url = `${API_BASE_URL}${API_PREFIX}/tasks/${taskId}/users/${userId}`;
+        const response = await fetch(url, { method: 'DELETE' });
+        if (!response.ok) throw new Error(`Error al quitar usuario ${userId} de tarea ${taskId}`);
+        return await response.json();
+    } catch (error) {
+        console.error('quitarUsuarioDeTarea:', error);
+        return null;
+    }
+}
+
+// ── BUSCAR USUARIO POR DOCUMENTO ─────────────────────────────────────────────
+// GET /api/users/by-document/:documento
+// Usa la ruta dedicada del backend en lugar de traer todos los usuarios y filtrar en memoria.
+// Esto evita el problema del caché 304 que impedía encontrar usuarios recién creados.
+export async function buscarUsuarioPorDocumento(documentoId) {
+    try {
+        const url = `${API_BASE_URL}${API_PREFIX}/users/by-document/${encodeURIComponent(documentoId.toString().trim())}`;
+        const response = await fetch(url, { cache: 'no-store' });
+        if (response.status === 404) return null;
+        if (!response.ok) throw new Error('Error al consultar el servidor');
+        return await response.json();
+    } catch (error) {
+        console.error('buscarUsuarioPorDocumento:', error);
+        return null;
     }
 }
