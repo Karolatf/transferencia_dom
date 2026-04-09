@@ -27,8 +27,9 @@ export async function obtenerTodasLasTareas() {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks`;
         const response = await fetch(url, { cache: 'no-store' });
-        if (!response.ok) throw new Error('Error al obtener todas las tareas');
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || 'Error al obtener todas las tareas');
+        return json.data;
     } catch (error) {
         console.error('obtenerTodasLasTareas:', error);
         return [];
@@ -42,8 +43,9 @@ export async function obtenerDashboard() {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/dashboard`;
         const response = await fetch(url, { cache: 'no-store' });
-        if (!response.ok) throw new Error('Error al obtener el dashboard');
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || 'Error al obtener el dashboard');
+        return json.data;
     } catch (error) {
         console.error('obtenerDashboard:', error);
         return null;
@@ -57,8 +59,9 @@ export async function obtenerTareasDeUsuario(userId) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/filter?userId=${userId}`;
         const response = await fetch(url, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`Error al obtener tareas del usuario ${userId}`);
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || `Error al obtener tareas del usuario ${userId}`);
+        return json.data;
     } catch (error) {
         console.error('obtenerTareasDeUsuario:', error);
         return [];
@@ -71,8 +74,9 @@ export async function obtenerTareaPorId(id) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${id}`;
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Tarea ${id} no encontrada`);
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || `Tarea ${id} no encontrada`);
+        return json.data;
     } catch (error) {
         console.error('obtenerTareaPorId:', error);
         return null;
@@ -90,8 +94,9 @@ export async function registrarTarea(datosTarea) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosTarea),
         });
-        if (!response.ok) throw new Error('Error al registrar la tarea');
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || 'Error al registrar la tarea');
+        return json.data;
     } catch (error) {
         console.error('registrarTarea:', error);
         return null;
@@ -109,8 +114,9 @@ export async function actualizarTarea(tareaId, datosTarea) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosTarea),
         });
-        if (!response.ok) throw new Error(`Error al actualizar tarea ${tareaId}`);
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || `Error al actualizar tarea ${tareaId}`);
+        return json.data;
     } catch (error) {
         console.error('actualizarTarea:', error);
         return null;
@@ -128,8 +134,9 @@ export async function cambiarEstadoTarea(tareaId, status) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status }),
         });
-        if (!response.ok) throw new Error(`Error al cambiar estado de tarea ${tareaId}`);
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || `Error al cambiar estado de tarea ${tareaId}`);
+        return json.data;
     } catch (error) {
         console.error('cambiarEstadoTarea:', error);
         return null;
@@ -142,7 +149,8 @@ export async function eliminarTarea(tareaId) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${tareaId}`;
         const response = await fetch(url, { method: 'DELETE' });
-        if (!response.ok) throw new Error(`Error al eliminar tarea ${tareaId}`);
+        const json = await response.json();
+        if (!json.success) throw new Error(json.message || `Error al eliminar tarea ${tareaId}`);
         return true;
     } catch (error) {
         console.error('eliminarTarea:', error);
@@ -161,8 +169,9 @@ export async function asignarUsuariosATarea(taskId, userIds) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userIds }),
         });
-        if (!response.ok) throw new Error(`Error al asignar usuarios a tarea ${taskId}`);
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || `Error al asignar usuarios a tarea ${taskId}`);
+        return json.data;
     } catch (error) {
         console.error('asignarUsuariosATarea:', error);
         return null;
@@ -175,8 +184,9 @@ export async function quitarUsuarioDeTarea(taskId, userId) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${taskId}/users/${userId}`;
         const response = await fetch(url, { method: 'DELETE' });
-        if (!response.ok) throw new Error(`Error al quitar usuario ${userId} de tarea ${taskId}`);
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || `Error al quitar usuario ${userId} de tarea ${taskId}`);
+        return json.data;
     } catch (error) {
         console.error('quitarUsuarioDeTarea:', error);
         return null;
@@ -191,9 +201,10 @@ export async function buscarUsuarioPorDocumento(documentoId) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users/by-document/${encodeURIComponent(documentoId.toString().trim())}`;
         const response = await fetch(url, { cache: 'no-store' });
+        const json = await response.json();
         if (response.status === 404) return null;
-        if (!response.ok) throw new Error('Error al consultar el servidor');
-        return await response.json();
+        if (!response.ok) throw new Error(json.message || 'Error al consultar el servidor');
+        return json.data;
     } catch (error) {
         console.error('buscarUsuarioPorDocumento:', error);
         return null;
