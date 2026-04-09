@@ -19,8 +19,9 @@ export async function obtenerTodosLosUsuarios() {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users`;
         const response = await fetch(url, { cache: 'no-store' });
-        if (!response.ok) throw new Error('Error al obtener los usuarios');
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || 'Error al obtener los usuarios');
+        return json.data;
     } catch (error) {
         console.error('obtenerTodosLosUsuarios:', error);
         return null;
@@ -32,8 +33,9 @@ export async function obtenerUsuarioPorId(id) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users/${id}`;
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Usuario ${id} no encontrado`);
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || `Usuario ${id} no encontrado`);
+        return json.data;
     } catch (error) {
         console.error('obtenerUsuarioPorId:', error);
         return null;
@@ -47,8 +49,9 @@ export async function obtenerTareasDeUsuarioById(userId) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users/${userId}/tasks`;
         const response = await fetch(url);
-        if (!response.ok) throw new Error(`Error al obtener tareas del usuario ${userId}`);
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || `Error al obtener tareas del usuario ${userId}`);
+        return json.data;
     } catch (error) {
         console.error('obtenerTareasDeUsuarioById:', error);
         return [];
@@ -66,8 +69,9 @@ export async function crearUsuario(datosUsuario) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosUsuario),
         });
-        if (!response.ok) throw new Error('Error al crear el usuario');
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || 'Error al crear el usuario');
+        return json.data;
     } catch (error) {
         console.error('crearUsuario:', error);
         return null;
@@ -85,8 +89,9 @@ export async function actualizarUsuario(id, datosUsuario) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosUsuario),
         });
-        if (!response.ok) throw new Error(`Error al actualizar usuario ${id}`);
-        return await response.json();
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || `Error al actualizar usuario ${id}`);
+        return json.data;
     } catch (error) {
         console.error('actualizarUsuario:', error);
         return null;
@@ -99,7 +104,8 @@ export async function eliminarUsuario(id) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users/${id}`;
         const response = await fetch(url, { method: 'DELETE' });
-        if (!response.ok) throw new Error(`Error al eliminar usuario ${id}`);
+        const json = await response.json();
+        if (!json.success) throw new Error(json.message || `Error al eliminar usuario ${id}`);
         return true;
     } catch (error) {
         console.error('eliminarUsuario:', error);
