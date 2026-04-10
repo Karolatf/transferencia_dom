@@ -61,7 +61,13 @@ export function formatearEstadoTarea(estado) {
 // ── CONSTRUCCIÓN DE FILA ──────────────────────────────────────────────────────
 
 // Crea un TR completo con columnas: #, Título, Descripción, Estado, Comentario, Acciones
-// Los botones llevan data-id y data-action para la delegación en tareasService.js
+// Los botones llevan data-id y data-action para la delegación en tareasService.js.
+//
+// CAMBIO: el botón "Eliminar" fue reemplazado por dos botones:
+//   - "✏️ Editar tarea"  (data-action="edit")   — abre el modal de edición
+//   - "⬇️ Exportar JSON" (data-action="export") — descarga la tarea como .json
+// Esto mejora la experiencia del usuario en el panel de usuario, donde la
+// eliminación de tareas es responsabilidad exclusiva del administrador.
 export function crearFilaTarea(tarea, indice) {
     const fila = document.createElement('tr');
     fila.dataset.id = tarea.id;
@@ -89,19 +95,30 @@ export function crearFilaTarea(tarea, indice) {
     const celdaComentario = document.createElement('td');
     celdaComentario.textContent = tarea.comment || '—';
 
-    // Acciones: solo Eliminar (Editar está en el panel Admin)
+    // Acciones: Editar tarea y Exportar JSON
+    // Se eliminó el botón Eliminar — el usuario no debe poder borrar sus propias tareas
     const celdaAcciones = document.createElement('td');
     const contenedor = document.createElement('div');
     contenedor.classList.add('task-actions');
 
-    const btnEliminar = document.createElement('button');
-    btnEliminar.textContent    = '🗑️ Eliminar';
-    btnEliminar.classList.add('btn-action', 'btn-action--delete');
-    btnEliminar.type           = 'button';
-    btnEliminar.dataset.id     = tarea.id;
-    btnEliminar.dataset.action = 'delete';
+    // Botón Editar tarea — abre el modal de edición con los datos de esta tarea
+    const btnEditar = document.createElement('button');
+    btnEditar.textContent    = '✏️ Editar';
+    btnEditar.classList.add('btn-action', 'btn-action--edit');
+    btnEditar.type           = 'button';
+    btnEditar.dataset.id     = tarea.id;
+    btnEditar.dataset.action = 'edit';
 
-    contenedor.appendChild(btnEliminar);
+    // Botón Exportar JSON — descarga esta tarea como archivo .json individual
+    const btnExportar = document.createElement('button');
+    btnExportar.textContent    = '⬇️ Exportar';
+    btnExportar.classList.add('btn-action', 'btn-action--export');
+    btnExportar.type           = 'button';
+    btnExportar.dataset.id     = tarea.id;
+    btnExportar.dataset.action = 'export';
+
+    contenedor.appendChild(btnEditar);
+    contenedor.appendChild(btnExportar);
     celdaAcciones.appendChild(contenedor);
 
     fila.appendChild(celdaNum);
@@ -152,7 +169,11 @@ export function eliminarFilaTarea(tareaId) {
 
 // ── MODAL DE EDICIÓN ──────────────────────────────────────────────────────────
 
-export function mostrarModalEdicion(tarea) {
+// Muestra el modal de edición con los datos de la tarea recibida.
+// Parámetro soloLecturaTituloDesc (boolean, default false):
+//   true  → panel usuario: Título y Descripción quedan como solo lectura
+//   false → panel admin:   todos los campos son editables
+export function mostrarModalEdicion(tarea, soloLecturaTituloDesc = false) {
     document.getElementById('editTaskId').value          = tarea.id;
     document.getElementById('editTaskTitle').value       = tarea.title;
     document.getElementById('editTaskDescription').value = tarea.description || '';
@@ -160,6 +181,29 @@ export function mostrarModalEdicion(tarea) {
 
     const comentEl = document.getElementById('editTaskComment');
     if (comentEl) comentEl.value = tarea.comment || '';
+
+    const inputTitulo = document.getElementById('editTaskTitle');
+    const inputDesc   = document.getElementById('editTaskDescription');
+
+    if (soloLecturaTituloDesc) {
+        // El usuario solo puede editar Estado y Comentario.
+        // Título y Descripción se muestran como referencia pero no son editables —
+        // eso es responsabilidad exclusiva del administrador desde su panel.
+        inputTitulo.setAttribute('readonly', true);
+        inputDesc.setAttribute('readonly', true);
+        inputTitulo.style.opacity = '0.55';
+        inputTitulo.style.cursor  = 'not-allowed';
+        inputDesc.style.opacity   = '0.55';
+        inputDesc.style.cursor    = 'not-allowed';
+    } else {
+        // El admin puede editar todos los campos: se asegura de que no haya readonly
+        inputTitulo.removeAttribute('readonly');
+        inputDesc.removeAttribute('readonly');
+        inputTitulo.style.opacity = '';
+        inputTitulo.style.cursor  = '';
+        inputDesc.style.opacity   = '';
+        inputDesc.style.cursor    = '';
+    }
 
     document.getElementById('editModal').classList.remove('hidden');
 }
@@ -173,4 +217,16 @@ export function ocultarModalEdicion() {
 
     const comentEl = document.getElementById('editTaskComment');
     if (comentEl) comentEl.value = '';
+
+    // Se limpian los atributos readonly y los estilos al cerrar el modal,
+    // para que cuando el admin lo use desde su panel funcione con normalidad
+    const inputTitulo = document.getElementById('editTaskTitle');
+    const inputDesc   = document.getElementById('editTaskDescription');
+
+    inputTitulo.removeAttribute('readonly');
+    inputDesc.removeAttribute('readonly');
+    inputTitulo.style.opacity = '';
+    inputTitulo.style.cursor  = '';
+    inputDesc.style.opacity   = '';
+    inputDesc.style.cursor    = '';
 }

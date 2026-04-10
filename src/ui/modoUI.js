@@ -20,6 +20,8 @@ import {
     obtenerTodosLosUsuarios,
     crearUsuario,
     eliminarUsuario,
+    // Se importa actualizarUsuario para el nuevo flujo de edición de usuario
+    actualizarUsuario,
 } from '../api/usuariosApi.js';
 
 import {
@@ -102,7 +104,7 @@ export async function cargarTablaUsuarios() {
         return;
     }
 
-    // Vaciar tbody
+    // Vaciar tbody con removeChild para respetar la regla del proyecto
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
     if (usuarios.length === 0) {
@@ -122,6 +124,11 @@ export async function cargarTablaUsuarios() {
     });
 }
 
+// Construye una fila de la tabla de usuarios del panel admin
+// Ahora incluye tres botones: Ver/Asignar, Editar y Eliminar
+// Parámetros:
+//   usuario — objeto del usuario a representar
+//   indice  — posición en la lista (para el # correlativo)
 function crearFilaUsuario(usuario, indice) {
     const fila = document.createElement('tr');
 
@@ -141,12 +148,22 @@ function crearFilaUsuario(usuario, indice) {
     const contenedor    = document.createElement('div');
     contenedor.classList.add('task-actions');
 
+    // Botón Ver / Asignar — abre el modal de tareas del usuario
     const btnVer = document.createElement('button');
     btnVer.textContent = 'Ver / Asignar';
     btnVer.classList.add('btn-action', 'btn-action--edit');
     btnVer.type = 'button';
     btnVer.addEventListener('click', function() { abrirModalUsuario(usuario); });
 
+    // NUEVO: Botón Editar — abre el modal de edición de datos del usuario
+    // Sigue el mismo patrón de los demás botones de acción del proyecto
+    const btnEditar = document.createElement('button');
+    btnEditar.textContent = '✏️ Editar';
+    btnEditar.classList.add('btn-action', 'btn-action--edit');
+    btnEditar.type = 'button';
+    btnEditar.addEventListener('click', function() { abrirModalEditarUsuario(usuario); });
+
+    // Botón Eliminar — pide confirmación antes de eliminar
     const btnEliminar = document.createElement('button');
     btnEliminar.textContent = '🗑️ Eliminar';
     btnEliminar.classList.add('btn-action', 'btn-action--delete');
@@ -170,7 +187,9 @@ function crearFilaUsuario(usuario, indice) {
         }
     });
 
+    // Se agregan los tres botones al contenedor de acciones
     contenedor.appendChild(btnVer);
+    contenedor.appendChild(btnEditar);
     contenedor.appendChild(btnEliminar);
     celdaAcciones.appendChild(contenedor);
 
@@ -181,6 +200,174 @@ function crearFilaUsuario(usuario, indice) {
     fila.appendChild(celdaAcciones);
 
     return fila;
+}
+
+// ── MODAL EDITAR USUARIO ──────────────────────────────────────────────────────
+
+// Abre un modal dinámico para editar los datos de un usuario (nombre, correo, documento)
+// Sigue la misma lógica de construcción que abrirModalUsuario: createElement + appendChild
+// Parámetro: usuario — objeto con los datos actuales del usuario a editar
+async function abrirModalEditarUsuario(usuario) {
+
+    // Se cierra cualquier modal de edición de usuario que ya esté abierto
+    cerrarModalEditarUsuarioExistente();
+
+    // Overlay oscuro que cubre toda la pantalla
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-usuario-overlay';
+    overlay.id        = 'modalEditarUsuarioOverlay';
+
+    // Contenedor del modal
+    const modal = document.createElement('div');
+    modal.className = 'modal-usuario';
+
+    // ── Header del modal ──────────────────────────────────────────────────────
+    const header = document.createElement('div');
+    header.className = 'modal-usuario__header';
+
+    const infoTexto = document.createElement('div');
+
+    // Título con el nombre actual del usuario
+    const titulo = document.createElement('h2');
+    titulo.className   = 'modal-usuario__titulo';
+    titulo.textContent = `Editar: ${usuario.name}`;
+
+    const subtitulo = document.createElement('p');
+    subtitulo.className   = 'modal-usuario__subtitulo';
+    subtitulo.textContent = `Documento actual: ${usuario.documento || usuario.id}`;
+
+    infoTexto.appendChild(titulo);
+    infoTexto.appendChild(subtitulo);
+
+    // Botón de cierre en la esquina del header
+    const btnCerrar = document.createElement('button');
+    btnCerrar.className   = 'modal-usuario__cerrar';
+    btnCerrar.type        = 'button';
+    btnCerrar.textContent = '✕';
+    btnCerrar.addEventListener('click', cerrarModalEditarUsuarioExistente);
+
+    header.appendChild(infoTexto);
+    header.appendChild(btnCerrar);
+    modal.appendChild(header);
+
+    // ── Cuerpo: formulario de edición ─────────────────────────────────────────
+    const cuerpo = document.createElement('div');
+    cuerpo.className = 'modal-usuario__asignar';
+
+    const formEditar = document.createElement('form');
+    formEditar.className = 'form';
+
+    // GRUPO DOCUMENTO
+    const grupoDoc = document.createElement('div');
+    grupoDoc.className = 'form__group';
+    const labelDoc = document.createElement('label');
+    labelDoc.setAttribute('for', 'editar-usuario-documento');
+    labelDoc.className   = 'form__label';
+    labelDoc.textContent = 'Número de documento';
+    const inputDoc = document.createElement('input');
+    inputDoc.type        = 'text';
+    inputDoc.id          = 'editar-usuario-documento';
+    inputDoc.className   = 'form__input';
+    inputDoc.placeholder = 'Ej: 1097497124';
+    // Se pre-rellena con el valor actual del usuario
+    inputDoc.value       = usuario.documento || '';
+    grupoDoc.appendChild(labelDoc);
+    grupoDoc.appendChild(inputDoc);
+
+    // GRUPO NOMBRE
+    const grupoNombre = document.createElement('div');
+    grupoNombre.className = 'form__group';
+    const labelNombre = document.createElement('label');
+    labelNombre.setAttribute('for', 'editar-usuario-nombre');
+    labelNombre.className   = 'form__label';
+    labelNombre.textContent = 'Nombre completo';
+    const inputNombre = document.createElement('input');
+    inputNombre.type        = 'text';
+    inputNombre.id          = 'editar-usuario-nombre';
+    inputNombre.className   = 'form__input';
+    inputNombre.placeholder = 'Ej: Karol Torres';
+    // Se pre-rellena con el valor actual del usuario
+    inputNombre.value       = usuario.name || '';
+    grupoNombre.appendChild(labelNombre);
+    grupoNombre.appendChild(inputNombre);
+
+    // GRUPO EMAIL
+    const grupoEmail = document.createElement('div');
+    grupoEmail.className = 'form__group';
+    const labelEmail = document.createElement('label');
+    labelEmail.setAttribute('for', 'editar-usuario-email');
+    labelEmail.className   = 'form__label';
+    labelEmail.textContent = 'Correo electrónico';
+    const inputEmail = document.createElement('input');
+    inputEmail.type        = 'email';
+    inputEmail.id          = 'editar-usuario-email';
+    inputEmail.className   = 'form__input';
+    inputEmail.placeholder = 'Ej: usuario@correo.com';
+    // Se pre-rellena con el valor actual del usuario
+    inputEmail.value       = usuario.email || '';
+    grupoEmail.appendChild(labelEmail);
+    grupoEmail.appendChild(inputEmail);
+
+    // Botón de submit del formulario de edición
+    const btnGuardar = document.createElement('button');
+    btnGuardar.type      = 'submit';
+    btnGuardar.className = 'btn btn--admin-primary';
+    const spanBtn = document.createElement('span');
+    spanBtn.className   = 'btn__text';
+    spanBtn.textContent = 'Guardar Cambios';
+    btnGuardar.appendChild(spanBtn);
+
+    formEditar.appendChild(grupoDoc);
+    formEditar.appendChild(grupoNombre);
+    formEditar.appendChild(grupoEmail);
+    formEditar.appendChild(btnGuardar);
+
+    // Listener del submit: llama a la API para actualizar y recarga la tabla
+    formEditar.addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const documento = inputDoc.value.trim();
+        const nombre    = inputNombre.value.trim();
+        const email     = inputEmail.value.trim();
+
+        // Se valida que ningún campo esté vacío antes de enviar al servidor
+        if (!documento || !nombre || !email) {
+            await mostrarNotificacion('Todos los campos son obligatorios', 'advertencia');
+            return;
+        }
+
+        // Se llama a la capa API con el id del usuario y los datos nuevos
+        const usuarioActualizado = await actualizarUsuario(usuario.id, {
+            documento,
+            name:  nombre,
+            email,
+        });
+
+        if (usuarioActualizado) {
+            cerrarModalEditarUsuarioExistente();
+            await mostrarNotificacion(`${nombre} fue actualizado correctamente`, 'exito');
+            // Se recarga la tabla para reflejar los datos actualizados
+            cargarTablaUsuarios();
+        } else {
+            await mostrarNotificacion('Error al actualizar el usuario', 'error');
+        }
+    });
+
+    cuerpo.appendChild(formEditar);
+    modal.appendChild(cuerpo);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Clic en el overlay oscuro cierra el modal (igual que el modal de asignar)
+    overlay.addEventListener('click', function(event) {
+        if (event.target === overlay) cerrarModalEditarUsuarioExistente();
+    });
+}
+
+// Cierra y elimina el modal de edición de usuario si existe en el DOM
+function cerrarModalEditarUsuarioExistente() {
+    const existing = document.getElementById('modalEditarUsuarioOverlay');
+    if (existing) existing.remove();
 }
 
 // ── DASHBOARD LOCAL ──────────────────────────────────────────────────────────
@@ -232,7 +419,7 @@ export function aplicarFiltrosAdmin() {
     let resultado = filtrarTareas(todasLasTareas, estado, termino);
     resultado     = ordenarTareas(resultado, orden);
 
-    // Vaciar tbody
+    // Vaciar tbody con removeChild para respetar la regla del proyecto
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
     if (contadorEl) {
@@ -566,8 +753,12 @@ export async function abrirModalUsuario(usuario) {
         const tareaCreada = await registrarTarea(datosTarea);
 
         if (tareaCreada) {
+            // CORRECCIÓN: se cierra el modal automáticamente al crear la tarea.
+            // Antes se rearía el modal llamando de nuevo a abrirModalUsuario(),
+            // lo que provocaba que el usuario tuviera que cerrarlo manualmente.
+            // Ahora se cierra solo y se recargan los datos en segundo plano.
             cerrarModalUsuarioExistente();
-            await abrirModalUsuario(usuario);
+            await mostrarNotificacion(`Tarea "${titulo}" asignada correctamente`, 'exito');
             cargarTodasLasTareas();
             cargarDashboard();
         } else {
