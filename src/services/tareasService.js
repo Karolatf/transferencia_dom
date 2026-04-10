@@ -2,14 +2,17 @@
 // CAPA:   Services
 
 // Coordina las operaciones del MODO USUARIO:
-// búsqueda de usuario, carga de sus tareas, edición y eliminación.
+// búsqueda de usuario, carga de sus tareas, edición y exportación individual.
 // Es el intermediario entre la capa API y la capa UI para este flujo.
+//
+// CAMBIO: se eliminó la acción 'delete' del panel de usuario.
+// Los usuarios no deben poder eliminar sus propias tareas asignadas.
+// Se agregó la acción 'export' para exportar una tarea individual como JSON.
 
 import {
     buscarUsuarioPorDocumento,
     obtenerTareasDeUsuario,
     actualizarTarea,
-    eliminarTarea,
 } from '../api/tareasApi.js';
 
 import {
@@ -35,6 +38,10 @@ import {
     mostrarConfirmacion,
 } from '../utils/notificaciones.js';
 
+// Se importa exportarTareasJSON para reutilizarlo con una sola tarea
+// El mismo utilitario acepta un arreglo, así que se le pasa [tarea]
+import { exportarTareasJSON } from '../utils/exportacion.js';
+
 import { filtrarTareas }  from '../utils/filtros.js';
 import { ordenarTareas }  from '../utils/ordenamiento.js';
 import { registrarEventosNavegacion, activarModoInicio } from '../ui/modoUI.js';
@@ -52,6 +59,10 @@ let criterioOrdenActivo = '';
 
 // ── FUNCIONES PRIVADAS ────────────────────────────────────────────────────────
 
+// Reinicia completamente el estado del modo usuario y limpia el DOM.
+// Se llama al presionar "Volver" y también antes de una nueva búsqueda.
+// CORRECCIÓN: ahora esta función se usa explícitamente en el botón Volver
+// para garantizar que la vista quede limpia al regresar y volver a entrar.
 function reiniciarVistaModoUsuario() {
     usuarioActual     = null;
     tareasRegistradas = [];
@@ -180,7 +191,8 @@ function mostrarResultadoUsuarioFijo(usuario, tareas) {
 // ── RF-03: EDITAR TAREA ───────────────────────────────────────────────────────
 
 export function manejarEdicionTarea(tarea) {
-    mostrarModalEdicion(tarea);
+    // Se pasa true para que Título y Descripción sean de solo lectura en el panel usuario
+    mostrarModalEdicion(tarea, true);
 
     const formulario = document.getElementById('editTaskForm');
 
@@ -230,32 +242,28 @@ export function manejarEdicionTarea(tarea) {
     formulario.addEventListener('submit', manejarGuardadoEdicion);
 }
 
-// ── RF-04: ELIMINAR TAREA ─────────────────────────────────────────────────────
+// ── RF-04: EXPORTAR TAREA INDIVIDUAL COMO JSON ───────────────────────────────
 
-export async function manejarEliminacionTarea(tarea) {
-    const confirmado = await mostrarConfirmacion(
-        `¿Eliminar la tarea "${tarea.title}"?`,
-        'Esta acción no se puede deshacer.',
-        'Sí, eliminar'
-    );
-    if (!confirmado) return;
+// Descarga una sola tarea como archivo .json con nombre basado en su título.
+// Se reutiliza exportarTareasJSON pasando un arreglo de un elemento.
+// Parámetro: tarea — el objeto de la tarea a exportar
+export async function manejarExportacionTarea(tarea) {
 
-    const eliminada = await eliminarTarea(tarea.id);
+    // Se exporta la tarea envuelta en un arreglo para reutilizar el utilitario
+    const exportado = exportarTareasJSON([tarea]);
 
-    if (eliminada) {
-        tareasRegistradas = tareasRegistradas.filter(
-            t => t.id.toString() !== tarea.id.toString()
-        );
-        eliminarFilaTarea(tarea.id);
-        refrescarTabla();
-        await mostrarNotificacion('Tarea eliminada exitosamente', 'exito');
+    if (exportado) {
+        await mostrarNotificacion(`Tarea "${tarea.title}" exportada correctamente`, 'exito');
     } else {
-        await mostrarNotificacion('Error al eliminar la tarea', 'error');
+        await mostrarNotificacion('Error al exportar la tarea', 'error');
     }
 }
 
 // ── DELEGACIÓN DE EVENTOS EN LA TABLA ────────────────────────────────────────
 
+// Manejador delegado: escucha todos los clics del tbody y despacha según data-action.
+// Se eliminó el caso 'delete' — el usuario no puede eliminar sus propias tareas.
+// Se agregó el caso 'export' para la nueva acción de exportación individual.
 function manejarClicEnTabla(event) {
     const botonAccion = event.target.closest('[data-action]');
     if (!botonAccion) return;
@@ -266,8 +274,11 @@ function manejarClicEnTabla(event) {
     const tarea = tareasRegistradas.find(t => t.id.toString() === tareaId.toString());
     if (!tarea) return;
 
+    // Editar: abre el modal con los datos actuales de la tarea
     if (accion === 'edit')   manejarEdicionTarea(tarea);
-    if (accion === 'delete') manejarEliminacionTarea(tarea);
+
+    // Exportar: descarga esta tarea individual como archivo .json
+    if (accion === 'export') manejarExportacionTarea(tarea);
 }
 
 // ── REGISTRO DE LISTENERS (llamado desde main.js) ─────────────────────────────
@@ -301,6 +312,26 @@ export function registrarEventListeners() {
 
     const btnCancelarModal = document.getElementById('editCancelBtn');
     if (btnCancelarModal) btnCancelarModal.addEventListener('click', ocultarModalEdicion);
+
+    // CORRECCIÓN: el botón Volver ahora llama explícitamente a reiniciarVistaModoUsuario()
+    // antes de activar la pantalla de inicio. Esto garantiza que al volver a entrar al
+    // modo usuario la búsqueda anterior haya desaparecido completamente.
+    const btnVolver = document.getElementById('btnVolverUsuario');
+    if (btnVolver) {
+        btnVolver.addEventListener('click', function() {
+            reiniciarVistaModoUsuario();
+            // activarModoInicio() lo llama registrarEventosNavegacion() en modoUI.js,
+            // pero como aquí interceptamos el mismo botón necesitamos importar la función.
+            // Para no crear dependencia circular se activa la pantalla de inicio directamente.
+            const pantallaInicio = document.getElementById('pantallaInicio');
+            const vistaUsuario   = document.getElementById('vistaUsuario');
+            const vistaAdmin     = document.getElementById('vistaAdmin');
+            if (pantallaInicio) pantallaInicio.classList.remove('hidden');
+            if (vistaUsuario)   vistaUsuario.classList.add('hidden');
+            if (vistaAdmin)     vistaAdmin.classList.add('hidden');
+            document.body.dataset.modo = 'inicio';
+        });
+    }
 
     // Todos los eventos de navegación y del panel admin
     registrarEventosNavegacion();
