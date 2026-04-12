@@ -330,11 +330,18 @@
             </div>
             <div class="form__group">
                 <label for="editTaskStatus" class="form__label">Estado</label>
+                <!-- Select de estado del modal de edición de tarea -->
+                <!-- Las opciones se filtran dinámicamente según el modo (usuario o admin) -->
+                <!-- En modo usuario solo aparecen "Pendiente por aprobar" y "En Progreso" -->
+                <!-- En modo admin aparecen las tres opciones incluyendo "Completada" -->
                 <select id="editTaskStatus" class="form__input">
                     <option value="" disabled>Selecciona un estado</option>
-                    <option value="pendiente">Pendiente</option>
+                    <!-- Opción visible solo en modo usuario: el usuario no puede finalizar tareas -->
+                    <option value="pendiente" class="opcion-usuario">Pendiente por aprobar</option>
+                    <!-- Opción visible en ambos modos -->
                     <option value="en_progreso">En Progreso</option>
-                    <option value="completada">Completada</option>
+                    <!-- Opción visible solo en modo admin: solo el admin puede marcar como completada -->
+                    <option value="completada" class="opcion-admin">Completada</option>
                 </select>
             </div>
             <div class="form__group">

@@ -173,7 +173,14 @@ export function eliminarFilaTarea(tareaId) {
 // Parámetro soloLecturaTituloDesc (boolean, default false):
 //   true  → panel usuario: Título y Descripción quedan como solo lectura
 //   false → panel admin:   todos los campos son editables
+// Muestra el modal de edición con los datos de la tarea recibida.
+// Parámetro soloLecturaTituloDesc (boolean, default false):
+//   true  → panel usuario: Título y Descripción quedan como solo lectura,
+//            y el select de estado solo muestra las opciones del usuario
+//   false → panel admin: todos los campos son editables y el select
+//            muestra las tres opciones incluyendo "Completada"
 export function mostrarModalEdicion(tarea, soloLecturaTituloDesc = false) {
+    // Se cargan los valores actuales de la tarea en los campos del formulario
     document.getElementById('editTaskId').value          = tarea.id;
     document.getElementById('editTaskTitle').value       = tarea.title;
     document.getElementById('editTaskDescription').value = tarea.description || '';
@@ -184,27 +191,48 @@ export function mostrarModalEdicion(tarea, soloLecturaTituloDesc = false) {
 
     const inputTitulo = document.getElementById('editTaskTitle');
     const inputDesc   = document.getElementById('editTaskDescription');
+    const selectEstado = document.getElementById('editTaskStatus');
+
+    // Se buscan las opciones que son exclusivas de cada modo
+    // opcion-usuario: "Pendiente por aprobar" — visible solo en modo usuario
+    // opcion-admin:   "Completada"            — visible solo en modo admin
+    const opcionesUsuario = selectEstado.querySelectorAll('.opcion-usuario');
+    const opcionesAdmin   = selectEstado.querySelectorAll('.opcion-admin');
 
     if (soloLecturaTituloDesc) {
-        // El usuario solo puede editar Estado y Comentario.
-        // Título y Descripción se muestran como referencia pero no son editables —
-        // eso es responsabilidad exclusiva del administrador desde su panel.
+        // MODO USUARIO: Título y Descripción son de solo lectura
+        // porque editarlos es responsabilidad exclusiva del administrador
         inputTitulo.setAttribute('readonly', true);
         inputDesc.setAttribute('readonly', true);
         inputTitulo.style.opacity = '0.55';
         inputTitulo.style.cursor  = 'not-allowed';
         inputDesc.style.opacity   = '0.55';
         inputDesc.style.cursor    = 'not-allowed';
+
+        // Se muestran las opciones del usuario y se ocultan las del admin
+        opcionesUsuario.forEach(function(opt) { opt.style.display = ''; });
+        opcionesAdmin.forEach(function(opt) { opt.style.display = 'none'; });
+
+        // Si la tarea ya tenía estado "completada" pero estamos en modo usuario,
+        // se fuerza a "pendiente" para que el select no quede en un valor oculto
+        if (selectEstado.value === 'completada') {
+            selectEstado.value = 'pendiente';
+        }
     } else {
-        // El admin puede editar todos los campos: se asegura de que no haya readonly
+        // MODO ADMIN: todos los campos son editables
         inputTitulo.removeAttribute('readonly');
         inputDesc.removeAttribute('readonly');
         inputTitulo.style.opacity = '';
         inputTitulo.style.cursor  = '';
         inputDesc.style.opacity   = '';
         inputDesc.style.cursor    = '';
+
+        // Se muestran todas las opciones incluyendo "Completada"
+        opcionesUsuario.forEach(function(opt) { opt.style.display = ''; });
+        opcionesAdmin.forEach(function(opt) { opt.style.display = ''; });
     }
 
+    // Se abre el modal eliminando la clase hidden
     document.getElementById('editModal').classList.remove('hidden');
 }
 
