@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestion de Tareas - SENA</title>
+    <!-- Favicon del proyecto: icono de lista de tareas con paleta morada del sistema -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body data-modo="inicio">
@@ -215,11 +217,14 @@
         </div>
 
         <!-- Tabla de usuarios -->
-        <section class="admin-card admin-card--full">
-            <div class="admin-card__cabecera">
-                <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
-                <button class="btn btn--admin-secondary" id="btnRefrescarUsuarios">Actualizar</button>
-            </div>
+        <!-- Card de usuarios del sistema: cabecera unificada con contador morado igual a la de tareas -->
+    <section class="admin-card admin-card--full">
+        <div class="admin-card__cabecera">
+            <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
+            <!-- Contador de usuarios con el mismo estilo morado del contador de tareas -->
+            <span id="adminUsersCount" class="tasks-header__count">0 usuarios</span>
+        </div>
+
             <div class="tasks-table-container">
                 <table class="tasks-table tasks-table--admin">
                     <thead class="tasks-table__head">

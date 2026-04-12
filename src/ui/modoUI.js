@@ -103,6 +103,14 @@ export async function cargarTablaUsuarios() {
         await mostrarNotificacion('Error al cargar los usuarios', 'error');
         return;
     }
+    // Dentro de cargarTablaUsuarios, después de obtener los usuarios y antes de vaciar el tbody
+    // Se actualiza el contador de usuarios con el mismo formato que el contador de tareas
+    const contadorUsuariosEl = document.getElementById('adminUsersCount');
+    if (contadorUsuariosEl) {
+        const cantidad = usuarios ? usuarios.length : 0;
+        // Texto con singular o plural según la cantidad
+        contadorUsuariosEl.textContent = `${cantidad} ${cantidad === 1 ? 'usuario' : 'usuarios'}`;
+    }
 
     // Vaciar tbody con removeChild para respetar la regla del proyecto
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
@@ -794,10 +802,6 @@ export function registrarEventosNavegacion() {
     // Botones volver
     document.getElementById('btnVolverUsuario').addEventListener('click', activarModoInicio);
     document.getElementById('btnVolverAdmin').addEventListener('click', activarModoInicio);
-
-    // Actualizar tabla usuarios
-    const btnRefrescar = document.getElementById('btnRefrescarUsuarios');
-    if (btnRefrescar) btnRefrescar.addEventListener('click', cargarTablaUsuarios);
 
     // Filtros de la tabla admin
     const btnAplicar = document.getElementById('adminBtnAplicarFiltros');
