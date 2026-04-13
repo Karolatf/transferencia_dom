@@ -115,7 +115,8 @@ export async function manejarBusquedaUsuario(event) {
     const inputDocumento = document.getElementById('userDocument');
     const errorDocumento = document.getElementById('userDocumentError');
 
-    const esValido = validarFormularioBusqueda(inputDocumento, errorDocumento);
+    // FEAT #57: await requerido porque validarFormularioBusqueda es async
+    const esValido = await validarFormularioBusqueda(inputDocumento, errorDocumento);
     if (!esValido) return;
 
     // Se guarda el valor ANTES de reiniciar porque reiniciarVistaModoUsuario()

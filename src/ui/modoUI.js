@@ -36,7 +36,7 @@ import {
 } from './tareasUI.js';
 import { ordenarTareas }  from '../utils/ordenamiento.js';
 import { exportarTareasJSON } from '../utils/exportacion.js';
-import { validarFormularioUsuario } from '../utils/validaciones.js';
+import { validarFormularioUsuario, validarFormularioTarea } from '../utils/validaciones.js';
 
 // ── REFERENCIAS A VISTAS ──────────────────────────────────────────────────────
 
@@ -318,7 +318,9 @@ async function abrirModalEditarUsuario(usuario) {
     labelEmail.className   = 'form__label';
     labelEmail.textContent = 'Correo electrónico';
     const inputEmail = document.createElement('input');
-    inputEmail.type        = 'email';
+    // FEAT #57: type="text" en lugar de "email" para evitar el tooltip nativo del browser.
+    // La validación de formato se hace manualmente en validarFormularioUsuario().
+    inputEmail.type        = 'text';
     inputEmail.id          = 'editar-usuario-email';
     inputEmail.className   = 'form__input';
     inputEmail.placeholder = 'Ej: usuario@correo.com';
@@ -345,15 +347,20 @@ async function abrirModalEditarUsuario(usuario) {
     formEditar.addEventListener('submit', async function(event) {
         event.preventDefault();
 
+        // FEAT #57: validación completa con mensajes del backend (Zod-matching)
+        const valido = await validarFormularioUsuario({
+            docInput:   inputDoc,
+            nameInput:  inputNombre,
+            emailInput: inputEmail,
+            docError:   null,
+            nameError:  null,
+            emailError: null,
+        });
+        if (!valido) return;
+
         const documento = inputDoc.value.trim();
         const nombre    = inputNombre.value.trim();
         const email     = inputEmail.value.trim();
-
-        // Se valida que ningún campo esté vacío antes de enviar al servidor
-        if (!documento || !nombre || !email) {
-            await mostrarNotificacion('Todos los campos son obligatorios', 'advertencia');
-            return;
-        }
 
         // Se llama a la capa API con el id del usuario y los datos nuevos
         const usuarioActualizado = await actualizarUsuario(usuario.id, {
@@ -804,10 +811,14 @@ export async function abrirModalUsuario(usuario) {
         const estado     = selectEstado.value;
         const comentario = textareaComentario.value.trim();
 
-        if (!titulo || !estado) {
-            await mostrarNotificacion('El título y el estado son obligatorios', 'advertencia');
-            return;
-        }
+        // FEAT #57: validación con mensajes del backend (Zod-matching)
+        const validoTarea = await validarFormularioTarea({
+            titleInput:  inputTitulo,
+            statusInput: selectEstado,
+            titleError:  null,
+            statusError: null,
+        });
+        if (!validoTarea) return;
 
         const datosTarea = {
             title:         titulo,
@@ -1174,7 +1185,8 @@ export function registrarEventosNavegacion() {
             const nameError   = document.getElementById('newUserNameError');
             const emailError  = document.getElementById('newUserEmailError');
 
-            const valido = validarFormularioUsuario({
+            // FEAT #57: await requerido porque validarFormularioUsuario es async
+            const valido = await validarFormularioUsuario({
                 docInput, nameInput, emailInput,
                 docError, nameError, emailError,
             });
@@ -1221,29 +1233,17 @@ export function registrarEventosNavegacion() {
             const titleError   = document.getElementById('newTaskTitleError');
             const statusError  = document.getElementById('newTaskStatusError');
 
-            // Se limpian los errores previos antes de validar de nuevo
-            if (titleError)  titleError.textContent  = '';
-            if (statusError) statusError.textContent = '';
-            if (titleInput)  titleInput.classList.remove('error');
-            if (statusInput) statusInput.classList.remove('error');
-
+            // FEAT #57: validación con mensajes descriptivos del backend (Zod-matching)
             const titulo  = titleInput  ? titleInput.value.trim()  : '';
             const estado  = statusInput ? statusInput.value         : '';
 
-            // Validación mínima en frontend: el backend hace la validación completa
-            // Solo se valida que los campos obligatorios no estén vacíos
-            let hayError = false;
-            if (!titulo) {
-                if (titleError) titleError.textContent = 'El título es obligatorio';
-                if (titleInput) titleInput.classList.add('error');
-                hayError = true;
-            }
-            if (!estado) {
-                if (statusError) statusError.textContent = 'El estado es obligatorio';
-                if (statusInput) statusInput.classList.add('error');
-                hayError = true;
-            }
-            if (hayError) return;
+            const validoTareaForm = await validarFormularioTarea({
+                titleInput,
+                statusInput,
+                titleError,
+                statusError,
+            });
+            if (!validoTareaForm) return;
 
             // Se obtienen los IDs de los usuarios seleccionados en el dropdown de checkboxes
             const assignedUsers = obtenerIdsSeleccionados();

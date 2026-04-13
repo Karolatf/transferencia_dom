@@ -15,6 +15,9 @@ import {
     obtenerTareasDeUsuario
 } from '../api/tareasApi.js';
 
+// FEAT #57: mostrarNotificacion para toasts de error descriptivos
+import { mostrarNotificacion } from '../utils/notificaciones.js';
+
 // Función principal que monta la vista de búsqueda en el contenedor recibido
 // Parámetro: contenedor — el elemento HTML donde se renderiza la vista
 export function montarBuscarUsuario(contenedor) {
@@ -104,8 +107,11 @@ export function montarBuscarUsuario(contenedor) {
 
         // Se valida que el campo no esté vacío antes de hacer la petición
         if (!documento) {
-            errorSpan.textContent = 'Ingresa tu numero de documento';
+            const msg = 'El documento del usuario es obligatorio';
+            errorSpan.textContent = msg;
             input.classList.add('error');
+            // FEAT #57: toast descriptivo en lugar de dejar solo el span
+            await mostrarNotificacion(msg, 'error');
             return;
         }
 
