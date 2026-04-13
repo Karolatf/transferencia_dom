@@ -1,26 +1,39 @@
 // MÓDULO: utils/validaciones.js
 // CAPA:   Utils
 
+// ACTUALIZACIÓN [FEAT #57]:
+//   Se eliminan window.alert() y mensajes genéricos.
+//   Ahora todas las validaciones usan mostrarNotificacion() de notificaciones.js
+//   con mensajes iguales a los que devuelve el backend (Zod) cuando falla.
+
+import { mostrarNotificacion } from './notificaciones.js';
+
 export function entradaEsValida(value) {
     return value.trim().length > 0;
 }
 
+// Muestra un error en el span de error (si existe) y añade clase visual al input.
 export function mostrarError(elementoError, elementoInput, mensaje) {
-    elementoError.textContent = mensaje;
-    elementoInput.classList.add('error');
+    if (elementoError) elementoError.textContent = mensaje;
+    if (elementoInput) elementoInput.classList.add('error');
 }
 
+// Limpia el error del span y la clase visual del input.
 export function limpiarError(elementoError, elementoInput) {
-    elementoError.textContent = '';
-    elementoInput.classList.remove('error');
+    if (elementoError) elementoError.textContent = '';
+    if (elementoInput) elementoInput.classList.remove('error');
 }
 
-export function validarFormularioBusqueda(documentoInput, documentoError) {
-    const valorDocumento = documentoInput.value;
+// ── VALIDACIÓN FORMULARIO BÚSQUEDA (modo usuario) ─────────────────────────────
+// Retorna true si el campo es válido. Muestra toast de error.
+export async function validarFormularioBusqueda(documentoInput, documentoError) {
+    const valorDocumento = documentoInput ? documentoInput.value : '';
     let esValido = true;
 
     if (!entradaEsValida(valorDocumento)) {
-        mostrarError(documentoError, documentoInput, 'El documento del usuario es obligatorio');
+        const msg = 'El documento del usuario es obligatorio';
+        mostrarError(documentoError, documentoInput, msg);
+        await mostrarNotificacion(msg, 'error');
         esValido = false;
     } else {
         limpiarError(documentoError, documentoInput);
@@ -29,32 +42,142 @@ export function validarFormularioBusqueda(documentoInput, documentoError) {
     return esValido;
 }
 
-// Valida el formulario de crear/editar usuario en el panel admin
-export function validarFormularioUsuario({ docInput, nameInput, emailInput, docError, nameError, emailError }) {
+// ── VALIDACIÓN FORMULARIO USUARIO (crear / editar en panel admin) ─────────────
+// Mensajes alineados exactamente con los del backend (user.schema.js / Zod).
+// Retorna true si todos los campos son válidos.
+// Muestra el primer error como toast usando mostrarNotificacion().
+export async function validarFormularioUsuario({ docInput, nameInput, emailInput, docError, nameError, emailError }) {
     let esValido = true;
+    let primerMensaje = null;
 
+    // Limpiar errores previos
     [docError, nameError, emailError].forEach(el => { if (el) el.textContent = ''; });
     [docInput, nameInput, emailInput].forEach(el => { if (el) el.classList.remove('error'); });
 
-    if (!entradaEsValida(docInput.value)) {
-        mostrarError(docError, docInput, 'El documento es obligatorio');
+    // ── Validar documento ───────────────────────────────────────────────────
+    const valorDoc = docInput ? docInput.value.trim() : '';
+
+    if (!entradaEsValida(valorDoc)) {
+        const msg = 'El número de documento es obligatorio';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
         esValido = false;
-    } else if (!/^\d+$/.test(docInput.value.trim())) {
-        mostrarError(docError, docInput, 'El documento solo puede contener números');
+    } else if (valorDoc.length < 5) {
+        const msg = 'El documento debe tener al menos 5 caracteres';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorDoc.length > 20) {
+        const msg = 'El documento no puede exceder los 20 caracteres';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (!/^\d+$/.test(valorDoc)) {
+        const msg = 'El documento solo puede contener números';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
         esValido = false;
     }
 
-    if (!entradaEsValida(nameInput.value)) {
-        mostrarError(nameError, nameInput, 'El nombre es obligatorio');
+    // ── Validar nombre ──────────────────────────────────────────────────────
+    const valorName = nameInput ? nameInput.value.trim() : '';
+
+    if (!entradaEsValida(valorName)) {
+        const msg = 'El nombre es obligatorio';
+        mostrarError(nameError, nameInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
         esValido = false;
-    } else if (!/^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/.test(nameInput.value.trim())) {
-        mostrarError(nameError, nameInput, 'El nombre solo puede contener letras y espacios');
+    } else if (valorName.length < 3) {
+        const msg = 'El nombre debe tener al menos 3 caracteres';
+        mostrarError(nameError, nameInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorName.length > 100) {
+        const msg = 'El nombre no puede exceder los 100 caracteres';
+        mostrarError(nameError, nameInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (!/^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/.test(valorName)) {
+        const msg = 'El nombre solo puede contener letras y espacios';
+        mostrarError(nameError, nameInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
         esValido = false;
     }
 
-    if (!entradaEsValida(emailInput.value)) {
-        mostrarError(emailError, emailInput, 'El correo es obligatorio');
+    // ── Validar email ───────────────────────────────────────────────────────
+    // IMPORTANTE: el input email ya NO usa type="email" para evitar tooltip nativo del browser.
+    // La validación se hace manualmente aquí con regex.
+    const valorEmail = emailInput ? emailInput.value.trim() : '';
+
+    if (!entradaEsValida(valorEmail)) {
+        const msg = 'El correo electrónico es obligatorio';
+        mostrarError(emailError, emailInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
         esValido = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valorEmail)) {
+        const msg = 'El correo electrónico no tiene un formato válido';
+        mostrarError(emailError, emailInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorEmail.length > 100) {
+        const msg = 'El correo no puede exceder los 100 caracteres';
+        mostrarError(emailError, emailInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // Mostrar el primer error como toast
+    if (primerMensaje) {
+        await mostrarNotificacion(primerMensaje, 'error');
+    }
+
+    return esValido;
+}
+
+// ── VALIDACIÓN FORMULARIO TAREA (crear tarea en panel admin) ──────────────────
+// Mensajes alineados con task.schema.js del backend.
+// Retorna true si los campos obligatorios son válidos.
+export async function validarFormularioTarea({ titleInput, statusInput, titleError, statusError }) {
+    let esValido = true;
+    let primerMensaje = null;
+
+    // Limpiar errores previos
+    [titleError, statusError].forEach(el => { if (el) el.textContent = ''; });
+    [titleInput, statusInput].forEach(el => { if (el) el.classList.remove('error'); });
+
+    // ── Validar título ──────────────────────────────────────────────────────
+    const valorTitulo = titleInput ? titleInput.value.trim() : '';
+
+    if (!entradaEsValida(valorTitulo)) {
+        const msg = 'El título de la tarea es obligatorio';
+        mostrarError(titleError, titleInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorTitulo.length < 3) {
+        const msg = 'El título debe tener al menos 3 caracteres';
+        mostrarError(titleError, titleInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorTitulo.length > 200) {
+        const msg = 'El título no puede exceder los 200 caracteres';
+        mostrarError(titleError, titleInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // ── Validar estado ──────────────────────────────────────────────────────
+    const valorEstado = statusInput ? statusInput.value : '';
+
+    if (!valorEstado) {
+        const msg = 'El estado de la tarea es obligatorio';
+        mostrarError(statusError, statusInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // Mostrar el primer error como toast
+    if (primerMensaje) {
+        await mostrarNotificacion(primerMensaje, 'error');
     }
 
     return esValido;
