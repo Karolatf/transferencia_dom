@@ -225,6 +225,103 @@
             </section>
         </div>
 
+        <!-- Card de crear tareas — contraíble (la lógica la registra registrarCardsContraibles en modoUI.js) -->
+        <section class="admin-card admin-card--full" id="cardCrearTareas">
+            <!-- Encabezado contraíble: título + flecha de toggle -->
+            <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleCrearTareas">
+                <h2 class="admin-card__titulo">Crear Tarea</h2>
+                <!-- Flecha que rota al contraer o desplegar -->
+                <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Crear Tarea">▼</button>
+            </div>
+            <!-- Cuerpo contraíble: formulario de creación de tarea -->
+            <div class="admin-card__cuerpo" id="cuerpoCrearTareas">
+                <form id="createTaskForm" class="form" novalidate>
+
+                    <!-- Campo título: obligatorio según el schema del backend -->
+                    <div class="form__group">
+                        <label for="newTaskTitle" class="form__label">Título</label>
+                        <input
+                            type="text"
+                            id="newTaskTitle"
+                            class="form__input"
+                            placeholder="Ej: Revisar documentación del proyecto"
+                            autocomplete="off"
+                        >
+                        <span class="form__error" id="newTaskTitleError"></span>
+                    </div>
+
+                    <!-- Campo descripción: opcional -->
+                    <div class="form__group">
+                        <label for="newTaskDescription" class="form__label">
+                            Descripción <span class="form__label--opcional">(opcional)</span>
+                        </label>
+                        <textarea
+                            id="newTaskDescription"
+                            class="form__input form__textarea"
+                            rows="2"
+                            placeholder="Descripción detallada de la tarea..."
+                        ></textarea>
+                    </div>
+
+                    <!-- Campo estado: pendiente o en_progreso (el admin no crea tareas ya completadas) -->
+                    <div class="form__group">
+                        <label for="newTaskStatus" class="form__label">Estado</label>
+                        <select id="newTaskStatus" class="form__input">
+                            <option value="" disabled selected>Selecciona un estado</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en_progreso">En Progreso</option>
+                        </select>
+                        <span class="form__error" id="newTaskStatusError"></span>
+                    </div>
+
+                    <!-- Campo comentario: opcional -->
+                    <div class="form__group">
+                        <label for="newTaskComment" class="form__label">
+                            Comentario <span class="form__label--opcional">(opcional)</span>
+                        </label>
+                        <textarea
+                            id="newTaskComment"
+                            class="form__input form__textarea"
+                            rows="2"
+                            placeholder="Agrega un comentario inicial..."
+                        ></textarea>
+                    </div>
+
+                    <!-- Campo asignación de usuarios: dropdown con checkboxes -->
+                    <div class="form__group">
+                        <label class="form__label">
+                            Asignar usuarios <span class="form__label--opcional">(opcional)</span>
+                        </label>
+                        <!-- Contenedor relativo para posicionar el panel flotante -->
+                        <div class="usuarios-dropdown" id="usuariosDropdown">
+                            <!-- Botón que abre y cierra el panel de checkboxes -->
+                            <button
+                                type="button"
+                                class="usuarios-dropdown__btn"
+                                id="usuariosDropdownBtn"
+                                aria-expanded="false"
+                                aria-haspopup="listbox"
+                            >
+                                <!-- El texto cambia según los usuarios seleccionados -->
+                                <span id="usuariosDropdownTexto">Seleccionar usuarios...</span>
+                                <span class="usuarios-dropdown__icono">▼</span>
+                            </button>
+                            <!-- Panel con la lista de checkboxes — empieza oculto -->
+                            <div class="usuarios-dropdown__panel hidden" id="usuariosDropdownPanel" role="listbox">
+                                <!-- Los checkboxes se generan dinámicamente con JS desde modoUI.js -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón de submit del formulario -->
+                    <button type="submit" class="btn btn--admin-primary">
+                        <span class="btn__text">Crear Tarea</span>
+                    </button>
+
+                </form>
+            </div>
+        </section>
+
         <!-- Card de tabla de usuarios — también contraíble -->
         <section class="admin-card admin-card--full" id="cardUsuarios">
             <!-- Encabezado contraíble con contador morado -->
