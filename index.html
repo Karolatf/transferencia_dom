@@ -293,10 +293,10 @@
                         ></textarea>
                     </div>
 
-                    <!-- Campo asignación de usuarios: dropdown con checkboxes -->
+                    <!-- Campo asignación de usuarios: obligatorio -->
                     <div class="form__group">
                         <label class="form__label">
-                            Asignar usuarios <span class="form__label--opcional">(opcional)</span>
+                            Asignar usuarios
                         </label>
                         <!-- Contenedor relativo para posicionar el panel flotante -->
                         <div class="usuarios-dropdown" id="usuariosDropdown">
@@ -317,6 +317,7 @@
                                 <!-- Los checkboxes se generan dinámicamente con JS desde modoUI.js -->
                             </div>
                         </div>
+                        <span class="form__error" id="newTaskUsersError"></span>
                     </div>
 
                     <!-- Botón de submit del formulario -->
