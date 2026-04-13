@@ -10,6 +10,7 @@
     --color-pendiente:  #fbbf24;
     --color-progreso:   #60a5fa;
     --color-completada: #34d399;
+    --color-aprobacion: #f97316;
     --color-error:      #ef4444;
 
     --texto-oscuro: #111827;
@@ -564,6 +565,9 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .status-pendiente   { background: #fef3c7; color: #92400e; }
 .status-en_progreso { background: #dbeafe; color: #1e40af; }
 .status-completada  { background: #d1fae5; color: #065f46; }
+/* Badge para el cuarto estado: naranja suave, diferente del amarillo de "pendiente" */
+/* Fondo #ffedd5 (naranja claro) — texto #9a3412 (naranja oscuro con buen contraste) */
+.status-pendiente_aprobacion { background: #ffedd5; color: #9a3412; }
 
 
 /* ACCIONES EN LA TABLA */
@@ -1107,7 +1111,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
    GET /api/tasks/dashboard → { total, pendientes, enProgreso, completadas } */
 .dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    /* 5 columnas: Total, Pendiente, En Progreso, Por aprobar, Completada */
+    grid-template-columns: repeat(5, 1fr);
     gap: var(--espacio-md);
     margin-bottom: var(--espacio-lg);
 }
@@ -1129,6 +1134,9 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .stat-card--pendiente  { border-left-color: var(--color-pendiente); }
 .stat-card--progreso   { border-left-color: var(--color-progreso); }
 .stat-card--completada { border-left-color: var(--color-completada); }
+/* Stat-card del dashboard para el estado "pendiente_aprobacion" */
+/* Color naranja para diferenciarlo del amarillo de "pendiente" */
+.stat-card--aprobacion { border-left-color: var(--color-aprobacion); }
 
 .stat-card__label {
     font-size: var(--texto-sm);
@@ -1148,6 +1156,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .stat-card--pendiente  .stat-card__valor { color: #92400e; }
 .stat-card--progreso   .stat-card__valor { color: #1e40af; }
 .stat-card--completada .stat-card__valor { color: #065f46; }
+/* Número grande de la stat-card de "Por aprobar" — color naranja oscuro */
+.stat-card--aprobacion .stat-card__valor { color: #9a3412; }
 
 @media (max-width: 768px) {
     .dashboard-stats { grid-template-columns: 1fr 1fr; }
@@ -1184,7 +1194,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 /* Cuerpo de la card que se oculta al contraer */
 /* max-height y overflow permiten una animación de colapso suave */
 .admin-card__cuerpo {
-    overflow: hidden;
+    overflow: visible;
     /* Estado desplegado: max-height grande para que quepa cualquier contenido */
     max-height: 2000px;
     transition: max-height 300ms ease, opacity 200ms ease;
@@ -1193,6 +1203,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 /* Estado contraído: altura 0 y opacidad 0 para ocultar el contenido */
 .admin-card__cuerpo.oculto {
+    overflow: hidden;
     max-height: 0;
     opacity: 0;
 }
@@ -1226,8 +1237,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     position: relative;
 }
 
-/* Botón que abre y cierra el panel de checkboxes */
-/* Imita el estilo de los inputs del formulario para coherencia visual */
+/* Botón principal del dropdown — imita el estilo de los inputs */
 .usuarios-dropdown__btn {
     width: 100%;
     padding: var(--espacio-md);
@@ -1243,6 +1253,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: var(--espacio-sm);
 }
 
 .usuarios-dropdown__btn:focus,
@@ -1252,20 +1263,18 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     outline: none;
 }
 
-/* Ícono de flecha dentro del botón */
 .usuarios-dropdown__icono {
     font-size: var(--texto-sm);
     color: var(--texto-claro);
     transition: transform var(--transicion);
+    flex-shrink: 0;
 }
 
-/* Cuando el panel está abierto la flecha apunta hacia arriba */
 .usuarios-dropdown__btn.abierto .usuarios-dropdown__icono {
     transform: rotate(180deg);
 }
 
-/* Panel flotante con la lista de checkboxes */
-/* Aparece debajo del botón con sombra y borde suave */
+/* Panel flotante */
 .usuarios-dropdown__panel {
     position: absolute;
     top: calc(100% + 4px);
@@ -1274,31 +1283,83 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     background: white;
     border: 1.5px solid var(--borde-suave);
     border-radius: var(--radio-md);
-    box-shadow: var(--sombra-md);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     z-index: 100;
-    max-height: 200px;
+    min-height: 320px;
+    max-height: 420px;
     overflow-y: auto;
-    /* Empieza oculto — se muestra con JS quitando la clase hidden */
 }
 
-/* Cada opción del dropdown: fila con checkbox + nombre de usuario */
+/* Encabezado del panel con contador */
+.usuarios-dropdown__encabezado {
+    padding: 8px var(--espacio-md);
+    border-bottom: 1px solid var(--borde-suave);
+    background: var(--fondo-gris);
+    border-radius: var(--radio-md) var(--radio-md) 0 0;
+}
+
+.usuarios-dropdown__contador {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--texto-claro);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Mensaje mientras carga */
+.usuarios-dropdown__cargando {
+    padding: var(--espacio-md);
+    font-size: var(--texto-sm);
+    color: var(--texto-claro);
+    text-align: center;
+    font-style: italic;
+}
+
+/* Estado vacío */
+.usuarios-dropdown__vacio {
+    padding: var(--espacio-md);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.usuarios-dropdown__vacio-icono {
+    font-size: 1.6rem;
+}
+
+.usuarios-dropdown__vacio-texto {
+    font-size: var(--texto-sm);
+    color: var(--texto-claro);
+    margin: 0;
+}
+
+/* Cada opción: checkbox + avatar + info */
 .usuarios-dropdown__opcion {
     display: flex;
     align-items: center;
-    gap: var(--espacio-sm);
-    padding: var(--espacio-sm) var(--espacio-md);
+    gap: 12px;
+    padding: 13px var(--espacio-md);
     cursor: pointer;
     transition: background-color var(--transicion);
-    font-size: var(--texto-sm);
-    color: var(--texto-oscuro);
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.usuarios-dropdown__opcion:last-child {
+    border-bottom: none;
 }
 
 .usuarios-dropdown__opcion:hover {
-    background-color: var(--fondo-gris);
+    background-color: #f0f9ff;
 }
 
-/* Checkbox dentro de cada opción */
-.usuarios-dropdown__opcion input[type="checkbox"] {
+.usuarios-dropdown__opcion.seleccionada {
+    background-color: #e0f2fe;
+}
+
+/* Checkbox */
+.usuarios-dropdown__checkbox {
     width: 16px;
     height: 16px;
     accent-color: var(--color-admin);
@@ -1306,10 +1367,40 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     flex-shrink: 0;
 }
 
-/* Texto vacío cuando no hay usuarios para mostrar */
-.usuarios-dropdown__vacio {
-    padding: var(--espacio-md);
+/* Avatar circular con iniciales */
+.usuarios-dropdown__avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-admin), #0ea5e9);
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+}
+
+/* Info: nombre + documento */
+.usuarios-dropdown__info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.usuarios-dropdown__nombre {
     font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.usuarios-dropdown__doc {
+    font-size: 11px;
     color: var(--texto-claro);
-    text-align: center;
 }

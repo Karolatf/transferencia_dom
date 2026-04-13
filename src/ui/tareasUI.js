@@ -53,8 +53,18 @@ export function actualizarContadorTareas(cantidad) {
 
 // ── FORMATO ───────────────────────────────────────────────────────────────────
 
+// Convierte el valor técnico del estado a texto legible en español.
+// Se usa en los badges de la tabla del panel usuario y en actualizarFilaTarea.
+// ACTUALIZACIÓN v3.4.0: incluye el cuarto estado pendiente_aprobacion.
 export function formatearEstadoTarea(estado) {
-    const mapa = { pendiente: 'Pendiente', en_progreso: 'En Progreso', completada: 'Completada' };
+    const mapa = {
+        pendiente:            'Pendiente',
+        en_progreso:          'En Progreso',
+        // El usuario marca este estado cuando considera que terminó su trabajo
+        pendiente_aprobacion: 'Pendiente por aprobar',
+        completada:           'Completada',
+    };
+    // Si el estado no existe en el mapa se retorna el valor original como fallback
     return mapa[estado] || estado;
 }
 
@@ -148,7 +158,8 @@ export function actualizarFilaTarea(tareaActualizada) {
     fila.cells[2].textContent = tareaActualizada.description || '—';
 
     const badge = fila.cells[3].querySelector('.status-badge');
-    badge.classList.remove('status-pendiente', 'status-en_progreso', 'status-completada');
+    // Se eliminan las cuatro clases de estado posibles antes de agregar la nueva
+    badge.classList.remove('status-pendiente', 'status-en_progreso', 'status-pendiente_aprobacion', 'status-completada');
     badge.classList.add(`status-${tareaActualizada.status}`);
     badge.textContent = formatearEstadoTarea(tareaActualizada.status);
 
@@ -209,14 +220,19 @@ export function mostrarModalEdicion(tarea, soloLecturaTituloDesc = false) {
         inputDesc.style.opacity   = '0.55';
         inputDesc.style.cursor    = 'not-allowed';
 
-        // Se muestran las opciones del usuario y se ocultan las del admin
+        // MODO USUARIO: se muestran solo las opciones del usuario (En Progreso y Pendiente por aprobar)
+        // Se ocultan las opciones exclusivas del admin (Pendiente y Completada)
         opcionesUsuario.forEach(function(opt) { opt.style.display = ''; });
         opcionesAdmin.forEach(function(opt) { opt.style.display = 'none'; });
 
-        // Si la tarea ya tenía estado "completada" pero estamos en modo usuario,
-        // se fuerza a "pendiente" para que el select no quede en un valor oculto
-        if (selectEstado.value === 'completada') {
-            selectEstado.value = 'pendiente';
+        // Si la tarea tiene un estado que no está en el select del usuario,
+        // se fuerza a "en_progreso" para que el select no quede en un valor oculto.
+        // Los estados "pendiente" y "completada" son exclusivos del admin.
+        if (tarea.status === 'pendiente' || tarea.status === 'completada') {
+            selectEstado.value = 'en_progreso';
+        } else {
+            // "en_progreso" y "pendiente_aprobacion" sí están en el select del usuario
+            selectEstado.value = tarea.status;
         }
     } else {
         // MODO ADMIN: todos los campos son editables
@@ -227,9 +243,12 @@ export function mostrarModalEdicion(tarea, soloLecturaTituloDesc = false) {
         inputDesc.style.opacity   = '';
         inputDesc.style.cursor    = '';
 
-        // Se muestran todas las opciones incluyendo "Completada"
+        // MODO ADMIN: se muestran los cuatro estados completos
         opcionesUsuario.forEach(function(opt) { opt.style.display = ''; });
         opcionesAdmin.forEach(function(opt) { opt.style.display = ''; });
+
+        // Se asigna el estado actual — todos los valores son válidos en modo admin
+        selectEstado.value = tarea.status;
     }
 
     // Se abre el modal eliminando la clase hidden
