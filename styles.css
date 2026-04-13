@@ -1154,3 +1154,66 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 @media (max-width: 768px) {
     .dashboard-stats { grid-template-columns: 1fr 1fr; }
 }
+
+/* Botón de toggle (flecha) que aparece en el encabezado de cada card contraíble */
+/* Se posiciona al extremo derecho del encabezado mediante margin-left: auto */
+.btn-toggle-card {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: var(--texto-lg);
+    color: var(--color-admin-oscuro);
+    padding: var(--espacio-xs);
+    border-radius: var(--radio-sm);
+    margin-left: auto;
+    line-height: 1;
+    /* La flecha rota suavemente al contraer o desplegar */
+    transition: transform var(--transicion), color var(--transicion);
+    display: flex;
+    align-items: center;
+}
+
+.btn-toggle-card:hover {
+    color: var(--color-admin);
+    background: rgba(2, 132, 199, 0.08);
+}
+
+/* Cuando la card está contraída la flecha apunta hacia arriba */
+.btn-toggle-card.contraido {
+    transform: rotate(180deg);
+}
+
+/* Cuerpo de la card que se oculta al contraer */
+/* max-height y overflow permiten una animación de colapso suave */
+.admin-card__cuerpo {
+    overflow: hidden;
+    /* Estado desplegado: max-height grande para que quepa cualquier contenido */
+    max-height: 2000px;
+    transition: max-height 300ms ease, opacity 200ms ease;
+    opacity: 1;
+}
+
+/* Estado contraído: altura 0 y opacidad 0 para ocultar el contenido */
+.admin-card__cuerpo.oculto {
+    max-height: 0;
+    opacity: 0;
+}
+
+/* Encabezado de la card contraíble: fila flexible para título + flecha */
+.admin-card__cabecera--toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding-bottom: var(--espacio-sm);
+    border-bottom: 1px solid var(--borde-suave);
+    margin-bottom: var(--espacio-lg);
+    /* Cuando la card está contraída no hay separación inferior */
+    transition: border-color var(--transicion), margin-bottom var(--transicion);
+}
+
+/* Al contraer la card el borde inferior desaparece */
+.admin-card__cabecera--toggle.sin-borde {
+    border-bottom-color: transparent;
+    margin-bottom: 0;
+}
