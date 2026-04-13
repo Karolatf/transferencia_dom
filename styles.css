@@ -10,6 +10,7 @@
     --color-pendiente:  #fbbf24;
     --color-progreso:   #60a5fa;
     --color-completada: #34d399;
+    --color-aprobacion: #f97316;
     --color-error:      #ef4444;
 
     --texto-oscuro: #111827;
@@ -564,6 +565,9 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .status-pendiente   { background: #fef3c7; color: #92400e; }
 .status-en_progreso { background: #dbeafe; color: #1e40af; }
 .status-completada  { background: #d1fae5; color: #065f46; }
+/* Badge para el cuarto estado: naranja suave, diferente del amarillo de "pendiente" */
+/* Fondo #ffedd5 (naranja claro) — texto #9a3412 (naranja oscuro con buen contraste) */
+.status-pendiente_aprobacion { background: #ffedd5; color: #9a3412; }
 
 
 /* ACCIONES EN LA TABLA */
@@ -1107,7 +1111,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
    GET /api/tasks/dashboard → { total, pendientes, enProgreso, completadas } */
 .dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    /* 5 columnas: Total, Pendiente, En Progreso, Por aprobar, Completada */
+    grid-template-columns: repeat(5, 1fr);
     gap: var(--espacio-md);
     margin-bottom: var(--espacio-lg);
 }
@@ -1129,6 +1134,9 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .stat-card--pendiente  { border-left-color: var(--color-pendiente); }
 .stat-card--progreso   { border-left-color: var(--color-progreso); }
 .stat-card--completada { border-left-color: var(--color-completada); }
+/* Stat-card del dashboard para el estado "pendiente_aprobacion" */
+/* Color naranja para diferenciarlo del amarillo de "pendiente" */
+.stat-card--aprobacion { border-left-color: var(--color-aprobacion); }
 
 .stat-card__label {
     font-size: var(--texto-sm);
@@ -1148,6 +1156,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .stat-card--pendiente  .stat-card__valor { color: #92400e; }
 .stat-card--progreso   .stat-card__valor { color: #1e40af; }
 .stat-card--completada .stat-card__valor { color: #065f46; }
+/* Número grande de la stat-card de "Por aprobar" — color naranja oscuro */
+.stat-card--aprobacion .stat-card__valor { color: #9a3412; }
 
 @media (max-width: 768px) {
     .dashboard-stats { grid-template-columns: 1fr 1fr; }
