@@ -1103,10 +1103,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
         padding: var(--espacio-lg);
     }
 }
-/* ══════════════════════════════════════════════════
-   DASHBOARD DE ESTADÍSTICAS (panel admin)
-   GET /api/tasks/dashboard → { total, pendientes, enProgreso, completadas }
-══════════════════════════════════════════════════ */
+/* DASHBOARD DE ESTADÍSTICAS (panel admin)
+   GET /api/tasks/dashboard → { total, pendientes, enProgreso, completadas } */
 .dashboard-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1216,4 +1214,102 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .admin-card__cabecera--toggle.sin-borde {
     border-bottom-color: transparent;
     margin-bottom: 0;
+}
+
+/* ══════════════════════════════════════════════════
+   DROPDOWN DE CHECKBOXES — Card Crear Tareas
+   Permite seleccionar uno o varios usuarios al crear una tarea
+══════════════════════════════════════════════════ */
+
+/* Contenedor relativo para posicionar el panel flotante debajo del botón */
+.usuarios-dropdown {
+    position: relative;
+}
+
+/* Botón que abre y cierra el panel de checkboxes */
+/* Imita el estilo de los inputs del formulario para coherencia visual */
+.usuarios-dropdown__btn {
+    width: 100%;
+    padding: var(--espacio-md);
+    font-size: var(--texto-md);
+    font-family: var(--fuente);
+    color: var(--texto-oscuro);
+    background: white;
+    border: 2px solid var(--borde-suave);
+    border-radius: var(--radio-md);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--transicion), box-shadow var(--transicion);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.usuarios-dropdown__btn:focus,
+.usuarios-dropdown__btn:hover {
+    border-color: var(--color-admin);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.10);
+    outline: none;
+}
+
+/* Ícono de flecha dentro del botón */
+.usuarios-dropdown__icono {
+    font-size: var(--texto-sm);
+    color: var(--texto-claro);
+    transition: transform var(--transicion);
+}
+
+/* Cuando el panel está abierto la flecha apunta hacia arriba */
+.usuarios-dropdown__btn.abierto .usuarios-dropdown__icono {
+    transform: rotate(180deg);
+}
+
+/* Panel flotante con la lista de checkboxes */
+/* Aparece debajo del botón con sombra y borde suave */
+.usuarios-dropdown__panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1.5px solid var(--borde-suave);
+    border-radius: var(--radio-md);
+    box-shadow: var(--sombra-md);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+    /* Empieza oculto — se muestra con JS quitando la clase hidden */
+}
+
+/* Cada opción del dropdown: fila con checkbox + nombre de usuario */
+.usuarios-dropdown__opcion {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    padding: var(--espacio-sm) var(--espacio-md);
+    cursor: pointer;
+    transition: background-color var(--transicion);
+    font-size: var(--texto-sm);
+    color: var(--texto-oscuro);
+}
+
+.usuarios-dropdown__opcion:hover {
+    background-color: var(--fondo-gris);
+}
+
+/* Checkbox dentro de cada opción */
+.usuarios-dropdown__opcion input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-admin);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Texto vacío cuando no hay usuarios para mostrar */
+.usuarios-dropdown__vacio {
+    padding: var(--espacio-md);
+    font-size: var(--texto-sm);
+    color: var(--texto-claro);
+    text-align: center;
 }
