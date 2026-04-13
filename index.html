@@ -183,6 +183,12 @@
                 <span class="stat-card__label">En Progreso</span>
                 <span class="stat-card__valor" id="dashboardProgreso">—</span>
             </div>
+            <!-- Stat-card de tareas en estado "pendiente_aprobacion" -->
+            <!-- El usuario marcó la tarea como lista para revisión del admin -->
+            <div class="stat-card stat-card--aprobacion">
+                <span class="stat-card__label">Por aprobar</span>
+                <span class="stat-card__valor" id="dashboardAprobacion">—</span>
+            </div>
             <div class="stat-card stat-card--completada">
                 <span class="stat-card__label">Completadas</span>
                 <span class="stat-card__valor" id="dashboardCompletada">—</span>
@@ -364,10 +370,14 @@
                 <div class="tasks-controls">
                     <div class="tasks-controls__grupo">
                         <label for="adminFiltroEstado" class="tasks-controls__label">Estado</label>
+                        <!-- Select de filtro por estado en la tabla del admin -->
+                        <!-- Incluye el cuarto estado para que el admin pueda filtrar tareas por aprobar -->
                         <select id="adminFiltroEstado" class="tasks-controls__select">
                             <option value="">Todos</option>
                             <option value="pendiente">Pendiente</option>
                             <option value="en_progreso">En Progreso</option>
+                            <!-- Cuarto estado: tareas que el usuario marcó como listas para revisión -->
+                            <option value="pendiente_aprobacion">Pendiente por aprobar</option>
                             <option value="completada">Completada</option>
                         </select>
                     </div>
@@ -447,13 +457,24 @@
                 <!-- Las opciones se filtran dinámicamente según el modo (usuario o admin) -->
                 <!-- En modo usuario solo aparecen "Pendiente por aprobar" y "En Progreso" -->
                 <!-- En modo admin aparecen las tres opciones incluyendo "Completada" -->
+                <!-- Select de estado del modal de edición de tarea -->
+                <!-- Las opciones se filtran dinámicamente en mostrarModalEdicion() de tareasUI.js -->
+                <!-- MODO USUARIO: solo "En Progreso" y "Pendiente por aprobar" -->
+                <!-- MODO ADMIN:   los cuatro estados completos -->
                 <select id="editTaskStatus" class="form__input">
                     <option value="" disabled>Selecciona un estado</option>
-                    <!-- Opción visible solo en modo usuario: el usuario no puede finalizar tareas -->
-                    <option value="pendiente" class="opcion-usuario">Pendiente por aprobar</option>
-                    <!-- Opción visible en ambos modos -->
+
+                    <!-- SOLO ADMIN: la tarea fue creada y aún no se inicia -->
+                    <option value="pendiente" class="opcion-admin">Pendiente</option>
+
+                    <!-- AMBOS MODOS: el usuario está trabajando en ella -->
                     <option value="en_progreso">En Progreso</option>
-                    <!-- Opción visible solo en modo admin: solo el admin puede marcar como completada -->
+
+                    <!-- SOLO USUARIO: terminó y espera revisión del admin -->
+                    <!-- value diferente a "pendiente" — son estados distintos en la BD -->
+                    <option value="pendiente_aprobacion" class="opcion-usuario">Pendiente por aprobar</option>
+
+                    <!-- SOLO ADMIN: revisó el trabajo y lo aprueba -->
                     <option value="completada" class="opcion-admin">Completada</option>
                 </select>
             </div>
