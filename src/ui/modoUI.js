@@ -77,20 +77,28 @@ export function activarModoAdmin() {
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 
+// Carga las estadísticas del dashboard desde el backend y las muestra en pantalla.
+// GET /api/tasks/dashboard → { total, pendientes, enProgreso, aprobacion, completadas }
+// ACTUALIZACIÓN v3.4.0: se agrega el elemento dashboardAprobacion para pendiente_aprobacion.
 async function cargarDashboard() {
     const data = await obtenerDashboard();
     if (!data) return;
 
+    // Se mapean los ids del DOM con las propiedades de la respuesta del backend
     const el = {
         total:      document.getElementById('dashboardTotal'),
         pendiente:  document.getElementById('dashboardPendiente'),
         progreso:   document.getElementById('dashboardProgreso'),
+        // Nuevo elemento del dashboard para el cuarto estado del sistema
+        aprobacion: document.getElementById('dashboardAprobacion'),
         completada: document.getElementById('dashboardCompletada'),
     };
 
     if (el.total)      el.total.textContent      = data.total;
     if (el.pendiente)  el.pendiente.textContent   = data.pendientes;
     if (el.progreso)   el.progreso.textContent    = data.enProgreso;
+    // data.aprobacion viene del controlador getDashboard() del backend
+    if (el.aprobacion) el.aprobacion.textContent  = data.aprobacion ?? 0;
     if (el.completada) el.completada.textContent  = data.completadas;
 }
 
@@ -383,23 +391,31 @@ function cerrarModalEditarUsuarioExistente() {
 
 // ── DASHBOARD LOCAL ──────────────────────────────────────────────────────────
 // Recalcula los contadores del dashboard usando todasLasTareas en memoria,
-// sin hacer ninguna petición al servidor. Se usa después de editar o eliminar.
+// sin hacer ninguna petición al servidor.
+// Se usa después de editar o eliminar una tarea para reflejar el cambio de inmediato.
+// ACTUALIZACIÓN v3.4.0: incluye el contador de pendiente_aprobacion.
 function actualizarDashboardLocal() {
     const el = {
         total:      document.getElementById('dashboardTotal'),
         pendiente:  document.getElementById('dashboardPendiente'),
         progreso:   document.getElementById('dashboardProgreso'),
+        // Nuevo contador para el cuarto estado del sistema
+        aprobacion: document.getElementById('dashboardAprobacion'),
         completada: document.getElementById('dashboardCompletada'),
     };
     if (!el.total) return;
 
+    // Se filtran las tareas de memoria por cada uno de los cuatro estados
     const pendientes  = todasLasTareas.filter(t => t.status === 'pendiente').length;
     const enProgreso  = todasLasTareas.filter(t => t.status === 'en_progreso').length;
+    // Cuarto estado: el usuario marcó la tarea como lista para revisión del admin
+    const aprobacion  = todasLasTareas.filter(t => t.status === 'pendiente_aprobacion').length;
     const completadas = todasLasTareas.filter(t => t.status === 'completada').length;
 
     el.total.textContent      = todasLasTareas.length;
     el.pendiente.textContent  = pendientes;
     el.progreso.textContent   = enProgreso;
+    if (el.aprobacion) el.aprobacion.textContent = aprobacion;
     el.completada.textContent = completadas;
 }
 
@@ -454,8 +470,17 @@ export function aplicarFiltrosAdmin() {
     });
 }
 
+// Convierte el valor técnico del estado a texto legible en español.
+// Se usa en la tabla de tareas del panel admin.
+// ACTUALIZACIÓN v3.4.0: incluye el cuarto estado pendiente_aprobacion.
 function formatearEstado(estado) {
-    const mapa = { pendiente: 'Pendiente', en_progreso: 'En Progreso', completada: 'Completada' };
+    const mapa = {
+        pendiente:            'Pendiente',
+        en_progreso:          'En Progreso',
+        // Estado que pone el usuario cuando considera que terminó su trabajo
+        pendiente_aprobacion: 'Pendiente por aprobar',
+        completada:           'Completada',
+    };
     return mapa[estado] || estado;
 }
 
