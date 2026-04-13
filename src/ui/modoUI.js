@@ -791,9 +791,56 @@ function cerrarModalUsuarioExistente() {
     if (existing) existing.remove();
 }
 
+// ── CARDS CONTRAÍBLES ─────────────────────────────────────────────────────────
+// Registra el comportamiento de toggle (contraer/desplegar) en las cards del panel admin.
+// Cada card tiene un encabezado con clase admin-card__cabecera--toggle y un cuerpo
+// con clase admin-card__cuerpo. Al hacer clic en el encabezado (o en la flecha):
+//   - Se alterna la clase "oculto" en el cuerpo para ocultarlo o mostrarlo
+//   - Se alterna la clase "contraido" en la flecha para rotarla
+//   - Se alterna la clase "sin-borde" en el encabezado para quitar el separador
+function registrarCardsContraibles() {
+    // Pares de [id del encabezado, id del cuerpo] de cada card contraíble
+    const pares = [
+        ['toggleCrearUsuario', 'cuerpoCrearUsuario'],
+        ['toggleUsuarios',     'cuerpoUsuarios'],
+        ['toggleTareas',       'cuerpoTareas'],
+        // La card de crear tareas se agrega aquí cuando Sebastián la cree
+        ['toggleCrearTareas',  'cuerpoCrearTareas'],
+    ];
+
+    pares.forEach(function(par) {
+        const encabezadoId = par[0];
+        const cuerpoId     = par[1];
+
+        const encabezado = document.getElementById(encabezadoId);
+        const cuerpo     = document.getElementById(cuerpoId);
+
+        // Si alguno de los dos no existe en el DOM se salta este par
+        if (!encabezado || !cuerpo) return;
+
+        const botonFlecha = encabezado.querySelector('.btn-toggle-card');
+
+        // Listener en el encabezado completo para que el clic en cualquier parte lo active
+        encabezado.addEventListener('click', function() {
+            // Se alterna la visibilidad del cuerpo de la card
+            const estaOculto = cuerpo.classList.toggle('oculto');
+
+            // Si está oculto la flecha apunta hacia arriba (clase contraido)
+            // Si está visible la flecha apunta hacia abajo (sin clase)
+            if (botonFlecha) botonFlecha.classList.toggle('contraido', estaOculto);
+
+            // Se quita el borde inferior del encabezado cuando la card está contraída
+            encabezado.classList.toggle('sin-borde', estaOculto);
+        });
+    });
+}
+
 // ── REGISTRO DE EVENTOS DE NAVEGACIÓN ────────────────────────────────────────
 
 export function registrarEventosNavegacion() {
+    
+    // Se registra el comportamiento de toggle en las cards contraíbles del panel admin
+    registrarCardsContraibles();
 
     // Botones de la pantalla de inicio
     document.getElementById('btnAccesoUsuario').addEventListener('click', activarModoUsuario);

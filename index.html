@@ -189,114 +189,130 @@
             </div>
         </section>
 
-        <!-- Crear usuario -->
+        <!-- Fila de cards del panel admin — cada card es contraíble con la flechita -->
         <div class="admin-fila">
-            <section class="admin-card">
-                <h2 class="admin-card__titulo">Crear Usuario</h2>
-                <form id="createUserForm" class="form" novalidate>
-                    <div class="form__group">
-                        <label for="newUserId" class="form__label">Numero de documento</label>
-                        <input type="text" id="newUserId" class="form__input" placeholder="Ej: 1097497124" autocomplete="off">
-                        <span class="form__error" id="newUserIdError"></span>
-                    </div>
-                    <div class="form__group">
-                        <label for="newUserName" class="form__label">Nombre completo</label>
-                        <input type="text" id="newUserName" class="form__input" placeholder="Ej: Karol Torres">
-                        <span class="form__error" id="newUserNameError"></span>
-                    </div>
-                    <div class="form__group">
-                        <label for="newUserEmail" class="form__label">Correo electronico</label>
-                        <input type="email" id="newUserEmail" class="form__input" placeholder="Ej: usuario@correo.com">
-                        <span class="form__error" id="newUserEmailError"></span>
-                    </div>
-                    <button type="submit" class="btn btn--admin-primary">
-                        <span class="btn__text">Crear Usuario</span>
-                    </button>
-                </form>
+            <!-- Card de crear usuario — se puede contraer para ahorrar espacio -->
+            <section class="admin-card" id="cardCrearUsuario">
+                <!-- Encabezado contraíble: título + botón flecha -->
+                <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleCrearUsuario">
+                    <h2 class="admin-card__titulo">Crear Usuario</h2>
+                    <!-- Flecha que rota al contraer o desplegar la card -->
+                    <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Crear Usuario">▼</button>
+                </div>
+                <!-- Cuerpo contraíble: todo el contenido de la card -->
+                <div class="admin-card__cuerpo" id="cuerpoCrearUsuario">
+                    <form id="createUserForm" class="form" novalidate>
+                        <div class="form__group">
+                            <label for="newUserId" class="form__label">Numero de documento</label>
+                            <input type="text" id="newUserId" class="form__input" placeholder="Ej: 1097497124" autocomplete="off">
+                            <span class="form__error" id="newUserIdError"></span>
+                        </div>
+                        <div class="form__group">
+                            <label for="newUserName" class="form__label">Nombre completo</label>
+                            <input type="text" id="newUserName" class="form__input" placeholder="Ej: Karol Torres">
+                            <span class="form__error" id="newUserNameError"></span>
+                        </div>
+                        <div class="form__group">
+                            <label for="newUserEmail" class="form__label">Correo electronico</label>
+                            <input type="email" id="newUserEmail" class="form__input" placeholder="Ej: usuario@correo.com">
+                            <span class="form__error" id="newUserEmailError"></span>
+                        </div>
+                        <button type="submit" class="btn btn--admin-primary">
+                            <span class="btn__text">Crear Usuario</span>
+                        </button>
+                    </form>
+                </div>
             </section>
         </div>
 
-        <!-- Tabla de usuarios -->
-        <!-- Card de usuarios del sistema: cabecera unificada con contador morado igual a la de tareas -->
-    <section class="admin-card admin-card--full">
-        <div class="admin-card__cabecera">
-            <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
-            <!-- Contador de usuarios con el mismo estilo morado del contador de tareas -->
-            <span id="adminUsersCount" class="tasks-header__count">0 usuarios</span>
-        </div>
-
-            <div class="tasks-table-container">
-                <table class="tasks-table tasks-table--admin">
-                    <thead class="tasks-table__head">
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Documento</th>
-                            <th scope="col">Nombre</th>
-                            <th scope="col">Correo</th>
-                            <th scope="col">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTableBody"></tbody>
-                </table>
+        <!-- Card de tabla de usuarios — también contraíble -->
+        <section class="admin-card admin-card--full" id="cardUsuarios">
+            <!-- Encabezado contraíble con contador morado -->
+            <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleUsuarios">
+                <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
+                <span id="adminUsersCount" class="tasks-header__count">0 usuarios</span>
+                <!-- Flecha de toggle al extremo derecho -->
+                <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Usuarios del Sistema">▼</button>
+            </div>
+            <!-- Cuerpo contraíble: tabla de usuarios -->
+            <div class="admin-card__cuerpo" id="cuerpoUsuarios">
+                <div class="tasks-table-container">
+                    <table class="tasks-table tasks-table--admin">
+                        <thead class="tasks-table__head">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Documento</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Correo</th>
+                                <th scope="col">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
-        <!-- Tabla de tareas con filtros -->
-        <section class="admin-card admin-card--full">
-            <div class="admin-card__cabecera">
+        <!-- Card de tabla de tareas — también contraíble -->
+        <section class="admin-card admin-card--full" id="cardTareas">
+            <!-- Encabezado contraíble con contador morado -->
+            <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleTareas">
                 <h2 class="admin-card__titulo">Todas las Tareas del Sistema</h2>
                 <span id="adminTasksCount" class="tasks-header__count">0 tareas</span>
+                <!-- Flecha de toggle al extremo derecho -->
+                <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Tareas del Sistema">▼</button>
             </div>
-
-            <div class="tasks-controls">
-                <div class="tasks-controls__grupo">
-                    <label for="adminFiltroEstado" class="tasks-controls__label">Estado</label>
-                    <select id="adminFiltroEstado" class="tasks-controls__select">
-                        <option value="">Todos</option>
-                        <option value="pendiente">Pendiente</option>
-                        <option value="en_progreso">En Progreso</option>
-                        <option value="completada">Completada</option>
-                    </select>
+            <!-- Cuerpo contraíble: filtros y tabla de tareas -->
+            <div class="admin-card__cuerpo" id="cuerpoTareas">
+                <div class="tasks-controls">
+                    <div class="tasks-controls__grupo">
+                        <label for="adminFiltroEstado" class="tasks-controls__label">Estado</label>
+                        <select id="adminFiltroEstado" class="tasks-controls__select">
+                            <option value="">Todos</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en_progreso">En Progreso</option>
+                            <option value="completada">Completada</option>
+                        </select>
+                    </div>
+                    <div class="tasks-controls__grupo">
+                        <label for="adminFiltroUsuario" class="tasks-controls__label">Usuario</label>
+                        <input type="text" id="adminFiltroUsuario" class="tasks-controls__input" placeholder="Nombre del usuario">
+                    </div>
+                    <div class="tasks-controls__grupo">
+                        <label for="adminOrdenSelect" class="tasks-controls__label">Ordenar</label>
+                        <select id="adminOrdenSelect" class="tasks-controls__select">
+                            <option value="">Sin orden</option>
+                            <option value="titulo_asc">Titulo A-Z</option>
+                            <option value="titulo_desc">Titulo Z-A</option>
+                            <option value="estado">Por estado</option>
+                            <option value="usuario">Por usuario</option>
+                        </select>
+                    </div>
+                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
+                        <button class="btn btn--admin-primary" id="adminBtnAplicarFiltros">Aplicar</button>
+                    </div>
+                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
+                        <button class="btn btn--admin-secondary" id="adminBtnLimpiarFiltros">Limpiar</button>
+                    </div>
+                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
+                        <button class="btn btn--admin-primary" id="adminBtnExportar">Exportar JSON</button>
+                    </div>
                 </div>
-                <div class="tasks-controls__grupo">
-                    <label for="adminFiltroUsuario" class="tasks-controls__label">Usuario</label>
-                    <input type="text" id="adminFiltroUsuario" class="tasks-controls__input" placeholder="Nombre del usuario">
+                <div class="tasks-table-container">
+                    <table class="tasks-table tasks-table--admin">
+                        <thead class="tasks-table__head">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Titulo</th>
+                                <th scope="col">Descripcion</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col">Usuario asignado</th>
+                                <th scope="col">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTasksTableBody"></tbody>
+                    </table>
                 </div>
-                <div class="tasks-controls__grupo">
-                    <label for="adminOrdenSelect" class="tasks-controls__label">Ordenar</label>
-                    <select id="adminOrdenSelect" class="tasks-controls__select">
-                        <option value="">Sin orden</option>
-                        <option value="titulo_asc">Titulo A-Z</option>
-                        <option value="titulo_desc">Titulo Z-A</option>
-                        <option value="estado">Por estado</option>
-                        <option value="usuario">Por usuario</option>
-                    </select>
-                </div>
-                <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                    <button class="btn btn--admin-primary" id="adminBtnAplicarFiltros">Aplicar</button>
-                </div>
-                <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                    <button class="btn btn--admin-secondary" id="adminBtnLimpiarFiltros">Limpiar</button>
-                </div>
-                <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                    <button class="btn btn--admin-primary" id="adminBtnExportar">Exportar JSON</button>
-                </div>
-            </div>
-
-            <div class="tasks-table-container">
-                <table class="tasks-table tasks-table--admin">
-                    <thead class="tasks-table__head">
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Titulo</th>
-                            <th scope="col">Descripcion</th>
-                            <th scope="col">Estado</th>
-                            <th scope="col">Usuario asignado</th>
-                            <th scope="col">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminTasksTableBody"></tbody>
-                </table>
             </div>
         </section>
 
