@@ -70,6 +70,9 @@ export function activarModoAdmin() {
     cargarDashboard();
     cargarTablaUsuarios();
     cargarTodasLasTareas();
+    // Se inicializa el dropdown de usuarios de la card "Crear Tarea"
+    // Se llama aquí para que los checkboxes carguen cuando el admin entra al panel
+    inicializarDropdownUsuarios();
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -835,6 +838,135 @@ function registrarCardsContraibles() {
     });
 }
 
+// ── CARD CREAR TAREAS — DROPDOWN DE USUARIOS ──────────────────────────────────
+// Inicializa el dropdown de checkboxes de usuarios en la card "Crear Tarea".
+// Carga todos los usuarios del sistema desde la API y crea un checkbox por cada uno.
+// Parámetros: ninguno — lee y escribe en los elementos del DOM directamente.
+async function inicializarDropdownUsuarios() {
+    const btn    = document.getElementById('usuariosDropdownBtn');
+    const panel  = document.getElementById('usuariosDropdownPanel');
+    const texto  = document.getElementById('usuariosDropdownTexto');
+
+    // Si alguno de los elementos no existe no se hace nada (evita errores fuera del admin)
+    if (!btn || !panel || !texto) return;
+
+    // Se cargan los usuarios del sistema para poblar el dropdown
+    const usuarios = await obtenerTodosLosUsuarios();
+
+    // Se vacía el panel antes de agregar los checkboxes
+    while (panel.firstChild) panel.removeChild(panel.firstChild);
+
+    if (!usuarios || usuarios.length === 0) {
+        // Si no hay usuarios se muestra un mensaje vacío en el panel
+        const vacio = document.createElement('p');
+        vacio.className   = 'usuarios-dropdown__vacio';
+        vacio.textContent = 'No hay usuarios registrados';
+        panel.appendChild(vacio);
+    } else {
+        // Se crea un checkbox por cada usuario disponible en el sistema
+        usuarios.forEach(function(usuario) {
+            // Contenedor de la opción: fila con checkbox + nombre
+            const opcion = document.createElement('label');
+            opcion.className = 'usuarios-dropdown__opcion';
+
+            // Checkbox con el id del usuario como value para enviarlo al backend
+            const checkbox = document.createElement('input');
+            checkbox.type  = 'checkbox';
+            checkbox.value = usuario.id;
+            // Al cambiar cualquier checkbox se actualiza el texto del botón
+            checkbox.addEventListener('change', function() {
+                actualizarTextoDropdown(btn, texto, panel);
+            });
+
+            // Texto con el nombre del usuario
+            const spanNombre = document.createElement('span');
+            spanNombre.textContent = `${usuario.name} (Doc: ${usuario.documento})`;
+
+            opcion.appendChild(checkbox);
+            opcion.appendChild(spanNombre);
+            panel.appendChild(opcion);
+        });
+    }
+
+    // Listener del botón: abre o cierra el panel al hacer clic
+    btn.addEventListener('click', function(event) {
+        // Se evita que el clic llegue al documento y cierre el panel inmediatamente
+        event.stopPropagation();
+
+        const estaAbierto = !panel.classList.contains('hidden');
+
+        if (estaAbierto) {
+            // Si ya estaba abierto, se cierra
+            panel.classList.add('hidden');
+            btn.classList.remove('abierto');
+            btn.setAttribute('aria-expanded', 'false');
+        } else {
+            // Si estaba cerrado, se abre
+            panel.classList.remove('hidden');
+            btn.classList.add('abierto');
+            btn.setAttribute('aria-expanded', 'true');
+        }
+    });
+
+    // Clic en cualquier lugar fuera del dropdown cierra el panel
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('usuariosDropdown');
+        if (dropdown && !dropdown.contains(event.target)) {
+            panel.classList.add('hidden');
+            btn.classList.remove('abierto');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+
+// Actualiza el texto del botón del dropdown según los checkboxes seleccionados.
+// Si ninguno está seleccionado muestra el placeholder.
+// Si hay seleccionados muestra los nombres separados por coma (máximo 2 + "y N más").
+// Parámetros:
+//   btn   — el elemento button del dropdown
+//   texto — el span que muestra el texto dentro del botón
+//   panel — el div con los checkboxes para leer cuáles están marcados
+function actualizarTextoDropdown(btn, texto, panel) {
+    // Se buscan todos los checkboxes marcados dentro del panel
+    const seleccionados = panel.querySelectorAll('input[type="checkbox"]:checked');
+
+    if (seleccionados.length === 0) {
+        // Sin selección se muestra el placeholder original
+        texto.textContent = 'Seleccionar usuarios...';
+        return;
+    }
+
+    // Se recogen los nombres de los labels de los checkboxes seleccionados
+    const nombres = Array.from(seleccionados).map(function(cb) {
+        // El span con el nombre es el siguiente hermano del checkbox dentro del label
+        const label = cb.closest('.usuarios-dropdown__opcion');
+        const span  = label ? label.querySelector('span') : null;
+        // Solo se toma el nombre (antes del paréntesis del documento)
+        return span ? span.textContent.split(' (')[0] : '';
+    }).filter(Boolean);
+
+    // Si hay 2 o menos nombres se muestran todos
+    // Si hay más se muestran los primeros 2 y "y N más"
+    if (nombres.length <= 2) {
+        texto.textContent = nombres.join(', ');
+    } else {
+        texto.textContent = `${nombres.slice(0, 2).join(', ')} y ${nombres.length - 2} más`;
+    }
+}
+
+// Retorna un arreglo con los IDs numéricos de los usuarios seleccionados en el dropdown.
+// Se usa al hacer submit del formulario de crear tarea.
+function obtenerIdsSeleccionados() {
+    const panel = document.getElementById('usuariosDropdownPanel');
+    if (!panel) return [];
+
+    // Se buscan todos los checkboxes marcados y se mapean a número entero
+    const checkboxes = panel.querySelectorAll('input[type="checkbox"]:checked');
+    return Array.from(checkboxes).map(function(cb) {
+        return parseInt(cb.value, 10);
+    });
+}
+
 // ── REGISTRO DE EVENTOS DE NAVEGACIÓN ────────────────────────────────────────
 
 export function registrarEventosNavegacion() {
@@ -951,6 +1083,95 @@ export function registrarEventosNavegacion() {
 
             cargarTablaUsuarios();
             abrirModalUsuario(usuarioCreado);
+        });
+    }
+
+    // Formulario de crear tarea en la card "Crear Tarea" del panel admin
+    const formCrearTarea = document.getElementById('createTaskForm');
+    if (formCrearTarea) {
+        formCrearTarea.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            // Se leen los valores de los campos del formulario
+            const titleInput   = document.getElementById('newTaskTitle');
+            const descInput    = document.getElementById('newTaskDescription');
+            const statusInput  = document.getElementById('newTaskStatus');
+            const commentInput = document.getElementById('newTaskComment');
+            const titleError   = document.getElementById('newTaskTitleError');
+            const statusError  = document.getElementById('newTaskStatusError');
+
+            // Se limpian los errores previos antes de validar de nuevo
+            if (titleError)  titleError.textContent  = '';
+            if (statusError) statusError.textContent = '';
+            if (titleInput)  titleInput.classList.remove('error');
+            if (statusInput) statusInput.classList.remove('error');
+
+            const titulo  = titleInput  ? titleInput.value.trim()  : '';
+            const estado  = statusInput ? statusInput.value         : '';
+
+            // Validación mínima en frontend: el backend hace la validación completa
+            // Solo se valida que los campos obligatorios no estén vacíos
+            let hayError = false;
+            if (!titulo) {
+                if (titleError) titleError.textContent = 'El título es obligatorio';
+                if (titleInput) titleInput.classList.add('error');
+                hayError = true;
+            }
+            if (!estado) {
+                if (statusError) statusError.textContent = 'El estado es obligatorio';
+                if (statusInput) statusInput.classList.add('error');
+                hayError = true;
+            }
+            if (hayError) return;
+
+            // Se obtienen los IDs de los usuarios seleccionados en el dropdown de checkboxes
+            const assignedUsers = obtenerIdsSeleccionados();
+
+            // Se construye el objeto de la nueva tarea para enviar al backend
+            const datosTarea = {
+                title:         titulo,
+                description:   descInput  ? descInput.value.trim()   : '',
+                status:        estado,
+                comment:       commentInput ? commentInput.value.trim() : '',
+                assignedUsers: assignedUsers,
+            };
+
+            // Se llama al backend para crear la tarea
+            let tareaCreada;
+            try {
+                tareaCreada = await registrarTarea(datosTarea);
+            } catch (errorCreacion) {
+                // Si el backend responde 400 (Zod) se muestran los mensajes descriptivos
+                if (errorCreacion.errors && errorCreacion.errors.length > 0) {
+                    await mostrarNotificacion(errorCreacion.errors[0].message, 'error');
+                } else {
+                    await mostrarNotificacion(
+                        errorCreacion.message || 'No se pudo crear la tarea',
+                        'error'
+                    );
+                }
+                return;
+            }
+
+            if (tareaCreada) {
+                // Se limpia el formulario después de crear exitosamente
+                formCrearTarea.reset();
+
+                // Se limpian los checkboxes del dropdown
+                const panel = document.getElementById('usuariosDropdownPanel');
+                if (panel) {
+                    panel.querySelectorAll('input[type="checkbox"]').forEach(function(cb) {
+                        cb.checked = false;
+                    });
+                }
+                const textoDropdown = document.getElementById('usuariosDropdownTexto');
+                if (textoDropdown) textoDropdown.textContent = 'Seleccionar usuarios...';
+
+                // Se recargan la tabla de tareas y el dashboard para reflejar la nueva tarea
+                cargarTodasLasTareas();
+                cargarDashboard();
+                await mostrarNotificacion(`Tarea "${datosTarea.title}" creada correctamente`, 'exito');
+            }
         });
     }
 }
