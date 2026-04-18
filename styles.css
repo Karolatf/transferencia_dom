@@ -1404,3 +1404,92 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     font-size: 11px;
     color: var(--texto-claro);
 }
+
+/* ============================================================
+   LOGIN FORM — Módulo de Autenticación JWT
+   ============================================================ */
+
+.login-form-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Botón principal — gradiente morado-azul de la paleta del proyecto */
+.btn-acceso--login {
+    background-color: var(--color-primario);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 0.85rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.btn-acceso--login:hover  { opacity: 0.92; transform: translateY(-1px); }
+.btn-acceso--login:active { transform: translateY(0); }
+.btn-acceso--login:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Wrapper del input de contraseña — necesario para el botón 👁️ */
+.input-password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-password-wrapper .form__input {
+    padding-right: 2.8rem;
+    width: 100%;
+}
+
+/* Botón mostrar/ocultar contraseña */
+.btn-toggle-password {
+    position: absolute;
+    right: 0.6rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0.25rem;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.btn-toggle-password:hover { opacity: 1; }
+
+/* Mensaje de bienvenida post-login */
+.login-bienvenida {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(124, 58, 237, 0.12);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    animation: fadeInDown 0.4s ease;
+}
+
+.login-bienvenida__icono { font-size: 1.4rem; }
+
+.login-bienvenida__texto {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #4c1d95;
+    margin: 0;
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

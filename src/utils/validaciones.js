@@ -182,3 +182,64 @@ export async function validarFormularioTarea({ titleInput, statusInput, titleErr
 
     return esValido;
 }
+
+// ── VALIDACIÓN FORMULARIO LOGIN ───────────────────────────────────────────────
+// Mensajes alineados con lo que devuelve el backend en auth.controller.js.
+// Sigue el mismo patrón que validarFormularioUsuario y validarFormularioTarea:
+// muestra el error en el span del campo Y como toast con mostrarNotificacion().
+// Retorna true si ambos campos son válidos.
+//
+// Reglas del documento: mismas que createUserSchema del backend (user.schema.js).
+// Reglas de la contraseña: mínimo 6 caracteres.
+export async function validarFormularioLogin({ docInput, passwordInput, docError, passwordError }) {
+    let esValido      = true;
+    let primerMensaje = null;
+
+    // Limpiar errores previos en los dos campos
+    [docError, passwordError].forEach(el => { if (el) el.textContent = ''; });
+    [docInput, passwordInput].forEach(el => { if (el) el.classList.remove('error'); });
+
+    // ── Validar documento ────────────────────────────────────────────────────
+    const valorDoc = docInput ? docInput.value.trim() : '';
+
+    if (!entradaEsValida(valorDoc)) {
+        const msg = 'El número de documento es obligatorio';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (!/^\d+$/.test(valorDoc)) {
+        const msg = 'El documento solo puede contener números';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorDoc.length < 5) {
+        const msg = 'El documento debe tener al menos 5 caracteres';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorDoc.length > 20) {
+        const msg = 'El documento no puede exceder los 20 caracteres';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // ── Validar contraseña ───────────────────────────────────────────────────
+    const valorPassword = passwordInput ? passwordInput.value : '';
+
+    if (!valorPassword) {
+        const msg = 'La contraseña es obligatoria';
+        mostrarError(passwordError, passwordInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorPassword.length < 6) {
+        const msg = 'La contraseña debe tener al menos 6 caracteres';
+        mostrarError(passwordError, passwordInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    if (primerMensaje) await mostrarNotificacion(primerMensaje, 'error');
+
+    return esValido;
+}

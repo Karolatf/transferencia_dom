@@ -21,28 +21,58 @@
                 <p class="inicio__subtitulo">Ejercicio DOM · Transferencia del Conocimiento · SENA</p>
             </header>
 
-            <div class="inicio__accesos">
-                <div class="acceso-card acceso-card--usuario">
-                    <h2 class="acceso-card__titulo">Acceso Usuario</h2>
-                    <p class="acceso-card__desc">
-                        Busca tus tareas asignadas por numero de documento,
-                        edita su estado y anade comentarios.
-                    </p>
-                    <button class="btn-acceso btn-acceso--usuario" id="btnAccesoUsuario">
-                        Ingresar como Usuario
-                    </button>
+            <!-- LOGIN FORM — reemplaza los dos acceso-card originales -->
+            <!-- El formulario envía las credenciales al backend y recibe el JWT -->
+            <div class="login-form-wrapper">
+
+                <!-- Mensaje de bienvenida — aparece tras un login exitoso -->
+                <div class="login-bienvenida hidden" id="loginBienvenida">
+                    <span class="login-bienvenida__icono">👋</span>
+                    <p class="login-bienvenida__texto" id="loginBienvenidaTexto">¡Bienvenido!</p>
                 </div>
 
-                <div class="acceso-card acceso-card--admin">
-                    <h2 class="acceso-card__titulo">Acceso Administrador</h2>
-                    <p class="acceso-card__desc">
-                        Crea usuarios, gestiona todas las tareas del sistema,
-                        filtra, ordena y exporta.
-                    </p>
-                    <button class="btn-acceso btn-acceso--admin" id="btnAccesoAdmin">
-                        Ingresar como Administrador
+                <form class="login-form" id="loginForm" novalidate>
+
+                    <!-- Campo: número de documento -->
+                    <div class="form__group">
+                        <label for="loginDocumento" class="form__label">Número de documento</label>
+                        <input
+                            type="text"
+                            id="loginDocumento"
+                            class="form__input"
+                            placeholder="Ej: 1097497001"
+                            autocomplete="username"
+                        >
+                        <span class="form__error" id="loginDocumentoError"></span>
+                    </div>
+
+                    <!-- Campo: contraseña con botón para mostrar/ocultar -->
+                    <div class="form__group">
+                        <label for="loginPassword" class="form__label">Contraseña</label>
+                        <div class="input-password-wrapper">
+                            <input
+                                type="password"
+                                id="loginPassword"
+                                class="form__input"
+                                placeholder="Tu contraseña"
+                                autocomplete="current-password"
+                            >
+                            <button
+                                type="button"
+                                class="btn-toggle-password"
+                                id="btnTogglePassword"
+                                aria-label="Mostrar u ocultar contraseña"
+                            >👁️</button>
+                        </div>
+                        <span class="form__error" id="loginPasswordError"></span>
+                    </div>
+
+                    <!-- Botón principal de ingreso -->
+                    <button type="submit" class="btn-acceso btn-acceso--login" id="btnLogin">
+                        Ingresar al Sistema
                     </button>
-                </div>
+
+                </form>
             </div>
 
             <p class="inicio__nota">*Solo personal autorizado.*</p>
