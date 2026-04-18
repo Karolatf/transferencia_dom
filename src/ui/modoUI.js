@@ -34,9 +34,17 @@ import {
     mostrarModalEdicion,
     ocultarModalEdicion,
 } from './tareasUI.js';
+
 import { ordenarTareas }  from '../utils/ordenamiento.js';
+
 import { exportarTareasJSON } from '../utils/exportacion.js';
-import { validarFormularioUsuario, validarFormularioTarea } from '../utils/validaciones.js';
+
+import { validarFormularioUsuario, validarFormularioTarea, validarFormularioLogin } from '../utils/validaciones.js';
+
+// Agregar junto a los otros imports al inicio de modoUI.js:
+import { loginUsuario }  from '../api/authApi.js';
+
+import { guardarSesion } from '../utils/sesion.js';
 
 // ── REFERENCIAS A VISTAS ──────────────────────────────────────────────────────
 
@@ -1104,9 +1112,85 @@ export function registrarEventosNavegacion() {
     // Se registra el comportamiento de toggle en las cards contraíbles del panel admin
     registrarCardsContraibles();
 
-    // Botones de la pantalla de inicio
-    document.getElementById('btnAccesoUsuario').addEventListener('click', activarModoUsuario);
-    document.getElementById('btnAccesoAdmin').addEventListener('click', activarModoAdmin);
+    // ── FORMULARIO DE LOGIN ───────────────────────────────────────────────────────
+    const formLogin       = document.getElementById('loginForm');
+    const inputDocumento  = document.getElementById('loginDocumento');
+    const inputPassword   = document.getElementById('loginPassword');
+    const errorDocumento  = document.getElementById('loginDocumentoError');
+    const errorPassword   = document.getElementById('loginPasswordError');
+    const bienvenidaDiv   = document.getElementById('loginBienvenida');
+    const bienvenidaTexto = document.getElementById('loginBienvenidaTexto');
+    const btnToggle       = document.getElementById('btnTogglePassword');
+
+    // Botón 👁️ — alternar visibilidad de la contraseña
+    if (btnToggle) {
+        btnToggle.addEventListener('click', function () {
+            const tipo = inputPassword.type === 'password' ? 'text' : 'password';
+            inputPassword.type    = tipo;
+            btnToggle.textContent = tipo === 'password' ? '👁️' : '🙈';
+        });
+    }
+
+    // Submit del formulario de login
+    if (formLogin) {
+        formLogin.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            // validarFormularioLogin valida ambos campos con el mismo patrón del proyecto:
+            // muestra el error en el span del input Y como toast con SweetAlert2.
+            // Retorna false si algo falla — en ese caso no llamamos al servidor.
+            const esValido = await validarFormularioLogin({
+                docInput:      inputDocumento,
+                passwordInput: inputPassword,
+                docError:      errorDocumento,
+                passwordError: errorPassword,
+            });
+            if (!esValido) return;
+
+            // Deshabilitar el botón para evitar doble envío
+            const btnLogin = document.getElementById('btnLogin');
+            if (btnLogin) { btnLogin.disabled = true; btnLogin.textContent = 'Ingresando...'; }
+
+            try {
+                // Llamada al backend — si falla lanza un Error con el mensaje del servidor
+                const datos = await loginUsuario({
+                    documento: inputDocumento.value.trim(),
+                    password:  inputPassword.value,
+                });
+
+                // Guardar tokens y datos del usuario en localStorage
+                guardarSesion(datos);
+
+                // Mostrar saludo personalizado con el rol
+                const etiquetaRol = datos.user.role === 'admin' ? 'Administrador' : 'Usuario';
+                if (bienvenidaDiv && bienvenidaTexto) {
+                    bienvenidaTexto.textContent =
+                        `¡Bienvenido, ${datos.user.name}! Ingresando como ${etiquetaRol}...`;
+                    bienvenidaDiv.classList.remove('hidden');
+                }
+
+                // Pequeña pausa para que el usuario vea el saludo antes de redirigir
+                await new Promise(resolve => setTimeout(resolve, 1200));
+
+                // Redirigir al modo que corresponde según el rol del usuario
+                if (datos.user.role === 'admin') {
+                    await activarModoAdmin();
+                } else {
+                    activarModoUsuario();
+                }
+
+            } catch (error) {
+                // El mensaje de error viene del backend en español
+                await mostrarNotificacion(error.message || 'Credenciales incorrectas', 'error');
+            } finally {
+                // Siempre rehabilitar el botón, haya error o no
+                if (btnLogin) {
+                    btnLogin.disabled    = false;
+                    btnLogin.textContent = 'Ingresar al Sistema';
+                }
+            }
+        });
+    }
 
     // Botones volver
     document.getElementById('btnVolverUsuario').addEventListener('click', activarModoInicio);
