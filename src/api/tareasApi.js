@@ -18,6 +18,7 @@
 //   DELETE /api/tasks/:taskId/users/:userId  -> quitarUsuarioDeTarea
 
 import { API_BASE_URL, API_PREFIX } from '../utils/config.js';
+import { fetchConAuth } from '../utils/fetchConAuth.js';
 
 // ── OBTENER TODAS LAS TAREAS ──────────────────────────────────────────────────
 // GET /api/tasks
@@ -26,7 +27,7 @@ import { API_BASE_URL, API_PREFIX } from '../utils/config.js';
 export async function obtenerTodasLasTareas() {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks`;
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetchConAuth(url, { cache: 'no-store' });
         const json = await response.json();
         if (!response.ok) throw new Error(json.message || 'Error al obtener todas las tareas');
         return json.data;
@@ -42,7 +43,7 @@ export async function obtenerTodasLasTareas() {
 export async function obtenerDashboard() {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/dashboard`;
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetchConAuth(url, { cache: 'no-store' });
         const json = await response.json();
         if (!response.ok) throw new Error(json.message || 'Error al obtener el dashboard');
         return json.data;
@@ -58,7 +59,7 @@ export async function obtenerDashboard() {
 export async function obtenerTareasDeUsuario(userId) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/filter?userId=${userId}`;
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetchConAuth(url, { cache: 'no-store' });
         const json = await response.json();
         if (!response.ok) throw new Error(json.message || `Error al obtener tareas del usuario ${userId}`);
         return json.data;
@@ -73,7 +74,7 @@ export async function obtenerTareasDeUsuario(userId) {
 export async function obtenerTareaPorId(id) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${id}`;
-        const response = await fetch(url);
+        const response = await fetchConAuth(url);
         const json = await response.json();
         if (!response.ok) throw new Error(json.message || `Tarea ${id} no encontrada`);
         return json.data;
@@ -89,7 +90,7 @@ export async function obtenerTareaPorId(id) {
 export async function registrarTarea(datosTarea) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks`;
-        const response = await fetch(url, {
+        const response = await fetchConAuth(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosTarea),
@@ -109,7 +110,7 @@ export async function registrarTarea(datosTarea) {
 export async function actualizarTarea(tareaId, datosTarea) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${tareaId}`;
-        const response = await fetch(url, {
+        const response = await fetchConAuth(url, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosTarea),
@@ -129,7 +130,7 @@ export async function actualizarTarea(tareaId, datosTarea) {
 export async function cambiarEstadoTarea(tareaId, status) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${tareaId}/status`;
-        const response = await fetch(url, {
+        const response = await fetchConAuth(url, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status }),
@@ -148,7 +149,7 @@ export async function cambiarEstadoTarea(tareaId, status) {
 export async function eliminarTarea(tareaId) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${tareaId}`;
-        const response = await fetch(url, { method: 'DELETE' });
+        const response = await fetchConAuth(url, { method: 'DELETE' });
         const json = await response.json();
         if (!json.success) throw new Error(json.message || `Error al eliminar tarea ${tareaId}`);
         return true;
@@ -164,7 +165,7 @@ export async function eliminarTarea(tareaId) {
 export async function asignarUsuariosATarea(taskId, userIds) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${taskId}/assign`;
-        const response = await fetch(url, {
+        const response = await fetchConAuth(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userIds }),
@@ -183,7 +184,7 @@ export async function asignarUsuariosATarea(taskId, userIds) {
 export async function quitarUsuarioDeTarea(taskId, userId) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${taskId}/users/${userId}`;
-        const response = await fetch(url, { method: 'DELETE' });
+        const response = await fetchConAuth(url, { method: 'DELETE' });
         const json = await response.json();
         if (!response.ok) throw new Error(json.message || `Error al quitar usuario ${userId} de tarea ${taskId}`);
         return json.data;
@@ -200,7 +201,7 @@ export async function quitarUsuarioDeTarea(taskId, userId) {
 export async function buscarUsuarioPorDocumento(documentoId) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users/by-document/${encodeURIComponent(documentoId.toString().trim())}`;
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetchConAuth(url, { cache: 'no-store' });
         const json = await response.json();
         if (response.status === 404) return null;
         if (!response.ok) throw new Error(json.message || 'Error al consultar el servidor');
