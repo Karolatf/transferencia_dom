@@ -13,12 +13,13 @@
 //   DELETE /api/users/:id          -> eliminarUsuario
 
 import { API_BASE_URL, API_PREFIX } from '../utils/config.js';
+import { fetchConAuth } from '../utils/fetchConAuth.js';
 
 // ── OBTENER TODOS LOS USUARIOS ────────────────────────────────────────────────
 export async function obtenerTodosLosUsuarios() {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users`;
-        const response = await fetch(url, { cache: 'no-store' });
+        const response = await fetchConAuth(url, { cache: 'no-store' });
         const json = await response.json();
         if (!response.ok) throw new Error(json.message || 'Error al obtener los usuarios');
         return json.data;
@@ -32,7 +33,7 @@ export async function obtenerTodosLosUsuarios() {
 export async function obtenerUsuarioPorId(id) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users/${id}`;
-        const response = await fetch(url);
+        const response = await fetchConAuth(url);
         const json = await response.json();
         if (!response.ok) throw new Error(json.message || `Usuario ${id} no encontrado`);
         return json.data;
@@ -48,7 +49,7 @@ export async function obtenerUsuarioPorId(id) {
 export async function obtenerTareasDeUsuarioById(userId) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users/${userId}/tasks`;
-        const response = await fetch(url);
+        const response = await fetchConAuth(url);
         const json = await response.json();
         if (!response.ok) throw new Error(json.message || `Error al obtener tareas del usuario ${userId}`);
         return json.data;
@@ -64,7 +65,7 @@ export async function obtenerTareasDeUsuarioById(userId) {
 export async function crearUsuario(datosUsuario) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users`;
-        const response = await fetch(url, {
+        const response = await fetchConAuth(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosUsuario),
@@ -84,7 +85,7 @@ export async function crearUsuario(datosUsuario) {
 export async function actualizarUsuario(id, datosUsuario) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users/${id}`;
-        const response = await fetch(url, {
+        const response = await fetchConAuth(url, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosUsuario),
@@ -103,7 +104,7 @@ export async function actualizarUsuario(id, datosUsuario) {
 export async function eliminarUsuario(id) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users/${id}`;
-        const response = await fetch(url, { method: 'DELETE' });
+        const response = await fetchConAuth(url, { method: 'DELETE' });
         const json = await response.json();
         if (!json.success) throw new Error(json.message || `Error al eliminar usuario ${id}`);
         return true;
