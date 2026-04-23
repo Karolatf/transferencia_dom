@@ -968,6 +968,78 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     to   { opacity: 1; }
 }
 
+/* ── BOTÓN CIRCULAR DE LOGOUT ────────────────────────────────────────────────
+   Reemplaza el botón rectangular "Volver" en ambos paneles.
+   Es circular, pequeño, con un ícono de encendido/apagado.
+   La variante --admin usa el color azul del panel de admin.
+   
+   Por qué circular: un botón circular con ícono es más profesional y
+   reconocible que un texto "Volver". Comunica visualmente la acción
+   de salida sin necesidad de leer el texto. */
+
+.btn-logout-circular {
+    /* Forma circular fija: mismo ancho y alto, border-radius al 50% */
+    width:  40px;
+    height: 40px;
+    border-radius: 50%;
+
+    /* Sin fondo sólido — transparente para que se vea el header detrás */
+    background:  transparent;
+
+    /* Borde del color primario (morado del proyecto) */
+    border: 2px solid var(--color-primario);
+
+    /* El cursor de puntero indica que es clickeable */
+    cursor: pointer;
+
+    /* Centrar el ícono dentro del círculo */
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+
+    /* Transición suave al hacer hover */
+    transition: background-color var(--transicion), transform var(--transicion);
+
+    /* Evitar que el botón se encoja en layouts flex */
+    flex-shrink: 0;
+}
+
+.btn-logout-circular:hover {
+    /* Al hacer hover el fondo se llena con el color primario */
+    background-color: var(--color-primario);
+    /* Pequeño crecimiento para dar feedback visual */
+    transform: scale(1.08);
+}
+
+.btn-logout-circular__icono {
+    /* El ícono hereda el color del botón (morado por defecto, blanco al hover) */
+    font-size:   1.1rem;
+    line-height: 1;
+    color:       var(--color-primario);
+    transition:  color var(--transicion);
+}
+
+.btn-logout-circular:hover .btn-logout-circular__icono {
+    /* Al hacer hover el ícono se vuelve blanco para contraste con el fondo morado */
+    color: white;
+}
+
+/* Variante para el panel de admin: usa el color azul */
+.btn-logout-circular--admin {
+    border-color: white;
+}
+
+.btn-logout-circular--admin .btn-logout-circular__icono {
+    color: white;
+}
+
+.btn-logout-circular--admin:hover {
+    background-color: white;
+}
+
+.btn-logout-circular--admin:hover .btn-logout-circular__icono {
+    color: var(--color-admin);
+}
 
 /* RESPONSIVE */
 @media (max-width: 768px) {

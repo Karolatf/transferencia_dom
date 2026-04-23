@@ -88,36 +88,17 @@
 
     <header class="header header--usuario">
         <div class="header__nav">
-            <button class="btn-volver" id="btnVolverUsuario">Volver</button>
+            <!-- Botón circular de cierre de sesión en el panel de usuario -->
+            <!-- El ícono de flecha de salida comunica visualmente la acción de salir -->
+            <button class="btn-logout-circular" id="btnLogoutUsuario" type="button" aria-label="Cerrar sesión">
+                <span class="btn-logout-circular__icono">⏻</span>
+            </button>
         </div>
         <h1 class="header__title">Mi Portal de Tareas</h1>
-        <p class="header__subtitle">Ingresa tu documento para ver y gestionar tus tareas asignadas</p>
+        <p class="header__subtitle">Gestiona tus tareas asignadas</p>
     </header>
 
     <main class="contenido-vista">
-
-        <!-- Buscar por documento -->
-        <section class="form-section">
-            <div class="card">
-                <h2 class="card__title">Buscar mis tareas</h2>
-                <form id="searchUserForm" class="form" novalidate>
-                    <div class="form__group">
-                        <label for="userDocument" class="form__label">Numero de documento</label>
-                        <input
-                            type="text"
-                            id="userDocument"
-                            class="form__input"
-                            placeholder="Ej: 1097497124"
-                            autocomplete="off"
-                        >
-                        <span class="form__error" id="userDocumentError"></span>
-                    </div>
-                    <button type="submit" class="btn btn--primary">
-                        <span class="btn__text">Buscar mis tareas</span>
-                    </button>
-                </form>
-            </div>
-        </section>
 
         <!-- Datos del usuario encontrado -->
         <section class="hidden" id="userDataSection">
@@ -183,7 +164,10 @@
 
     <header class="header header--admin">
         <div class="header__nav">
-            <button class="btn-volver btn-volver--admin" id="btnVolverAdmin">Volver</button>
+            <!-- La clase btn-logout-circular--admin aplica el color azul del admin -->
+            <button class="btn-logout-circular btn-logout-circular--admin" id="btnLogoutAdmin" type="button" aria-label="Cerrar sesión">
+                <span class="btn-logout-circular__icono">⏻</span>
+            </button>
         </div>
         <h1 class="header__title">Panel de Administracion</h1>
         <p class="header__subtitle">Gestion completa de usuarios y tareas del sistema</p>
