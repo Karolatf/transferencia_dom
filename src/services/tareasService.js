@@ -336,4 +336,40 @@ export function registrarEventListeners() {
 
     // Todos los eventos de navegación y del panel admin
     registrarEventosNavegacion();
+
+    // Barra de búsqueda de tareas en el panel de usuario
+    // Filtra en tiempo real sobre las tareasRegistradas ya en memoria
+    const inputBusquedaTareas = document.getElementById('userSearchTaskInput');
+    if (inputBusquedaTareas) {
+        inputBusquedaTareas.addEventListener('input', function() {
+            // Leer el término de búsqueda y convertirlo a minúsculas para comparar sin distinción
+            const termino = inputBusquedaTareas.value.trim().toLowerCase();
+
+            // Filtrar las tareas en memoria según el término de búsqueda
+            // Se busca en el id, el título y el estado de cada tarea
+            const tareasFiltradas = tareasRegistradas.filter(function(tarea) {
+                const enId     = tarea.id.toString().includes(termino);
+                const enTitulo = tarea.title.toLowerCase().includes(termino);
+                const enEstado = tarea.status.toLowerCase().includes(termino);
+                // Si el término coincide con cualquiera de los tres campos se incluye la tarea
+                return enId || enTitulo || enEstado;
+            });
+
+            // Repintar la tabla con las tareas filtradas sin hacer petición al backend
+            const tbody = document.getElementById('tasksTableBody');
+            if (!tbody) return;
+            while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+            if (tareasFiltradas.length === 0) {
+                mostrarEstadoVacio();
+                return;
+            }
+
+            ocultarEstadoVacio();
+            tareasFiltradas.forEach(function(tarea, indice) {
+                agregarTareaATabla(tarea, indice);
+            });
+        });
+    }
+
 }
