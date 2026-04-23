@@ -183,43 +183,40 @@ export async function validarFormularioTarea({ titleInput, statusInput, titleErr
     return esValido;
 }
 
-// ── VALIDACIÓN FORMULARIO LOGIN ───────────────────────────────────────────────
-// Mensajes alineados con lo que devuelve el backend en auth.controller.js.
-// Sigue el mismo patrón que validarFormularioUsuario y validarFormularioTarea:
-// muestra el error en el span del campo Y como toast con mostrarNotificacion().
-// Retorna true si ambos campos son válidos.
+// ── VALIDACIÓN FORMULARIO LOGIN (ACTUALIZADA) ─────────────────────────────────
+// Antes validaba documento (solo números, mínimo 5 caracteres).
+// Ahora valida email (formato correo, máximo 100 caracteres).
 //
-// Reglas del documento: mismas que createUserSchema del backend (user.schema.js).
-// Reglas de la contraseña: mínimo 6 caracteres.
-export async function validarFormularioLogin({ docInput, passwordInput, docError, passwordError }) {
+// Los mensajes de error están en español y aparecen tanto en el span del campo
+// como en un toast de SweetAlert2 (mostrarNotificacion).
+// Retorna true si ambos campos son válidos, false si hay algún error.
+export async function validarFormularioLogin({ emailInput, passwordInput, emailError, passwordError }) {
     let esValido      = true;
     let primerMensaje = null;
 
-    // Limpiar errores previos en los dos campos
-    [docError, passwordError].forEach(el => { if (el) el.textContent = ''; });
-    [docInput, passwordInput].forEach(el => { if (el) el.classList.remove('error'); });
+    // Limpiar errores previos en los dos campos para que no se acumulen
+    [emailError, passwordError].forEach(el => { if (el) el.textContent = ''; });
+    [emailInput, passwordInput].forEach(el => { if (el) el.classList.remove('error'); });
 
-    // ── Validar documento ────────────────────────────────────────────────────
-    const valorDoc = docInput ? docInput.value.trim() : '';
+    // ── Validar email ────────────────────────────────────────────────────────
+    // Se valida manualmente con regex en lugar de depender del type="email"
+    // para controlar el mensaje y el estilo del error
+    const valorEmail = emailInput ? emailInput.value.trim() : '';
 
-    if (!entradaEsValida(valorDoc)) {
-        const msg = 'El número de documento es obligatorio';
-        mostrarError(docError, docInput, msg);
+    if (!entradaEsValida(valorEmail)) {
+        const msg = 'El correo electrónico es obligatorio';
+        mostrarError(emailError, emailInput, msg);
         if (!primerMensaje) primerMensaje = msg;
         esValido = false;
-    } else if (!/^\d+$/.test(valorDoc)) {
-        const msg = 'El documento solo puede contener números';
-        mostrarError(docError, docInput, msg);
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valorEmail)) {
+        // El regex verifica que haya texto antes del @, el @ en sí, y texto con punto después
+        const msg = 'El correo electrónico no tiene un formato válido';
+        mostrarError(emailError, emailInput, msg);
         if (!primerMensaje) primerMensaje = msg;
         esValido = false;
-    } else if (valorDoc.length < 5) {
-        const msg = 'El documento debe tener al menos 5 caracteres';
-        mostrarError(docError, docInput, msg);
-        if (!primerMensaje) primerMensaje = msg;
-        esValido = false;
-    } else if (valorDoc.length > 20) {
-        const msg = 'El documento no puede exceder los 20 caracteres';
-        mostrarError(docError, docInput, msg);
+    } else if (valorEmail.length > 100) {
+        const msg = 'El correo no puede exceder los 100 caracteres';
+        mostrarError(emailError, emailInput, msg);
         if (!primerMensaje) primerMensaje = msg;
         esValido = false;
     }
@@ -239,6 +236,7 @@ export async function validarFormularioLogin({ docInput, passwordInput, docError
         esValido = false;
     }
 
+    // Mostrar el primer error como toast de SweetAlert2
     if (primerMensaje) await mostrarNotificacion(primerMensaje, 'error');
 
     return esValido;

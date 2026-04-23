@@ -33,17 +33,19 @@
 
                 <form class="login-form" id="loginForm" novalidate>
 
-                    <!-- Campo: número de documento -->
+                    <!-- Campo de correo electrónico — reemplaza al campo de documento -->
+                    <!-- El login ahora usa email + contraseña en lugar de documento + contraseña -->
+                    <!-- El id cambia a loginEmail para que los listeners en modoUI.js funcionen -->
                     <div class="form__group">
-                        <label for="loginDocumento" class="form__label">Número de documento</label>
+                        <label for="loginEmail" class="form__label">Correo electrónico</label>
                         <input
                             type="text"
-                            id="loginDocumento"
+                            id="loginEmail"
                             class="form__input"
-                            placeholder="Ej: 1097497001"
-                            autocomplete="username"
+                            placeholder="ejemplo@correo.com"
+                            autocomplete="email"
                         >
-                        <span class="form__error" id="loginDocumentoError"></span>
+                        <span class="form__error" id="loginEmailError"></span>
                     </div>
 
                     <!-- Campo: contraseña con botón para mostrar/ocultar -->
