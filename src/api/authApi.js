@@ -31,6 +31,30 @@ export async function loginUsuario({ email, password }) {
     return json.data;
 }
 
+// ── REGISTRO DE USUARIO ───────────────────────────────────────────────────────
+// POST /api/auth/register
+// Este endpoint fue creado por Sebastián en el Issue B-1.
+// Cuerpo: { name, documento, email, password }
+// Respuesta exitosa 201: { success, message, data: { usuario sin password } }
+// Error 409: email o documento ya registrado
+// Error 400: datos inválidos (Zod)
+//
+// Si la petición falla (409 o 400) lanza un Error con el mensaje del servidor
+// para que el modal de registro lo muestre con SweetAlert2.
+export async function registrarUsuario({ name, documento, email, password }) {
+    const url = `${API_BASE_URL}${API_PREFIX}/auth/register`;
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, documento, email, password }),
+    });
+    const json = await response.json();
+    // Si el servidor respondió con error (409 email duplicado, 400 validación)
+    // se lanza el error para que el llamador (modoUI.js) lo capture y muestre
+    if (!response.ok) throw new Error(json.message || 'Error al registrar el usuario');
+    return json.data;
+}
+
 // ── RENOVAR TOKEN ─────────────────────────────────────────────────────────────
 // POST /api/auth/refresh
 // Cuerpo: { refreshToken }

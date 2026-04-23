@@ -33,6 +33,7 @@
 
                 <form class="login-form" id="loginForm" novalidate>
 
+
                     <!-- Campo de correo electrónico — reemplaza al campo de documento -->
                     <!-- El login ahora usa email + contraseña en lugar de documento + contraseña -->
                     <!-- El id cambia a loginEmail para que los listeners en modoUI.js funcionen -->
@@ -73,8 +74,16 @@
                     <button type="submit" class="btn-acceso btn-acceso--login" id="btnLogin">
                         Ingresar al Sistema
                     </button>
-
                 </form>
+
+                <!-- Enlace de registro debajo del formulario de login -->
+                <!-- Al hacer clic abre el modal de registro sin recargar la página -->
+                <p class="login-registro-texto">
+                    ¿No tienes cuenta? 
+                    <button type="button" class="login-registro-btn" id="btnAbrirRegistro">
+                        Regístrate aquí
+                    </button>
+                </p>
             </div>
 
             <p class="inicio__nota">*Solo personal autorizado.*</p>
@@ -509,6 +518,82 @@
                     <span class="btn__text">Guardar Cambios</span>
                 </button>
             </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL DE REGISTRO -->
+<!-- Se muestra como overlay encima de la pantalla de inicio al hacer clic en "Regístrate" -->
+<!-- Tiene el mismo estilo glass que la card del login para coherencia visual -->
+<div class="modal-overlay hidden" id="registroModal">
+    <div class="modal modal--registro">
+
+        <!-- Encabezado del modal con título y botón de cierre -->
+        <div class="modal__header">
+            <h2 class="modal__title">Crear cuenta</h2>
+            <button class="modal__close" id="registroCloseBtn" type="button">✕</button>
+        </div>
+
+        <!-- Formulario de registro con validaciones en cada campo -->
+        <form id="registroForm" class="form" novalidate>
+
+            <!-- Campo nombre: solo letras y espacios, mínimo 3 caracteres -->
+            <div class="form__group">
+                <label for="registroNombre" class="form__label">Nombre completo</label>
+                <input
+                    type="text"
+                    id="registroNombre"
+                    class="form__input"
+                    placeholder="Ej: María López"
+                    autocomplete="name"
+                >
+                <span class="form__error" id="registroNombreError"></span>
+            </div>
+
+            <!-- Campo documento: solo números, mínimo 5 dígitos -->
+            <div class="form__group">
+                <label for="registroDocumento" class="form__label">Número de documento</label>
+                <input
+                    type="text"
+                    id="registroDocumento"
+                    class="form__input"
+                    placeholder="Ej: 1097497124"
+                    autocomplete="off"
+                >
+                <span class="form__error" id="registroDocumentoError"></span>
+            </div>
+
+            <!-- Campo email: debe tener @ y dominio válido -->
+            <div class="form__group">
+                <label for="registroEmail" class="form__label">Correo electrónico</label>
+                <input
+                    type="text"
+                    id="registroEmail"
+                    class="form__input"
+                    placeholder="ejemplo@correo.com"
+                    autocomplete="email"
+                >
+                <span class="form__error" id="registroEmailError"></span>
+            </div>
+
+            <!-- Campo contraseña: mínimo 6 caracteres -->
+            <div class="form__group">
+                <label for="registroPassword" class="form__label">Contraseña</label>
+                <input
+                    type="password"
+                    id="registroPassword"
+                    class="form__input"
+                    placeholder="Mínimo 6 caracteres"
+                    autocomplete="new-password"
+                >
+                <span class="form__error" id="registroPasswordError"></span>
+            </div>
+
+            <!-- Botón de envío del formulario de registro -->
+            <button type="submit" class="btn-acceso btn-acceso--login" id="btnRegistrar">
+                Crear cuenta
+            </button>
+
         </form>
     </div>
 </div>

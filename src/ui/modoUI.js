@@ -40,7 +40,7 @@ import { exportarTareasJSON } from '../utils/exportacion.js';
 import { validarFormularioUsuario, validarFormularioTarea, validarFormularioLogin } from '../utils/validaciones.js';
 
 // Agregar junto a los otros imports al inicio de modoUI.js:
-import { loginUsuario }  from '../api/authApi.js';
+import { loginUsuario, registrarUsuario } from '../api/authApi.js';
 
 import { guardarSesion, cerrarSesion, obtenerUsuarioSesion } from '../utils/sesion.js';
 
@@ -1249,6 +1249,149 @@ async function manejarCerrarSesion() {
     activarModoInicio();
 }
 
+// ── ABRIR MODAL DE REGISTRO ───────────────────────────────────────────────────
+// Se llama al hacer clic en el botón "Regístrate aquí" debajo del login.
+// El modal aparece encima de la pantalla de inicio sin que esta desaparezca.
+function abrirModalRegistro() {
+    const modal = document.getElementById('registroModal');
+    if (modal) modal.classList.remove('hidden');
+    // Limpiar el formulario por si el usuario lo abrió y cerró antes
+    limpiarFormularioRegistro();
+}
+
+// ── CERRAR MODAL DE REGISTRO ──────────────────────────────────────────────────
+// Se llama al hacer clic en el botón X o al registrarse exitosamente.
+function cerrarModalRegistro() {
+    const modal = document.getElementById('registroModal');
+    if (modal) modal.classList.add('hidden');
+    limpiarFormularioRegistro();
+}
+
+// ── LIMPIAR FORMULARIO DE REGISTRO ───────────────────────────────────────────
+// Limpia todos los campos del formulario y los mensajes de error.
+// Se llama al abrir y al cerrar el modal para siempre empezar limpio.
+function limpiarFormularioRegistro() {
+    const campos = ['registroNombre', 'registroDocumento', 'registroEmail', 'registroPassword'];
+    campos.forEach(function(id) {
+        const input = document.getElementById(id);
+        if (input) {
+            input.value = '';
+            input.classList.remove('error');
+        }
+    });
+    const errores = ['registroNombreError', 'registroDocumentoError', 'registroEmailError', 'registroPasswordError'];
+    errores.forEach(function(id) {
+        const span = document.getElementById(id);
+        if (span) span.textContent = '';
+    });
+}
+
+// ── VALIDAR FORMULARIO DE REGISTRO ───────────────────────────────────────────
+// Valida los 4 campos del formulario antes de enviar la petición al backend.
+// Muestra errores en los spans de cada campo Y como toast de SweetAlert2.
+// Retorna true si todos los campos son válidos.
+async function validarFormularioRegistroLocal() {
+    let esValido      = true;
+    let primerMensaje = null;
+
+    const nombreInput    = document.getElementById('registroNombre');
+    const documentoInput = document.getElementById('registroDocumento');
+    const emailInput     = document.getElementById('registroEmail');
+    const passwordInput  = document.getElementById('registroPassword');
+
+    const nombreError    = document.getElementById('registroNombreError');
+    const documentoError = document.getElementById('registroDocumentoError');
+    const emailError     = document.getElementById('registroEmailError');
+    const passwordError  = document.getElementById('registroPasswordError');
+
+    // Limpiar errores previos
+    [nombreError, documentoError, emailError, passwordError].forEach(el => { if (el) el.textContent = ''; });
+    [nombreInput, documentoInput, emailInput, passwordInput].forEach(el => { if (el) el.classList.remove('error'); });
+
+    // Validar nombre: obligatorio, mínimo 3, solo letras y espacios
+    const valorNombre = nombreInput ? nombreInput.value.trim() : '';
+    if (!valorNombre) {
+        const msg = 'El nombre es obligatorio';
+        if (nombreError) nombreError.textContent = msg;
+        if (nombreInput) nombreInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorNombre.length < 3) {
+        const msg = 'El nombre debe tener al menos 3 caracteres';
+        if (nombreError) nombreError.textContent = msg;
+        if (nombreInput) nombreInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (!/^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/.test(valorNombre)) {
+        // Si el nombre tiene números o caracteres especiales no se acepta
+        const msg = 'El nombre solo puede contener letras y espacios';
+        if (nombreError) nombreError.textContent = msg;
+        if (nombreInput) nombreInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // Validar documento: obligatorio, solo números, mínimo 5
+    const valorDocumento = documentoInput ? documentoInput.value.trim() : '';
+    if (!valorDocumento) {
+        const msg = 'El número de documento es obligatorio';
+        if (documentoError) documentoError.textContent = msg;
+        if (documentoInput) documentoInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (!/^\d+$/.test(valorDocumento)) {
+        // Si el documento tiene letras o caracteres especiales no se acepta
+        const msg = 'El documento solo puede contener números';
+        if (documentoError) documentoError.textContent = msg;
+        if (documentoInput) documentoInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorDocumento.length < 5) {
+        const msg = 'El documento debe tener al menos 5 dígitos';
+        if (documentoError) documentoError.textContent = msg;
+        if (documentoInput) documentoInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // Validar email: obligatorio, formato válido (tiene @ y dominio)
+    const valorEmail = emailInput ? emailInput.value.trim() : '';
+    if (!valorEmail) {
+        const msg = 'El correo electrónico es obligatorio';
+        if (emailError) emailError.textContent = msg;
+        if (emailInput) emailInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valorEmail)) {
+        const msg = 'El correo electrónico no tiene un formato válido';
+        if (emailError) emailError.textContent = msg;
+        if (emailInput) emailInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // Validar contraseña: obligatoria, mínimo 6 caracteres
+    const valorPassword = passwordInput ? passwordInput.value : '';
+    if (!valorPassword) {
+        const msg = 'La contraseña es obligatoria';
+        if (passwordError) passwordError.textContent = msg;
+        if (passwordInput) passwordInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorPassword.length < 6) {
+        const msg = 'La contraseña debe tener al menos 6 caracteres';
+        if (passwordError) passwordError.textContent = msg;
+        if (passwordInput) passwordInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // Mostrar el primer error como toast de SweetAlert2
+    if (primerMensaje) await mostrarNotificacion(primerMensaje, 'error');
+
+    return esValido;
+}
+
 // ── REGISTRO DE EVENTOS DE NAVEGACIÓN ────────────────────────────────────────
 
 export function registrarEventosNavegacion() {
@@ -1541,6 +1684,66 @@ export function registrarEventosNavegacion() {
                 cargarTodasLasTareas();
                 cargarDashboard();
                 await mostrarNotificacion(`Tarea "${datosTarea.title}" creada correctamente`, 'exito');
+            }
+        });
+    }
+    // ── MODAL DE REGISTRO ─────────────────────────────────────────────────────────
+    // Abrir el modal al hacer clic en "Regístrate aquí"
+    const btnAbrirRegistro = document.getElementById('btnAbrirRegistro');
+    if (btnAbrirRegistro) {
+        btnAbrirRegistro.addEventListener('click', abrirModalRegistro);
+    }
+
+    // Cerrar el modal al hacer clic en el botón X
+    const btnCerrarRegistro = document.getElementById('registroCloseBtn');
+    if (btnCerrarRegistro) {
+        btnCerrarRegistro.addEventListener('click', cerrarModalRegistro);
+    }
+
+    // Cerrar el modal al hacer clic fuera de él (en el overlay oscuro)
+    const registroModal = document.getElementById('registroModal');
+    if (registroModal) {
+        registroModal.addEventListener('click', function(event) {
+            // Solo cerrar si el clic fue directamente en el overlay, no en el modal
+            if (event.target === registroModal) cerrarModalRegistro();
+        });
+    }
+
+    // Submit del formulario de registro
+    const formRegistro = document.getElementById('registroForm');
+    if (formRegistro) {
+        formRegistro.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            // Validar los campos antes de enviar
+            const esValido = await validarFormularioRegistroLocal();
+            if (!esValido) return;
+
+            const btnRegistrar = document.getElementById('btnRegistrar');
+            if (btnRegistrar) { btnRegistrar.disabled = true; btnRegistrar.textContent = 'Creando cuenta...'; }
+
+            try {
+                // Enviar el registro al backend (POST /api/auth/register)
+                await registrarUsuario({
+                    name:      document.getElementById('registroNombre').value.trim(),
+                    documento: document.getElementById('registroDocumento').value.trim(),
+                    email:     document.getElementById('registroEmail').value.trim(),
+                    password:  document.getElementById('registroPassword').value,
+                });
+
+                // Si el registro fue exitoso cerrar el modal y mostrar notificación
+                cerrarModalRegistro();
+                await mostrarNotificacion('Cuenta creada correctamente. Ya puedes iniciar sesión.', 'exito');
+
+            } catch (error) {
+                // Si el backend respondió con un error (409 email duplicado, etc.)
+                await mostrarNotificacion(error.message || 'No se pudo crear la cuenta', 'error');
+            } finally {
+                // Siempre rehabilitar el botón, haya error o no
+                if (btnRegistrar) {
+                    btnRegistrar.disabled    = false;
+                    btnRegistrar.textContent = 'Crear cuenta';
+                }
             }
         });
     }
