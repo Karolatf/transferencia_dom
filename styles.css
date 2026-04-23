@@ -1565,3 +1565,43 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── MODAL DE REGISTRO ───────────────────────────────────────────────────────
+   Estilos específicos para el modal de creación de cuenta.
+   Hereda los estilos base de .modal-overlay y .modal pero añade
+   un ancho máximo más pequeño para que no sea tan grande.
+   
+   El modal aparece encima de la pantalla de inicio (z-index mayor)
+   sin que la pantalla de inicio desaparezca detrás. */
+
+.modal--registro {
+    /* Ancho máximo más pequeño que el modal de edición de tareas */
+    max-width: 420px;
+    /* Sombra más pronunciada para destacar sobre el fondo degradado */
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+}
+
+/* Texto y botón de enlace de "Regístrate aquí" debajo del login */
+.login-registro-texto {
+    text-align:  center;
+    font-size:   var(--texto-sm);
+    color:       var(--texto-medio);
+    margin-top:  var(--espacio-sm);
+}
+
+/* El botón de registro parece un enlace pero es un button para semántica correcta */
+.login-registro-btn {
+    background:  none;
+    border:      none;
+    color:       var(--color-primario);
+    cursor:      pointer;
+    font-size:   var(--texto-sm);
+    font-weight: 600;
+    padding:     0;
+    text-decoration: underline;
+    transition:  color var(--transicion);
+}
+
+.login-registro-btn:hover {
+    color: var(--color-primario-oscuro);
+}
