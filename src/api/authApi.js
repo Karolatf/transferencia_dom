@@ -10,18 +10,21 @@
 
 import { API_BASE_URL, API_PREFIX } from '../utils/config.js';
 
-// ── LOGIN ─────────────────────────────────────────────────────────────────────
+// ── LOGIN (ACTUALIZADO) ───────────────────────────────────────────────────────
 // POST /api/auth/login
-// Cuerpo esperado: { documento, password }
-// Respuesta exitosa: { accessToken, refreshToken, user: { id, name, role } }
-// Lanza un Error si el servidor responde un status de error, para que el
-// llamador (modoUI.js) pueda mostrarlo con SweetAlert2.
-export async function loginUsuario({ documento, password }) {
+// Cuerpo esperado: { email, password }  ← CAMBIO: antes era { documento, password }
+// Respuesta exitosa: { accessToken, refreshToken, user: { id, name, role, documento } }
+//
+// El backend (auth.service.js de Sebastian) ahora busca el usuario por email.
+// El token JWT sigue incluyendo { id, documento, role } en el payload,
+// así que el resto del frontend no necesita cambios.
+export async function loginUsuario({ email, password }) {
     const url = `${API_BASE_URL}${API_PREFIX}/auth/login`;
     const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documento, password }),
+        // CAMBIO: se envía email en lugar de documento
+        body: JSON.stringify({ email, password }),
     });
     const json = await response.json();
     if (!response.ok) throw new Error(json.error || json.message || 'Credenciales incorrectas');

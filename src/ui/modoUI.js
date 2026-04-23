@@ -62,6 +62,9 @@ export function activarModoInicio() {
     ocultarTodo();
     pantallaInicio.classList.remove('hidden');
     document.body.dataset.modo = 'inicio';
+    // Limpiar los campos del formulario para no exponer datos del usuario anterior
+    // Esto es especialmente importante en computadores compartidos
+    limpiarFormularioLogin();
 }
 
 export function activarModoUsuario() {
@@ -1105,6 +1108,46 @@ function obtenerIdsSeleccionados() {
     });
 }
 
+// ── LIMPIAR FORMULARIO DE LOGIN ───────────────────────────────────────────────
+// Limpia los campos de email y contraseña del formulario de login,
+// oculta el mensaje de bienvenida y quita los mensajes de error visibles.
+//
+// Se llama desde activarModoInicio() y desde manejarCerrarSesion()
+// para garantizar que cuando el usuario vuelve a la pantalla de inicio
+// no vea los datos del usuario anterior en los campos.
+// Esto es crítico en entornos compartidos: un segundo usuario no debe
+// ver el email del usuario anterior si este no cerró el navegador.
+function limpiarFormularioLogin() {
+    // Limpiar el campo de email
+    const inputEmail = document.getElementById('loginEmail');
+    if (inputEmail) inputEmail.value = '';
+
+    // Limpiar el campo de contraseña
+    const inputPassword = document.getElementById('loginPassword');
+    if (inputPassword) inputPassword.value = '';
+
+    // Resetear el botón del ojo (mostrar/ocultar contraseña) a su estado inicial
+    if (inputPassword) inputPassword.type = 'password';
+    const btnToggle = document.getElementById('btnTogglePassword');
+    if (btnToggle) btnToggle.textContent = '👁️';
+
+    // Ocultar el mensaje de bienvenida post-login si está visible
+    // El mensaje dice "Sesión iniciada · [nombre]" y debe desaparecer al volver
+    const bienvenidaDiv = document.getElementById('loginBienvenida');
+    if (bienvenidaDiv) bienvenidaDiv.classList.add('hidden');
+
+    // Limpiar los spans de error para que no queden mensajes visibles
+    const errorEmail = document.getElementById('loginEmailError');
+    if (errorEmail) errorEmail.textContent = '';
+
+    const errorPassword = document.getElementById('loginPasswordError');
+    if (errorPassword) errorPassword.textContent = '';
+
+    // Quitar la clase 'error' de los inputs si quedaron marcados en rojo
+    if (inputEmail)    inputEmail.classList.remove('error');
+    if (inputPassword) inputPassword.classList.remove('error');
+}
+
 // ── REGISTRO DE EVENTOS DE NAVEGACIÓN ────────────────────────────────────────
 
 export function registrarEventosNavegacion() {
@@ -1114,9 +1157,9 @@ export function registrarEventosNavegacion() {
 
     // ── FORMULARIO DE LOGIN ───────────────────────────────────────────────────────
     const formLogin       = document.getElementById('loginForm');
-    const inputDocumento  = document.getElementById('loginDocumento');
+    const inputEmail     = document.getElementById('loginEmail');              // Se cambia el id de loginDocumento a loginEmail para que coincida con el HTML actualizado
     const inputPassword   = document.getElementById('loginPassword');
-    const errorDocumento  = document.getElementById('loginDocumentoError');
+    const errorEmail     = document.getElementById('loginEmailError');
     const errorPassword   = document.getElementById('loginPasswordError');
     const bienvenidaDiv   = document.getElementById('loginBienvenida');
     const bienvenidaTexto = document.getElementById('loginBienvenidaTexto');
@@ -1139,10 +1182,10 @@ export function registrarEventosNavegacion() {
             // validarFormularioLogin valida ambos campos con el mismo patrón del proyecto:
             // muestra el error en el span del input Y como toast con SweetAlert2.
             // Retorna false si algo falla — en ese caso no llamamos al servidor.
-            const esValido = await validarFormularioLogin({
-                docInput:      inputDocumento,
+             const esValido = await validarFormularioLogin({
+                emailInput:    inputEmail,      // ← antes era docInput: inputDocumento
                 passwordInput: inputPassword,
-                docError:      errorDocumento,
+                emailError:    errorEmail,      // ← antes era docError: errorDocumento
                 passwordError: errorPassword,
             });
             if (!esValido) return;
@@ -1154,9 +1197,9 @@ export function registrarEventosNavegacion() {
             try {
                 // Llamada al backend — si falla lanza un Error con el mensaje del servidor
                 const datos = await loginUsuario({
-                    documento: inputDocumento.value.trim(),
-                    password:  inputPassword.value,
-                });
+                email:    inputEmail.value.trim(),     // ← antes era documento
+                password: inputPassword.value,
+            })
 
                 // Guardar tokens y datos del usuario en localStorage
                 guardarSesion(datos);
@@ -1164,8 +1207,7 @@ export function registrarEventosNavegacion() {
                 // Mostrar saludo personalizado con el rol
                 const etiquetaRol = datos.user.role === 'admin' ? 'Administrador' : 'Usuario';
                 if (bienvenidaDiv && bienvenidaTexto) {
-                    bienvenidaTexto.textContent =
-                        `¡Bienvenido, ${datos.user.name}! Ingresando como ${etiquetaRol}...`;
+                    bienvenidaTexto.textContent = `Sesión iniciada · ${datos.user.name}`;
                     bienvenidaDiv.classList.remove('hidden');
                 }
 
