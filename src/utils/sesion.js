@@ -11,10 +11,15 @@ const KEYS = {
     USUARIO:       'usuarioActual',
 };
 
-// Guarda todos los datos de sesión tras un login exitoso
+// ── GUARDAR SESIÓN (ACTUALIZADA) ─────────────────────────────────────────────
+// Guarda todos los datos de sesión tras un login exitoso.
+// CAMBIO: ahora también guarda el email del usuario para mostrarlo
+// en el panel de usuario sin tener que hacer una petición adicional al backend.
 export function guardarSesion({ accessToken, refreshToken, user }) {
     localStorage.setItem(KEYS.ACCESS_TOKEN,  accessToken);
     localStorage.setItem(KEYS.REFRESH_TOKEN, refreshToken);
+    // Se guarda el objeto user completo incluyendo el email
+    // El email viene en la respuesta del login desde auth.service.js
     localStorage.setItem(KEYS.USUARIO,       JSON.stringify(user));
 }
 

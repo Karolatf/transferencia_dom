@@ -30,10 +30,8 @@ import {
 } from '../utils/notificaciones.js';
 
 import { filtrarTareas }  from '../utils/filtros.js';
-import {
-    mostrarModalEdicion,
-    ocultarModalEdicion,
-} from './tareasUI.js';
+
+import { mostrarModalEdicion, ocultarModalEdicion, agregarTareaATabla } from './tareasUI.js';
 
 import { ordenarTareas }  from '../utils/ordenamiento.js';
 
@@ -44,7 +42,7 @@ import { validarFormularioUsuario, validarFormularioTarea, validarFormularioLogi
 // Agregar junto a los otros imports al inicio de modoUI.js:
 import { loginUsuario }  from '../api/authApi.js';
 
-import { guardarSesion } from '../utils/sesion.js';
+import { guardarSesion, cerrarSesion, obtenerUsuarioSesion } from '../utils/sesion.js';
 
 // ── REFERENCIAS A VISTAS ──────────────────────────────────────────────────────
 
@@ -67,10 +65,79 @@ export function activarModoInicio() {
     limpiarFormularioLogin();
 }
 
-export function activarModoUsuario() {
+// ── ACTIVAR MODO USUARIO (ACTUALIZADO) ────────────────────────────────────────
+// Al entrar al panel de usuario ya no se muestra el formulario de búsqueda.
+// En su lugar se leen los datos del usuario directamente desde el token JWT
+// guardado en localStorage y se cargan sus tareas automáticamente.
+//
+// Esto es más seguro y profesional: el usuario no puede buscar las tareas
+// de otra persona escribiendo un documento diferente.
+export async function activarModoUsuario() {
     ocultarTodo();
     vistaUsuario.classList.remove('hidden');
     document.body.dataset.modo = 'usuario';
+
+    // Leer los datos del usuario desde el token guardado en localStorage
+    // obtenerUsuarioSesion() viene de src/utils/sesion.js y parsea el JSON del localStorage
+    const usuarioSesion = obtenerUsuarioSesion();
+
+    // Si no hay sesión activa (el token expiró o fue borrado) redirigir al login
+    if (!usuarioSesion) {
+        activarModoInicio();
+        return;
+    }
+
+    // Mostrar los datos del usuario en la sección de datos
+    // Estos datos vienen del payload del token, no de una petición al servidor
+    const seccionDatos = document.getElementById('userDataSection');
+    if (seccionDatos) seccionDatos.classList.remove('hidden');
+
+    const spanId     = document.getElementById('userId');
+    const spanNombre = document.getElementById('userName');
+    const spanEmail  = document.getElementById('userEmail');
+
+    // usuarioSesion.documento es el número de cédula guardado en el token JWT
+    if (spanId)     spanId.textContent     = usuarioSesion.documento || usuarioSesion.id;
+    if (spanNombre) spanNombre.textContent = usuarioSesion.name;
+    // El email viene de obtenerUsuarioSesion pero el campo depende de qué guardó guardarSesion
+    // Si el email no está en el token, se muestra el documento
+    if (spanEmail)  spanEmail.textContent  = usuarioSesion.email || '—';
+
+    // Cargar automáticamente las tareas del usuario usando su id del token
+    // obtenerTareasDeUsuario hace GET /api/tasks/filter?userId={id}
+    const tareas = await obtenerTareasDeUsuario(usuarioSesion.id);
+
+    // Mostrar la sección de tareas
+    const seccionTareas = document.getElementById('tasksSection');
+    if (seccionTareas) seccionTareas.classList.remove('hidden');
+
+    // Actualizar el contador de tareas
+    const contadorEl = document.getElementById('tasksCount');
+    if (contadorEl) {
+        const cantidad = tareas ? tareas.length : 0;
+        contadorEl.textContent = `${cantidad} ${cantidad === 1 ? 'tarea' : 'tareas'}`;
+    }
+
+    // Pintar las tareas en la tabla
+    const tbody = document.getElementById('tasksTableBody');
+    if (!tbody) return;
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+    if (!tareas || tareas.length === 0) {
+        // Mostrar estado vacío si no hay tareas asignadas
+        const estadoVacio = document.getElementById('tasksEmptyState');
+        if (estadoVacio) estadoVacio.classList.remove('hidden');
+        return;
+    }
+
+    // Ocultar el estado vacío y pintar cada tarea
+    const estadoVacio = document.getElementById('tasksEmptyState');
+    if (estadoVacio) estadoVacio.classList.add('hidden');
+
+    tareas.forEach(function(tarea, indice) {
+        // agregarTareaATabla viene de tareasUI.js y construye la fila con createElement
+        agregarTareaATabla(tarea, indice);
+    });
 }
 
 export async function activarModoAdmin() {
@@ -1148,6 +1215,40 @@ function limpiarFormularioLogin() {
     if (inputPassword) inputPassword.classList.remove('error');
 }
 
+// ── CERRAR SESIÓN CON CONFIRMACIÓN ────────────────────────────────────────────
+// Se llama al hacer clic en el botón circular de logout en ambos paneles.
+// Muestra una confirmación SweetAlert2 antes de cerrar sesión.
+// Si el usuario confirma:
+//   1. Se borra la sesión del localStorage (tokens y datos del usuario)
+//   2. Se limpian los campos del formulario de login
+//   3. Se redirige a la pantalla de inicio
+// Así ningún dato queda expuesto si otro usuario usa el mismo computador.
+async function manejarCerrarSesion() {
+
+    // Pedir confirmación antes de cerrar sesión
+    // mostrarConfirmacion viene de notificaciones.js y usa SweetAlert2
+    const confirmado = await mostrarConfirmacion(
+        '¿Cerrar sesión?',
+        'Se cerrará tu sesión actual y volverás a la pantalla de inicio.',
+        'Sí, cerrar sesión'
+    );
+
+    // Si el usuario canceló no se hace nada
+    if (!confirmado) return;
+
+    // Borrar todos los datos de sesión del localStorage
+    // cerrarSesion() está en src/utils/sesion.js y elimina accessToken,
+    // refreshToken y usuarioActual en un solo paso
+    cerrarSesion();
+
+    // Limpiar los campos del formulario antes de mostrar la pantalla de inicio
+    // Así el próximo usuario que abra la página no verá los datos del anterior
+    limpiarFormularioLogin();
+
+    // Redirigir a la pantalla de inicio
+    activarModoInicio();
+}
+
 // ── REGISTRO DE EVENTOS DE NAVEGACIÓN ────────────────────────────────────────
 
 export function registrarEventosNavegacion() {
@@ -1204,6 +1305,15 @@ export function registrarEventosNavegacion() {
                 // Guardar tokens y datos del usuario en localStorage
                 guardarSesion(datos);
 
+                // Si el backend no incluye el email en datos.user, lo tomamos del campo del formulario
+                if (!datos.user.email) {
+                    const emailIngresado = inputEmail.value.trim();
+                    const usuarioConEmail = { ...datos.user, email: emailIngresado };
+                    guardarSesion({ ...datos, user: usuarioConEmail });
+                } else {
+                    guardarSesion(datos);
+                }
+
                 // Mostrar saludo personalizado con el rol
                 const etiquetaRol = datos.user.role === 'admin' ? 'Administrador' : 'Usuario';
                 if (bienvenidaDiv && bienvenidaTexto) {
@@ -1235,8 +1345,15 @@ export function registrarEventosNavegacion() {
     }
 
     // Botones volver
-    document.getElementById('btnVolverUsuario').addEventListener('click', activarModoInicio);
-    document.getElementById('btnVolverAdmin').addEventListener('click', activarModoInicio);
+    const btnLogoutUsuario = document.getElementById('btnLogoutUsuario');
+    if (btnLogoutUsuario) {
+        btnLogoutUsuario.addEventListener('click', manejarCerrarSesion);
+    }
+
+    const btnLogoutAdmin = document.getElementById('btnLogoutAdmin');
+    if (btnLogoutAdmin) {
+        btnLogoutAdmin.addEventListener('click', manejarCerrarSesion);
+    }
 
     // Filtros de la tabla admin
     const btnAplicar = document.getElementById('adminBtnAplicarFiltros');
