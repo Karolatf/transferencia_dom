@@ -1605,3 +1605,42 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .login-registro-btn:hover {
     color: var(--color-primario-oscuro);
 }
+
+/* Barra de búsqueda del panel de usuario — misma apariencia que la del admin
+   pero con los colores del tema morado del panel de usuario */
+.header__busqueda-usuario {
+    display:     flex;
+    align-items: center;
+    gap:         var(--espacio-sm);
+    background:  rgba(255, 255, 255, 0.15);
+    border:      1.5px solid rgba(199, 98, 227, 0.5);
+    border-radius: var(--radio-full);
+    padding:     var(--espacio-xs) var(--espacio-md);
+    width:       100%;
+    max-width:   400px;
+    margin:      var(--espacio-sm) auto 0;
+}
+
+.header__busqueda-usuario input {
+    flex:        1;
+    background:  transparent;
+    border:      none;
+    outline:     none;
+    color:       var(--texto-oscuro);
+    font-size:   var(--texto-sm);
+    font-family: var(--fuente);
+}
+
+.header__busqueda-usuario input::placeholder {
+    color: var(--texto-claro);
+}
+
+/* Botón de cambio de rol en la tabla de usuarios del admin */
+.btn-action--rol {
+    background:  #fef3c7;  /* Amarillo pastel suave */
+    color:       #92400e;  /* Marrón oscuro para contraste */
+}
+
+.btn-action--rol:hover {
+    background: #fde68a;
+}

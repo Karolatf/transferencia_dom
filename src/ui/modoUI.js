@@ -20,8 +20,8 @@ import {
     obtenerTodosLosUsuarios,
     crearUsuario,
     eliminarUsuario,
-    // Se importa actualizarUsuario para el nuevo flujo de edición de usuario
     actualizarUsuario,
+    cambiarRolUsuario,          // ← nueva función
 } from '../api/usuariosApi.js';
 
 import {
@@ -259,6 +259,44 @@ function crearFilaUsuario(usuario, indice) {
     btnEditar.classList.add('btn-action', 'btn-action--edit');
     btnEditar.type = 'button';
     btnEditar.addEventListener('click', function() { abrirModalEditarUsuario(usuario); });
+
+    // AGREGAR después del botón btnEditar en crearFilaUsuario:
+
+    // Botón para cambiar el rol — dice "Hacer Admin" si el usuario es 'user', o "Hacer User" si es 'admin'
+    // El texto del botón cambia dinámicamente según el rol actual del usuario
+    const btnCambiarRol = document.createElement('button');
+    btnCambiarRol.textContent = usuario.role === 'admin' ? '🔻 Hacer User' : '👑 Hacer Admin';
+    btnCambiarRol.classList.add('btn-action', 'btn-action--rol');
+    btnCambiarRol.type = 'button';
+
+    // Al hacer clic pide confirmación antes de cambiar el rol
+    btnCambiarRol.addEventListener('click', async function() {
+        const nuevoRol    = usuario.role === 'admin' ? 'user' : 'admin';
+        const etiquetaRol = nuevoRol === 'admin' ? 'Administrador' : 'Usuario';
+
+        // Pedir confirmación con SweetAlert2 antes de cambiar el rol
+        const confirmado = await mostrarConfirmacion(
+            `¿Cambiar rol de ${usuario.name}?`,
+            `El usuario pasará a ser ${etiquetaRol}. Este cambio tendrá efecto en su próximo inicio de sesión.`,
+            `Sí, hacer ${etiquetaRol}`
+        );
+
+        if (!confirmado) return;
+
+        // Llamar al endpoint del backend para actualizar el rol en MySQL
+        const usuarioActualizado = await cambiarRolUsuario(usuario.id, nuevoRol);
+
+        if (usuarioActualizado) {
+            await mostrarNotificacion(`Rol de ${usuario.name} actualizado a ${etiquetaRol}`, 'exito');
+            // Recargar la tabla de usuarios para reflejar el cambio
+            cargarTablaUsuarios();
+        } else {
+            await mostrarNotificacion('Error al cambiar el rol del usuario', 'error');
+        }
+    });
+
+    // Agregar el botón de rol al contenedor de acciones junto a los otros botones
+    contenedor.appendChild(btnCambiarRol);
 
     // Botón Eliminar — pide confirmación antes de eliminar
     const btnEliminar = document.createElement('button');

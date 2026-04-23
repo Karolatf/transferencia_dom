@@ -113,3 +113,30 @@ export async function eliminarUsuario(id) {
         return false;
     }
 }
+
+// ── CAMBIAR ROL DE USUARIO ────────────────────────────────────────────────────
+    // PATCH /api/users/:id/role
+    // Este endpoint fue creado por Sebastián en el Issue B-3.
+    // Solo funciona si el token del usuario autenticado tiene role = 'admin'.
+    //
+    // Parámetros:
+    //   id   — id numérico del usuario a modificar
+    //   role — nuevo rol: 'admin' o 'user'
+    //
+    // Retorna el usuario actualizado con el nuevo rol, o null si hubo error.
+    export async function cambiarRolUsuario(id, role) {
+        try {
+            const url = `${API_BASE_URL}${API_PREFIX}/users/${id}/role`;
+            const response = await fetchConAuth(url, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role }),
+            });
+            const json = await response.json();
+            if (!response.ok) throw new Error(json.message || `Error al cambiar el rol del usuario ${id}`);
+            return json.data;
+        } catch (error) {
+            console.error('cambiarRolUsuario:', error);
+            return null;
+        }
+    }

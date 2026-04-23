@@ -105,6 +105,17 @@
         </div>
         <h1 class="header__title">Mi Portal de Tareas</h1>
         <p class="header__subtitle">Gestiona tus tareas asignadas</p>
+        <!-- Barra de búsqueda de tareas en el panel de usuario -->
+        <!-- Filtra en tiempo real las tareas ya cargadas en pantalla -->
+        <!-- El evento input se registra en tareasService.js -->
+        <form class="header__busqueda-usuario" id="userSearchTaskForm" novalidate>
+            <input
+                type="text"
+                id="userSearchTaskInput"
+                placeholder="Buscar tarea por id, título o estado..."
+                autocomplete="off"
+            >
+        </form>
     </header>
 
     <main class="contenido-vista">
