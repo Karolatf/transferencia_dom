@@ -1255,8 +1255,6 @@ function limpiarFormularioLogin() {
     if (inputPassword) inputPassword.classList.remove('error');
 }
 
-
-
 // ── CERRAR SESIÓN CON CONFIRMACIÓN ────────────────────────────────────────────
 // Se llama al hacer clic en el botón circular de logout en ambos paneles.
 // Muestra una confirmación SweetAlert2 antes de cerrar sesión.
@@ -1342,15 +1340,17 @@ async function validarFormularioRegistroLocal() {
     const documentoInput = document.getElementById('registroDocumento');
     const emailInput     = document.getElementById('registroEmail');
     const passwordInput  = document.getElementById('registroPassword');
+    const confirmarInput  = document.getElementById('registroConfirmar');
 
     const nombreError    = document.getElementById('registroNombreError');
     const documentoError = document.getElementById('registroDocumentoError');
     const emailError     = document.getElementById('registroEmailError');
     const passwordError  = document.getElementById('registroPasswordError');
+    const confirmarError  = document.getElementById('registroConfirmarError');
 
     // Limpiar errores previos
-    [nombreError, documentoError, emailError, passwordError].forEach(el => { if (el) el.textContent = ''; });
-    [nombreInput, documentoInput, emailInput, passwordInput].forEach(el => { if (el) el.classList.remove('error'); });
+    [nombreError, documentoError, emailError, passwordError, confirmarError].forEach(el => { if (el) el.textContent = ''; });
+    [nombreInput, documentoInput, emailInput, passwordInput, confirmarInput].forEach(el => { if (el) el.classList.remove('error'); });
 
     // Validar nombre: obligatorio, mínimo 3, solo letras y espacios
     const valorNombre = nombreInput ? nombreInput.value.trim() : '';
@@ -1430,6 +1430,22 @@ async function validarFormularioRegistroLocal() {
         esValido = false;
     }
 
+    // Validar confirmar contraseña: obligatoria y debe coincidir con la contraseña
+    const valorConfirmar = confirmarInput ? confirmarInput.value : '';
+    if (!valorConfirmar) {
+        const msg = 'Debes confirmar tu contraseña';
+        if (confirmarError) confirmarError.textContent = msg;
+        if (confirmarInput) confirmarInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorPassword && valorConfirmar !== valorPassword) {
+        const msg = 'Las contraseñas no coinciden';
+        if (confirmarError) confirmarError.textContent = msg;
+        if (confirmarInput) confirmarInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+    
     // Mostrar el primer error como toast de SweetAlert2
     if (primerMensaje) await mostrarNotificacion(primerMensaje, 'error');
 
