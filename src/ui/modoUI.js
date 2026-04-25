@@ -37,7 +37,9 @@ import { ordenarTareas }  from '../utils/ordenamiento.js';
 
 import { exportarTareasJSON } from '../utils/exportacion.js';
 
-import { validarFormularioUsuario, validarFormularioTarea, validarFormularioLogin } from '../utils/validaciones.js';
+// Se agrega validarFormularioRegistro a los imports de validaciones
+// Este import conecta modoUI.js con la nueva función que valida los 5 campos del modal
+import { validarFormularioUsuario, validarFormularioTarea, validarFormularioLogin, validarFormularioRegistro } from '../utils/validaciones.js';
 
 // Agregar junto a los otros imports al inicio de modoUI.js:
 import { loginUsuario, registrarUsuario } from '../api/authApi.js';
@@ -1309,7 +1311,8 @@ function cerrarModalRegistro() {
 // Limpia todos los campos del formulario y los mensajes de error.
 // Se llama al abrir y al cerrar el modal para siempre empezar limpio.
 function limpiarFormularioRegistro() {
-    const campos = ['registroNombre', 'registroDocumento', 'registroEmail', 'registroPassword'];
+    // Agregar 'registroConfirmar' al array de campos
+    const campos = ['registroNombre', 'registroDocumento', 'registroEmail', 'registroPassword', 'registroConfirmar'];
     campos.forEach(function(id) {
         const input = document.getElementById(id);
         if (input) {
@@ -1317,7 +1320,8 @@ function limpiarFormularioRegistro() {
             input.classList.remove('error');
         }
     });
-    const errores = ['registroNombreError', 'registroDocumentoError', 'registroEmailError', 'registroPasswordError'];
+    // Agregar 'registroConfirmarError' al array de errores
+    const errores = ['registroNombreError', 'registroDocumentoError', 'registroEmailError', 'registroPasswordError', 'registroConfirmarError'];
     errores.forEach(function(id) {
         const span = document.getElementById(id);
         if (span) span.textContent = '';
@@ -1336,15 +1340,17 @@ async function validarFormularioRegistroLocal() {
     const documentoInput = document.getElementById('registroDocumento');
     const emailInput     = document.getElementById('registroEmail');
     const passwordInput  = document.getElementById('registroPassword');
+    const confirmarInput  = document.getElementById('registroConfirmar');
 
     const nombreError    = document.getElementById('registroNombreError');
     const documentoError = document.getElementById('registroDocumentoError');
     const emailError     = document.getElementById('registroEmailError');
     const passwordError  = document.getElementById('registroPasswordError');
+    const confirmarError  = document.getElementById('registroConfirmarError');
 
     // Limpiar errores previos
-    [nombreError, documentoError, emailError, passwordError].forEach(el => { if (el) el.textContent = ''; });
-    [nombreInput, documentoInput, emailInput, passwordInput].forEach(el => { if (el) el.classList.remove('error'); });
+    [nombreError, documentoError, emailError, passwordError, confirmarError].forEach(el => { if (el) el.textContent = ''; });
+    [nombreInput, documentoInput, emailInput, passwordInput, confirmarInput].forEach(el => { if (el) el.classList.remove('error'); });
 
     // Validar nombre: obligatorio, mínimo 3, solo letras y espacios
     const valorNombre = nombreInput ? nombreInput.value.trim() : '';
@@ -1424,6 +1430,22 @@ async function validarFormularioRegistroLocal() {
         esValido = false;
     }
 
+    // Validar confirmar contraseña: obligatoria y debe coincidir con la contraseña
+    const valorConfirmar = confirmarInput ? confirmarInput.value : '';
+    if (!valorConfirmar) {
+        const msg = 'Debes confirmar tu contraseña';
+        if (confirmarError) confirmarError.textContent = msg;
+        if (confirmarInput) confirmarInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorPassword && valorConfirmar !== valorPassword) {
+        const msg = 'Las contraseñas no coinciden';
+        if (confirmarError) confirmarError.textContent = msg;
+        if (confirmarInput) confirmarInput.classList.add('error');
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+    
     // Mostrar el primer error como toast de SweetAlert2
     if (primerMensaje) await mostrarNotificacion(primerMensaje, 'error');
 

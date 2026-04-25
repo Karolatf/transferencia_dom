@@ -241,3 +241,136 @@ export async function validarFormularioLogin({ emailInput, passwordInput, emailE
 
     return esValido;
 }
+
+// ── VALIDACIÓN FORMULARIO REGISTRO ────────────────────────────────────────────
+// Valida los 5 campos del modal de registro (registroModal en index.html).
+// IDs reales del HTML: registroNombre, registroDocumento, registroEmail,
+//                      registroPassword, registroConfirmar
+// Retorna true si todo es válido, false si hay algún error.
+// Muestra el primer error como toast con mostrarNotificacion(), igual que
+// las demás funciones de validación del módulo.
+export async function validarFormularioRegistro({
+    nombreInput, nombreError,
+    docInput, docError,
+    emailInput, emailError,
+    passInput, passError,
+    confirmarInput, confirmarError
+}) {
+    let esValido = true;
+    let primerMensaje = null;
+
+    // ── Limpiar errores anteriores ────────────────────────────────────────────
+    [nombreError, docError, emailError, passError, confirmarError]
+        .forEach(el => { if (el) el.textContent = ''; });
+    [nombreInput, docInput, emailInput, passInput, confirmarInput]
+        .forEach(el => { if (el) el.classList.remove('error'); });
+
+    // ── Validar Nombre ────────────────────────────────────────────────────────
+    const valorNombre = nombreInput ? nombreInput.value.trim() : '';
+
+    if (!entradaEsValida(valorNombre)) {
+        const msg = 'El nombre completo es obligatorio';
+        mostrarError(nombreError, nombreInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorNombre.length < 3) {
+        const msg = 'El nombre debe tener al menos 3 caracteres';
+        mostrarError(nombreError, nombreInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorNombre.length > 100) {
+        const msg = 'El nombre no puede exceder los 100 caracteres';
+        mostrarError(nombreError, nombreInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (!/^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/.test(valorNombre)) {
+        // Mismo regex que validarFormularioUsuario — solo letras y espacios
+        const msg = 'El nombre solo puede contener letras y espacios';
+        mostrarError(nombreError, nombreInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // ── Validar Documento ─────────────────────────────────────────────────────
+    const valorDoc = docInput ? docInput.value.trim() : '';
+
+    if (!entradaEsValida(valorDoc)) {
+        const msg = 'El número de documento es obligatorio';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorDoc.length < 5) {
+        const msg = 'El documento debe tener al menos 5 dígitos';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorDoc.length > 20) {
+        const msg = 'El documento no puede exceder los 20 dígitos';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (!/^\d+$/.test(valorDoc)) {
+        const msg = 'El documento solo puede contener números';
+        mostrarError(docError, docInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // ── Validar Email ─────────────────────────────────────────────────────────
+    const valorEmail = emailInput ? emailInput.value.trim() : '';
+
+    if (!entradaEsValida(valorEmail)) {
+        const msg = 'El correo electrónico es obligatorio';
+        mostrarError(emailError, emailInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valorEmail)) {
+        // Mismo regex que usan validarFormularioUsuario y validarFormularioLogin
+        const msg = 'El correo electrónico no tiene un formato válido';
+        mostrarError(emailError, emailInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorEmail.length > 100) {
+        const msg = 'El correo no puede exceder los 100 caracteres';
+        mostrarError(emailError, emailInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // ── Validar Contraseña ────────────────────────────────────────────────────
+    const valorPass = passInput ? passInput.value : '';
+
+    if (!valorPass) {
+        const msg = 'La contraseña es obligatoria';
+        mostrarError(passError, passInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorPass.length < 6) {
+        const msg = 'La contraseña debe tener al menos 6 caracteres';
+        mostrarError(passError, passInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // ── Validar Confirmar Contraseña ──────────────────────────────────────────
+    const valorConfirmar = confirmarInput ? confirmarInput.value : '';
+
+    if (!valorConfirmar) {
+        const msg = 'Debes confirmar tu contraseña';
+        mostrarError(confirmarError, confirmarInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    } else if (valorPass && valorConfirmar !== valorPass) {
+        const msg = 'Las contraseñas no coinciden';
+        mostrarError(confirmarError, confirmarInput, msg);
+        if (!primerMensaje) primerMensaje = msg;
+        esValido = false;
+    }
+
+    // ── Mostrar primer error como toast (igual que todas las funciones del módulo) ──
+    if (primerMensaje) {
+        await mostrarNotificacion(primerMensaje, 'error');
+    }
+
+    return esValido;
+}
