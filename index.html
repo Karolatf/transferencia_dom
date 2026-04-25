@@ -600,6 +600,19 @@
                 <span class="form__error" id="registroPasswordError"></span>
             </div>
 
+            <!-- Campo confirmar contraseña: debe coincidir con el campo anterior -->
+            <div class="form__group">
+                <label for="registroConfirmar" class="form__label">Confirmar contraseña</label>
+                <input
+                    type="password"
+                    id="registroConfirmar"
+                    class="form__input"
+                    placeholder="Repite tu contraseña"
+                    autocomplete="new-password"
+                >
+                <span class="form__error" id="registroConfirmarError"></span>
+            </div>
+
             <!-- Botón de envío del formulario de registro -->
             <button type="submit" class="btn-acceso btn-acceso--login" id="btnRegistrar">
                 Crear cuenta

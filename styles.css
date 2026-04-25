@@ -1644,3 +1644,19 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .btn-action--rol:hover {
     background: #fde68a;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   MODAL DE REGISTRO — estilos específicos
+   El overlay (.modal-overlay) y la tarjeta base (.modal) ya existen
+   en el proyecto y los hereda el registroModal.
+   Solo se agregan los estilos propios del registro aquí.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Hace que la tarjeta del modal de registro sea un poco más ancha
+   que el modal de edición de tarea, ya que tiene más campos */
+.modal--registro {
+    max-width: 460px;
+    width: 100%;
+    max-height: 90vh;   /* No supera el 90% del alto del viewport */
+    overflow-y: auto;   /* Scroll si el contenido desborda en pantallas pequeñas */
+}

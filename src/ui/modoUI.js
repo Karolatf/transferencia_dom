@@ -37,7 +37,9 @@ import { ordenarTareas }  from '../utils/ordenamiento.js';
 
 import { exportarTareasJSON } from '../utils/exportacion.js';
 
-import { validarFormularioUsuario, validarFormularioTarea, validarFormularioLogin } from '../utils/validaciones.js';
+// Se agrega validarFormularioRegistro a los imports de validaciones
+// Este import conecta modoUI.js con la nueva función que valida los 5 campos del modal
+import { validarFormularioUsuario, validarFormularioTarea, validarFormularioLogin, validarFormularioRegistro } from '../utils/validaciones.js';
 
 // Agregar junto a los otros imports al inicio de modoUI.js:
 import { loginUsuario, registrarUsuario } from '../api/authApi.js';
@@ -1253,6 +1255,8 @@ function limpiarFormularioLogin() {
     if (inputPassword) inputPassword.classList.remove('error');
 }
 
+
+
 // ── CERRAR SESIÓN CON CONFIRMACIÓN ────────────────────────────────────────────
 // Se llama al hacer clic en el botón circular de logout en ambos paneles.
 // Muestra una confirmación SweetAlert2 antes de cerrar sesión.
@@ -1309,7 +1313,8 @@ function cerrarModalRegistro() {
 // Limpia todos los campos del formulario y los mensajes de error.
 // Se llama al abrir y al cerrar el modal para siempre empezar limpio.
 function limpiarFormularioRegistro() {
-    const campos = ['registroNombre', 'registroDocumento', 'registroEmail', 'registroPassword'];
+    // Agregar 'registroConfirmar' al array de campos
+    const campos = ['registroNombre', 'registroDocumento', 'registroEmail', 'registroPassword', 'registroConfirmar'];
     campos.forEach(function(id) {
         const input = document.getElementById(id);
         if (input) {
@@ -1317,7 +1322,8 @@ function limpiarFormularioRegistro() {
             input.classList.remove('error');
         }
     });
-    const errores = ['registroNombreError', 'registroDocumentoError', 'registroEmailError', 'registroPasswordError'];
+    // Agregar 'registroConfirmarError' al array de errores
+    const errores = ['registroNombreError', 'registroDocumentoError', 'registroEmailError', 'registroPasswordError', 'registroConfirmarError'];
     errores.forEach(function(id) {
         const span = document.getElementById(id);
         if (span) span.textContent = '';
