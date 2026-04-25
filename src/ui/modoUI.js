@@ -954,9 +954,9 @@ export async function abrirModalUsuario(usuario) {
             // lo que provocaba que el usuario tuviera que cerrarlo manualmente.
             // Ahora se cierra solo y se recargan los datos en segundo plano.
             cerrarModalUsuarioExistente();
-            await mostrarNotificacion(`Tarea "${titulo}" asignada correctamente`, 'exito');
-            cargarTodasLasTareas();
+            cargarTodasLasTareas();  // Recarga inmediata ANTES de la notificación
             cargarDashboard();
+            await mostrarNotificacion(`Tarea "${titulo}" asignada correctamente`, 'exito');
         } else {
             await mostrarNotificacion('Error al asignar la tarea', 'error');
         }

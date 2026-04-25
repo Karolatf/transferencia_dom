@@ -370,9 +370,10 @@
             <!-- Encabezado contraíble con contador morado -->
             <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleUsuarios">
                 <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
-                <span id="adminUsersCount" class="tasks-header__count">0 usuarios</span>
-                <!-- Flecha de toggle al extremo derecho -->
-                <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Usuarios del Sistema">▼</button>
+                <div class="admin-card__cabecera-derecha">
+                    <span id="adminUsersCount" class="tasks-header__count">0 usuarios</span>
+                    <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Usuarios del Sistema">▼</button>
+                </div>
             </div>
             <!-- Cuerpo contraíble: tabla de usuarios -->
             <div class="admin-card__cuerpo" id="cuerpoUsuarios">
@@ -398,9 +399,10 @@
             <!-- Encabezado contraíble con contador morado -->
             <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleTareas">
                 <h2 class="admin-card__titulo">Todas las Tareas del Sistema</h2>
-                <span id="adminTasksCount" class="tasks-header__count">0 tareas</span>
-                <!-- Flecha de toggle al extremo derecho -->
-                <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Tareas del Sistema">▼</button>
+                <div class="admin-card__cabecera-derecha">
+                    <span id="adminTasksCount" class="tasks-header__count">0 tareas</span>
+                    <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Tareas del Sistema">▼</button>
+                </div>
             </div>
             <!-- Cuerpo contraíble: filtros y tabla de tareas -->
             <div class="admin-card__cuerpo" id="cuerpoTareas">
