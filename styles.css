@@ -895,6 +895,11 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 .admin-card__cabecera .admin-card__titulo { margin-bottom: 0; }
 
+.admin-card__cabecera-derecha {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+}
 
 /* FOOTER */
 .footer {

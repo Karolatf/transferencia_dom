@@ -954,9 +954,9 @@ export async function abrirModalUsuario(usuario) {
             // lo que provocaba que el usuario tuviera que cerrarlo manualmente.
             // Ahora se cierra solo y se recargan los datos en segundo plano.
             cerrarModalUsuarioExistente();
-            await mostrarNotificacion(`Tarea "${titulo}" asignada correctamente`, 'exito');
-            cargarTodasLasTareas();
+            cargarTodasLasTareas();  // Recarga inmediata ANTES de la notificación
             cargarDashboard();
+            await mostrarNotificacion(`Tarea "${titulo}" asignada correctamente`, 'exito');
         } else {
             await mostrarNotificacion('Error al asignar la tarea', 'error');
         }
@@ -1807,4 +1807,125 @@ export function registrarEventosNavegacion() {
             }
         });
     }
+
+    // ── BÚSQUEDA DE TAREAS EN EL PANEL USUARIO ────────────────────────────────
+    // El input filtra en tiempo real las filas ya pintadas en la tabla.
+    // No hace peticiones al servidor — trabaja sobre el DOM directamente.
+    // El id del input coincide con el que está en index.html
+    const userSearchTaskInput = document.getElementById('userSearchTaskInput');
+    if (userSearchTaskInput) {
+        userSearchTaskInput.addEventListener('input', function() {
+            const termino = this.value.trim().toLowerCase();
+
+            // Se obtienen todas las filas del tbody del panel usuario
+            const filas = document.querySelectorAll('#tasksTableBody tr');
+
+            filas.forEach(function(fila) {
+                // Se busca el término en todo el texto de la fila
+                // Así se puede buscar por id, título o estado en cualquier columna
+                const textoFila = fila.textContent.toLowerCase();
+                fila.style.display = textoFila.includes(termino) ? '' : 'none';
+            });
+        });
+    }
+
+    // Prevenir que el form de búsqueda de tareas recargue la página al presionar Enter
+    const userSearchTaskForm = document.getElementById('userSearchTaskForm');
+    if (userSearchTaskForm) {
+        userSearchTaskForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+        });
+    }
+
+    // ── BOTONES EDITAR Y EXPORTAR DE LA TABLA DE TAREAS DEL USUARIO ──────────
+    // Los botones se crean dinámicamente en tareasUI.js con data-action="edit" o "export".
+    // Se usa delegación de eventos en el tbody para capturar clics aunque
+    // las filas se agreguen después de registrar este listener.
+    const tablaUsuario = document.getElementById('tasksTableBody');
+    if (tablaUsuario) {
+        tablaUsuario.addEventListener('click', async function(event) {
+            // Se busca el botón más cercano al elemento clickeado
+            const btn = event.target.closest('button[data-action]');
+            if (!btn) return; // El clic no fue en un botón de acción
+
+            const accion  = btn.dataset.action;
+            const tareaId = btn.dataset.id;
+
+            if (accion === 'edit') {
+                // Buscar la tarea completa en el DOM para pasarla al modal
+                // Se reconstruye el objeto desde las celdas de la fila
+                const fila        = btn.closest('tr');
+                const titulo      = fila.cells[1].textContent;
+                const descripcion = fila.cells[2].textContent === '—' ? '' : fila.cells[2].textContent;
+                const estado      = fila.cells[3].querySelector('.status-badge').className
+                    .split(' ')
+                    .find(c => c.startsWith('status-') && c !== 'status-badge')
+                    ?.replace('status-', '') || '';
+                const comentario  = fila.cells[4].textContent === '—' ? '' : fila.cells[4].textContent;
+
+                // mostrarModalEdicion viene de tareasUI.js
+                // soloLecturaTituloDesc=true → modo usuario: título y desc de solo lectura
+                mostrarModalEdicion({
+                    id:          tareaId,
+                    title:       titulo,
+                    description: descripcion,
+                    status:      estado,
+                    comment:     comentario,
+                }, true);
+
+                // Registrar el submit del modal de edición para el modo usuario
+                const formularioEdicion = document.getElementById('editTaskForm');
+
+                // Clonar el form para eliminar listeners anteriores y evitar duplicados
+                const formularioClonado = formularioEdicion.cloneNode(true);
+                formularioEdicion.parentNode.replaceChild(formularioClonado, formularioEdicion);
+
+                formularioClonado.addEventListener('submit', async function(ev) {
+                    ev.preventDefault();
+
+                    const nuevoEstado   = document.getElementById('editTaskStatus').value;
+                    const nuevoComentario = document.getElementById('editTaskComment')
+                        ? document.getElementById('editTaskComment').value.trim()
+                        : '';
+
+                    // Solo se envía el estado y el comentario — título y desc son solo lectura
+                    const { actualizarTarea } = await import('../api/tareasApi.js');
+                    const tareaActualizada = await actualizarTarea(tareaId, {
+                        status:  nuevoEstado,
+                        comment: nuevoComentario,
+                    });
+
+                    if (tareaActualizada) {
+                        // Actualizar la fila en el DOM sin recargar toda la tabla
+                        const { actualizarFilaTarea } = await import('./tareasUI.js');
+                        actualizarFilaTarea(tareaActualizada);
+                        ocultarModalEdicion();
+                        await mostrarNotificacion('Tarea actualizada correctamente', 'exito');
+                    } else {
+                        await mostrarNotificacion('Error al actualizar la tarea', 'error');
+                    }
+                });
+
+            } else if (accion === 'export') {
+                // Exportar solo esta tarea como JSON
+                // Se reconstruye el objeto mínimo necesario para la exportación
+                const fila = btn.closest('tr');
+                const tareaExportar = {
+                    id:          tareaId,
+                    title:       fila.cells[1].textContent,
+                    description: fila.cells[2].textContent === '—' ? '' : fila.cells[2].textContent,
+                    status:      fila.cells[3].querySelector('.status-badge').textContent,
+                    comment:     fila.cells[4].textContent === '—' ? '' : fila.cells[4].textContent,
+                };
+                // exportarTareasJSON viene de exportacion.js y descarga el archivo
+                const exportado = exportarTareasJSON([tareaExportar]);
+                if (exportado) {
+                    await mostrarNotificacion('Tarea exportada correctamente', 'exito');
+                } else {
+                    await mostrarNotificacion('No se pudo exportar la tarea', 'error');
+                }
+            }
+        });
+    }
+
 }
