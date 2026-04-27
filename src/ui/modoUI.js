@@ -18,7 +18,6 @@ import {
 
 import {
     obtenerTodosLosUsuarios,
-    crearUsuario,
     eliminarUsuario,
     actualizarUsuario,
     cambiarRolUsuario,          // ← nueva función
@@ -140,6 +139,11 @@ export async function activarModoUsuario() {
         // agregarTareaATabla viene de tareasUI.js y construye la fila con createElement
         agregarTareaATabla(tarea, indice);
     });
+
+    // Cargar el dashboard de estadísticas del panel usuario.
+    // Se llama con los IDs del vistaUsuario (prefijo userDash) para no
+    // sobreescribir los valores del dashboard del panel admin.
+    cargarDashboardUsuario();   // ← AGREGAR ESTA LÍNEA
 }
 
 export async function activarModoAdmin() {
@@ -989,7 +993,6 @@ function cerrarModalUsuarioExistente() {
 function registrarCardsContraibles() {
     // Pares de [id del encabezado, id del cuerpo] de cada card contraíble
     const pares = [
-        ['toggleCrearUsuario', 'cuerpoCrearUsuario'],
         ['toggleUsuarios',     'cuerpoUsuarios'],
         ['toggleTareas',       'cuerpoTareas'],
         // La card de crear tareas se agrega aquí cuando Sebastián la cree
@@ -1618,53 +1621,6 @@ export function registrarEventosNavegacion() {
         });
     }
 
-    // Formulario crear usuario en el panel admin
-    const formCrear = document.getElementById('createUserForm');
-    if (formCrear) {
-        formCrear.addEventListener('submit', async function(event) {
-            event.preventDefault();
-
-            const docInput    = document.getElementById('newUserId');
-            const nameInput   = document.getElementById('newUserName');
-            const emailInput  = document.getElementById('newUserEmail');
-            const docError    = document.getElementById('newUserIdError');
-            const nameError   = document.getElementById('newUserNameError');
-            const emailError  = document.getElementById('newUserEmailError');
-
-            // FEAT #57: await requerido porque validarFormularioUsuario es async
-            const valido = await validarFormularioUsuario({
-                docInput, nameInput, emailInput,
-                docError, nameError, emailError,
-            });
-            if (!valido) return;
-
-            const nuevoUsuario = {
-                documento: docInput.value.trim(),
-                name:      nameInput.value.trim(),
-                email:     emailInput.value.trim(),
-            };
-
-            const usuarioCreado = await crearUsuario(nuevoUsuario);
-            if (!usuarioCreado) {
-                await mostrarNotificacion(
-                    'No se pudo crear el usuario. Verifica que el servidor esté activo.',
-                    'error'
-                );
-                return;
-            }
-
-            docInput.value  = '';
-            nameInput.value = '';
-            emailInput.value = '';
-            [docError, nameError, emailError].forEach(el => { if (el) el.textContent = ''; });
-
-            cargarTablaUsuarios();
-            // Se recarga el dropdown con await para que el nuevo usuario aparezca de inmediato
-            await recargarCheckboxesDropdown();
-            abrirModalUsuario(usuarioCreado);
-        });
-    }
-
     // Formulario de crear tarea en la card "Crear Tarea" del panel admin
     const formCrearTarea = document.getElementById('createTaskForm');
     if (formCrearTarea) {
@@ -1927,5 +1883,32 @@ export function registrarEventosNavegacion() {
             }
         });
     }
+}
 
+// cargarDashboardUsuario — carga las estadísticas del dashboard en el panel de usuario.
+// Usa IDs distintos a los del panel admin para que ambos paneles puedan coexistir
+// en el DOM sin sobrescribirse mutuamente.
+// Se llama desde activarModoUsuario() al entrar al panel de usuario.
+async function cargarDashboardUsuario() {
+    // obtenerDashboard viene de tareasApi.js y hace GET /api/tasks/dashboard
+    // Retorna { total, pendientes, enProgreso, aprobacion, completadas }
+    const data = await obtenerDashboard();
+    if (!data) return;
+
+    // Se mapean los IDs del DOM del panel usuario con las propiedades de la respuesta
+    // Los IDs tienen el prefijo "userDash" para distinguirlos de los del panel admin
+    const el = {
+        total:      document.getElementById('userDashTotal'),
+        pendiente:  document.getElementById('userDashPendiente'),
+        progreso:   document.getElementById('userDashProgreso'),
+        aprobacion: document.getElementById('userDashAprobacion'),
+        completada: document.getElementById('userDashCompletada'),
+    };
+
+    // Asignar los valores solo si el elemento existe en el DOM
+    if (el.total)      el.total.textContent      = data.total;
+    if (el.pendiente)  el.pendiente.textContent   = data.pendientes;
+    if (el.progreso)   el.progreso.textContent    = data.enProgreso;
+    if (el.aprobacion) el.aprobacion.textContent  = data.aprobacion ?? 0;
+    if (el.completada) el.completada.textContent  = data.completadas;
 }

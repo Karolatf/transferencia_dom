@@ -182,8 +182,10 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 }
 
 .header--usuario {
-    background: white;
-    box-shadow: var(--sombra-sm);
+    background:    white;
+    box-shadow:    var(--sombra-md);
+    border-radius: var(--radio-xl);
+    margin:        var(--espacio-xl);
 }
 
 .header--admin {
@@ -309,7 +311,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     gap: var(--espacio-lg);
 }
 
-.contenido-vista--admin { max-width: 1200px; }
+.contenido-vista--admin,
+.contenido-vista--usuario { max-width: 1200px; }
 
 
 /* CARD BASE */
