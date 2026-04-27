@@ -50,6 +50,8 @@ import { guardarSesion, cerrarSesion, obtenerUsuarioSesion } from '../utils/sesi
 const pantallaInicio = document.getElementById('pantallaInicio');
 const vistaUsuario   = document.getElementById('vistaUsuario');
 const vistaAdmin     = document.getElementById('vistaAdmin');
+// Busca donde están definidas vistaAdmin, vistaUsuario, pantallaInicio y agrega:
+const vistaInstructor = document.getElementById('vistaInstructor');
 
 function ocultarTodo() {
     pantallaInicio.classList.add('hidden');
@@ -159,6 +161,260 @@ export async function activarModoAdmin() {
     await inicializarDropdownUsuarios();
 }
 
+// ── ACTIVAR MODO INSTRUCTOR ───────────────────────────────────────────────────
+// Activa el panel de docente con paleta verde pastel.
+// El instructor tiene CRUD completo de tareas pero no puede gestionar usuarios.
+// Se llama desde main.js cuando role === 'instructor'.
+export async function activarModoInstructor() {
+    ocultarTodo();
+    vistaInstructor.classList.remove('hidden');
+    document.body.dataset.modo = 'instructor';
+
+    // Cargar datos en paralelo: no bloqueamos la UI mientras carga
+    cargarDashboardInstructor();
+    cargarTablaUsuariosInstructor();
+    cargarTareasInstructor();
+    // Inicializar el dropdown de usuarios para la card "Crear Tarea" del instructor
+    await inicializarDropdownInstructor();
+}
+
+// cargarDashboardInstructor — actualiza las tarjetas de estadísticas del panel instructor.
+// Usa los IDs con prefijo "instrDash" definidos en el vistaInstructor del index.html.
+async function cargarDashboardInstructor() {
+    const data = await obtenerDashboard();
+    if (!data) return;
+
+    const el = {
+        total:      document.getElementById('instrDashTotal'),
+        pendiente:  document.getElementById('instrDashPendiente'),
+        progreso:   document.getElementById('instrDashProgreso'),
+        aprobacion: document.getElementById('instrDashAprobacion'),
+        completada: document.getElementById('instrDashCompletada'),
+    };
+
+    if (el.total)      el.total.textContent      = data.total;
+    if (el.pendiente)  el.pendiente.textContent   = data.pendientes;
+    if (el.progreso)   el.progreso.textContent    = data.enProgreso;
+    if (el.aprobacion) el.aprobacion.textContent  = data.aprobacion ?? 0;
+    if (el.completada) el.completada.textContent  = data.completadas;
+}
+
+// cargarTablaUsuariosInstructor — llena la tabla de usuarios del panel instructor.
+// DIFERENCIA con cargarTablaUsuarios (admin): aquí los botones de acción son
+// SOLO "Ver / Asignar" — sin Editar, sin Cambiar Rol, sin Eliminar.
+async function cargarTablaUsuariosInstructor() {
+    const tbody = document.getElementById('instrUsersTableBody');
+    if (!tbody) return;
+
+    // Limpiar el tbody antes de rellenarlo para evitar duplicados
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+    const usuarios = await obtenerTodosLosUsuarios();
+    if (!usuarios) return;
+
+    // Actualizar el contador de usuarios en el header de la card
+    const contador = document.getElementById('instrUsersCount');
+    if (contador) {
+        const cantidad = usuarios.length;
+        contador.textContent = `${cantidad} ${cantidad === 1 ? 'usuario' : 'usuarios'}`;
+    }
+
+    usuarios.forEach(function(usuario, indice) {
+        const fila = document.createElement('tr');
+
+        const celdaNum = document.createElement('td');
+        celdaNum.textContent = indice + 1;
+
+        const celdaDoc = document.createElement('td');
+        celdaDoc.textContent = usuario.documento;
+
+        const celdaNombre = document.createElement('td');
+        celdaNombre.textContent = usuario.name;
+
+        const celdaEmail = document.createElement('td');
+        celdaEmail.textContent = usuario.email;
+
+        const celdaAcciones = document.createElement('td');
+        const contenedor    = document.createElement('div');
+        contenedor.classList.add('task-actions');
+
+        // ÚNICO botón del instructor: "Ver / Asignar" — abre el modal de tareas del usuario
+        // NO se crean botones de Editar, Cambiar Rol ni Eliminar
+        const btnVer = document.createElement('button');
+        btnVer.textContent = 'Ver / Asignar';
+        btnVer.classList.add('btn-action', 'btn-action--edit');
+        btnVer.type = 'button';
+        // abrirModalUsuario viene de modoUI.js — permite ver y asignar tareas al usuario
+        btnVer.addEventListener('click', function() { abrirModalUsuario(usuario); });
+
+        contenedor.appendChild(btnVer);
+        celdaAcciones.appendChild(contenedor);
+
+        fila.appendChild(celdaNum);
+        fila.appendChild(celdaDoc);
+        fila.appendChild(celdaNombre);
+        fila.appendChild(celdaEmail);
+        fila.appendChild(celdaAcciones);
+
+        tbody.appendChild(fila);
+    });
+}
+
+// cargarTareasInstructor — llena la tabla de tareas del panel instructor.
+// Es equivalente a cargarTodasLasTareas del admin pero usa los IDs del instructor.
+async function cargarTareasInstructor() {
+    const tbody = document.getElementById('instrTasksTableBody');
+    if (!tbody) return;
+
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+    const tareas = await obtenerTodasLasTareas();
+    if (!tareas) return;
+
+    const contador = document.getElementById('instrTasksCount');
+    if (contador) {
+        const cantidad = tareas.length;
+        contador.textContent = `${cantidad} ${cantidad === 1 ? 'tarea' : 'tareas'}`;
+    }
+
+    // Reusar la función agregarFilaTareaAdmin si existe, o construir las filas manualmente
+    // siguiendo el mismo patrón que cargarTodasLasTareas del panel admin
+    tareas.forEach(function(tarea, indice) {
+        const fila = crearFilaTareaInstructor(tarea, indice);
+        tbody.appendChild(fila);
+    });
+}
+
+// crearFilaTareaInstructor — construye una fila de la tabla de tareas del instructor.
+// El instructor puede Editar y Eliminar tareas (CRUD completo).
+// Sigue el mismo patrón de crearFilaTareaAdmin.
+function crearFilaTareaInstructor(tarea, indice) {
+    const fila = document.createElement('tr');
+
+    const celdaNum = document.createElement('td');
+    celdaNum.textContent = indice + 1;
+
+    const celdaTitulo = document.createElement('td');
+    celdaTitulo.textContent = tarea.title;
+
+    const celdaDesc = document.createElement('td');
+    celdaDesc.textContent = tarea.description || '—';
+
+    const celdaEstado = document.createElement('td');
+    // Reutilizar la misma función de formato de estado que el panel admin
+    const badgeEstado = document.createElement('span');
+    badgeEstado.classList.add('status-badge', `status-badge--${tarea.status}`);
+    badgeEstado.textContent = tarea.status.replace(/_/g, ' ');
+    celdaEstado.appendChild(badgeEstado);
+
+    const celdaUsuario = document.createElement('td');
+    celdaUsuario.textContent = tarea.assignedUsersDisplay || '—';
+
+    const celdaAcciones = document.createElement('td');
+    const contenedor    = document.createElement('div');
+    contenedor.classList.add('task-actions');
+
+    // Botón Editar — abre el modal de edición de tarea (el mismo del admin)
+    const btnEditar = document.createElement('button');
+    btnEditar.textContent = '✏️ Editar';
+    btnEditar.classList.add('btn-action', 'btn-action--edit');
+    btnEditar.type = 'button';
+    btnEditar.addEventListener('click', function() {
+        // abrirModalEditarTarea usa el modal existente id="editModal" del index.html
+        abrirModalEditarTarea(tarea);
+    });
+
+    // Botón Eliminar — pide confirmación antes de eliminar
+    const btnEliminar = document.createElement('button');
+    btnEliminar.textContent = '🗑️ Eliminar';
+    btnEliminar.classList.add('btn-action', 'btn-action--delete');
+    btnEliminar.type = 'button';
+    btnEliminar.addEventListener('click', async function() {
+        const confirmado = await mostrarConfirmacion(
+            '¿Eliminar tarea?',
+            `"${tarea.title}" será eliminada permanentemente.`,
+            'Sí, eliminar'
+        );
+        if (!confirmado) return;
+
+        const eliminado = await eliminarTarea(tarea.id);
+        if (eliminado) {
+            await mostrarNotificacion('Tarea eliminada correctamente', 'exito');
+            // Recargar el instructor panel tras la eliminación
+            cargarTareasInstructor();
+            cargarDashboardInstructor();
+        } else {
+            await mostrarNotificacion('Error al eliminar la tarea', 'error');
+        }
+    });
+
+    contenedor.appendChild(btnEditar);
+    contenedor.appendChild(btnEliminar);
+    celdaAcciones.appendChild(contenedor);
+
+    fila.appendChild(celdaNum);
+    fila.appendChild(celdaTitulo);
+    fila.appendChild(celdaDesc);
+    fila.appendChild(celdaEstado);
+    fila.appendChild(celdaUsuario);
+    fila.appendChild(celdaAcciones);
+
+    return fila;
+}
+
+// inicializarDropdownInstructor — carga los usuarios en el dropdown de la card Crear Tarea del instructor.
+// Usa los IDs instrUsuariosDropdown*, distintos a los del admin para coexistir en el DOM.
+async function inicializarDropdownInstructor() {
+    const panel = document.getElementById('instrUsuariosDropdownPanel');
+    const btn   = document.getElementById('instrUsuariosDropdownBtn');
+    const texto = document.getElementById('instrUsuariosDropdownTexto');
+    if (!panel || !btn) return;
+
+    const usuarios = await obtenerTodosLosUsuarios();
+    if (!usuarios) return;
+
+    // Limpiar el panel antes de rellenarlo
+    while (panel.firstChild) panel.removeChild(panel.firstChild);
+
+    // Crear un checkbox por cada usuario
+    usuarios.forEach(function(usuario) {
+        const label = document.createElement('label');
+        label.classList.add('usuarios-dropdown__opcion');
+
+        const checkbox = document.createElement('input');
+        checkbox.type  = 'checkbox';
+        checkbox.value = String(usuario.id);
+        checkbox.classList.add('usuarios-dropdown__checkbox');
+
+        const spanNombre = document.createElement('span');
+        spanNombre.textContent = `${usuario.name} (${usuario.documento})`;
+
+        label.appendChild(checkbox);
+        label.appendChild(spanNombre);
+        panel.appendChild(label);
+    });
+
+    // Abrir/cerrar el panel al hacer clic en el botón
+    btn.addEventListener('click', function() {
+        const estaAbierto = !panel.classList.contains('hidden');
+        if (estaAbierto) {
+            panel.classList.add('hidden');
+            btn.setAttribute('aria-expanded', 'false');
+        } else {
+            panel.classList.remove('hidden');
+            btn.setAttribute('aria-expanded', 'true');
+        }
+    });
+
+    // Actualizar el texto del botón según los usuarios seleccionados
+    panel.addEventListener('change', function() {
+        const seleccionados = Array.from(panel.querySelectorAll('input:checked'));
+        texto.textContent = seleccionados.length === 0
+            ? 'Seleccionar usuarios...'
+            : seleccionados.map(cb => cb.nextSibling.textContent).join(', ');
+    });
+}
+
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 
 // Carga las estadísticas del dashboard desde el backend y las muestra en pantalla.
@@ -266,43 +522,66 @@ function crearFilaUsuario(usuario, indice) {
     btnEditar.type = 'button';
     btnEditar.addEventListener('click', function() { abrirModalEditarUsuario(usuario); });
 
-    // AGREGAR después del botón btnEditar en crearFilaUsuario:
+    // Botón/select para cambiar el rol — ahora soporta 3 opciones: admin, user, instructor
+    // Se usa un select para facilitar la elección entre 3 roles
+    const selectRol = document.createElement('select');
+    selectRol.classList.add('btn-action', 'btn-action--rol');
+    selectRol.title = 'Cambiar rol del usuario';
 
-    // Botón para cambiar el rol — dice "Hacer Admin" si el usuario es 'user', o "Hacer User" si es 'admin'
-    // El texto del botón cambia dinámicamente según el rol actual del usuario
-    const btnCambiarRol = document.createElement('button');
-    btnCambiarRol.textContent = usuario.role === 'admin' ? '🔻 Hacer User' : '👑 Hacer Admin';
-    btnCambiarRol.classList.add('btn-action', 'btn-action--rol');
-    btnCambiarRol.type = 'button';
+    // Opción por defecto que muestra el rol actual (no se puede seleccionar)
+    const optDefault = document.createElement('option');
+    optDefault.value    = '';
+    optDefault.disabled = true;
+    optDefault.selected = true;
+    const etiquetasRol = { admin: '👑 Admin', user: '👤 User', instructor: '📚 Instructor' };
+    optDefault.textContent = etiquetasRol[usuario.role] || usuario.role;
+    selectRol.appendChild(optDefault);
 
-    // Al hacer clic pide confirmación antes de cambiar el rol
-    btnCambiarRol.addEventListener('click', async function() {
-        const nuevoRol    = usuario.role === 'admin' ? 'user' : 'admin';
-        const etiquetaRol = nuevoRol === 'admin' ? 'Administrador' : 'Usuario';
+    // Opciones de los otros roles (excluyendo el rol actual del usuario)
+    const todosLosRoles = [
+        { value: 'admin',      label: '👑 Hacer Admin' },
+        { value: 'user',       label: '👤 Hacer User' },
+        { value: 'instructor', label: '📚 Hacer Instructor' },
+    ];
 
-        // Pedir confirmación con SweetAlert2 antes de cambiar el rol
+    todosLosRoles.forEach(function(rolOpcion) {
+        // No mostrar el rol que el usuario ya tiene
+        if (rolOpcion.value === usuario.role) return;
+        const opt = document.createElement('option');
+        opt.value       = rolOpcion.value;
+        opt.textContent = rolOpcion.label;
+        selectRol.appendChild(opt);
+    });
+
+    // Al cambiar la selección, confirmar y ejecutar el cambio de rol
+    selectRol.addEventListener('change', async function() {
+        const nuevoRol    = selectRol.value;
+        if (!nuevoRol) return;
+        const etiquetaRol = etiquetasRol[nuevoRol] || nuevoRol;
+
         const confirmado = await mostrarConfirmacion(
             `¿Cambiar rol de ${usuario.name}?`,
-            `El usuario pasará a ser ${etiquetaRol}. Este cambio tendrá efecto en su próximo inicio de sesión.`,
+            `El usuario pasará a ser ${etiquetaRol}. Tendrá efecto en su próximo inicio de sesión.`,
             `Sí, hacer ${etiquetaRol}`
         );
 
-        if (!confirmado) return;
+        if (!confirmado) {
+            // Revertir el select si el usuario cancela
+            selectRol.value = '';
+            return;
+        }
 
-        // Llamar al endpoint del backend para actualizar el rol en MySQL
         const usuarioActualizado = await cambiarRolUsuario(usuario.id, nuevoRol);
-
         if (usuarioActualizado) {
             await mostrarNotificacion(`Rol de ${usuario.name} actualizado a ${etiquetaRol}`, 'exito');
-            // Recargar la tabla de usuarios para reflejar el cambio
             cargarTablaUsuarios();
         } else {
             await mostrarNotificacion('Error al cambiar el rol del usuario', 'error');
+            selectRol.value = '';
         }
     });
 
-    // Agregar el botón de rol al contenedor de acciones junto a los otros botones
-    contenedor.appendChild(btnCambiarRol);
+    contenedor.appendChild(selectRol);
 
     // Botón Eliminar — pide confirmación antes de eliminar
     const btnEliminar = document.createElement('button');
@@ -1561,6 +1840,13 @@ export function registrarEventosNavegacion() {
         btnLogoutAdmin.addEventListener('click', manejarCerrarSesion);
     }
 
+    // Botón de cerrar sesión del panel instructor
+    const btnLogoutInstructor = document.getElementById('btnLogoutInstructor');
+    if (btnLogoutInstructor) {
+        btnLogoutInstructor.addEventListener('click', manejarCerrarSesion);
+    }
+
+
     // Filtros de la tabla admin
     const btnAplicar = document.getElementById('adminBtnAplicarFiltros');
     if (btnAplicar) btnAplicar.addEventListener('click', aplicarFiltrosAdmin);
@@ -1703,6 +1989,63 @@ export function registrarEventosNavegacion() {
             }
         });
     }
+
+    // Formulario de crear tarea del instructor
+    const instrCreateTaskForm = document.getElementById('instrCreateTaskForm');
+    if (instrCreateTaskForm) {
+        instrCreateTaskForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const titulo     = document.getElementById('instrNewTaskTitle').value.trim();
+            const desc       = document.getElementById('instrNewTaskDescription').value.trim();
+            const estado     = document.getElementById('instrNewTaskStatus').value;
+            const comentario = document.getElementById('instrNewTaskComment').value.trim();
+
+            // Validación: estado obligatorio
+            if (!estado) {
+                await mostrarNotificacion('Selecciona un estado para la tarea', 'error');
+                return;
+            }
+            if (!titulo || titulo.length < 3) {
+                await mostrarNotificacion('El título debe tener al menos 3 caracteres', 'error');
+                return;
+            }
+
+            // Obtener los usuarios seleccionados en el dropdown del instructor
+            const checkboxes = document.querySelectorAll('#instrUsuariosDropdownPanel input:checked');
+            const usuariosSeleccionados = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
+
+            if (usuariosSeleccionados.length === 0) {
+                await mostrarNotificacion('Selecciona al menos un usuario para asignar la tarea', 'error');
+                return;
+            }
+
+            const datosTarea = {
+                title:         titulo,
+                description:   desc || undefined,
+                status:        estado,
+                comment:       comentario || null,
+                assignedUsers: usuariosSeleccionados,
+            };
+
+            const tareaCreada = await registrarTarea(datosTarea);
+            if (tareaCreada) {
+                // Limpiar el formulario tras crear la tarea
+                instrCreateTaskForm.reset();
+                // Deseleccionar los checkboxes del dropdown
+                document.querySelectorAll('#instrUsuariosDropdownPanel input').forEach(cb => { cb.checked = false; });
+                const texto = document.getElementById('instrUsuariosDropdownTexto');
+                if (texto) texto.textContent = 'Seleccionar usuarios...';
+
+                cargarTareasInstructor();
+                cargarDashboardInstructor();
+                await mostrarNotificacion(`Tarea "${titulo}" creada correctamente`, 'exito');
+            } else {
+                await mostrarNotificacion('Error al crear la tarea', 'error');
+            }
+        });
+    }
+
     // ── MODAL DE REGISTRO ─────────────────────────────────────────────────────────
     // Abrir el modal al hacer clic en "Regístrate aquí"
     const btnAbrirRegistro = document.getElementById('btnAbrirRegistro');

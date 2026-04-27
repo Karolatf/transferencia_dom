@@ -7,6 +7,11 @@
     --color-admin:        #0284c7;
     --color-admin-oscuro: #0369a1;
 
+    /* Variables de color para el rol instructor — paleta verde pastel */
+    --color-instructor:        #059669;
+    --color-instructor-oscuro: #047857;
+    --color-instructor-suave:  #d1fae5;
+
     --color-pendiente:  #fbbf24;
     --color-progreso:   #60a5fa;
     --color-completada: #34d399;
@@ -1668,3 +1673,66 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     max-height: 90vh;   /* No supera el 90% del alto del viewport */
     overflow-y: auto;   /* Scroll si el contenido desborda en pantallas pequeñas */
 }
+
+/* ── PANEL INSTRUCTOR — paleta verde pastel ────────────────────────────────── */
+/* El fondo del panel instructor es verde pastel, diferenciándose del azul del admin */
+body[data-modo="instructor"] { background-color: var(--color-instructor-suave); }
+
+/* Header del panel instructor con color verde principal */
+.header--instructor {
+    background: var(--color-instructor);
+}
+.header--instructor .header__title,
+.header--instructor .header__subtitle { color: white; }
+
+/* Buscador del header del panel instructor — misma estructura que el admin */
+.header__busqueda-instructor {
+    display:     flex;
+    gap:         var(--espacio-sm);
+    margin-top:  var(--espacio-md);
+}
+.header__busqueda-instructor input {
+    flex:            1;
+    padding:         var(--espacio-sm) var(--espacio-md);
+    border:          none;
+    border-radius:   var(--radio-sm);
+    background:      rgba(255,255,255,0.2);
+    color:           white;
+    font-size:       var(--texto-md);
+}
+.header__busqueda-instructor input::placeholder { color: rgba(255,255,255,0.7); }
+.header__busqueda-instructor button {
+    padding:         var(--espacio-sm) var(--espacio-md);
+    border:          none;
+    border-radius:   var(--radio-sm);
+    background:      white;
+    cursor:          pointer;
+    font-size:       var(--texto-md);
+    color:           var(--color-instructor);
+    font-weight:     600;
+}
+.header__busqueda-instructor button:hover { background-color: var(--color-instructor-suave); }
+
+/* Botón de logout circular con color del instructor */
+.btn-logout-circular--instructor {
+    border-color:     var(--color-instructor);
+    color:            var(--color-instructor);
+    background-color: white;
+}
+.btn-logout-circular--instructor:hover {
+    background-color: var(--color-instructor);
+    color:            white;
+}
+
+/* Botón principal del panel instructor — mismo estilo que btn--admin-primary pero verde */
+.btn--instr-primary {
+    background-color: var(--color-instructor);
+    color:            white;
+    border:           none;
+    padding:          var(--espacio-sm) var(--espacio-md);
+    border-radius:    var(--radio-sm);
+    cursor:           pointer;
+    font-size:        var(--texto-md);
+    font-weight:      600;
+}
+.btn--instr-primary:hover { background-color: var(--color-instructor-oscuro); }
