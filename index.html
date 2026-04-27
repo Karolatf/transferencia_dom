@@ -84,6 +84,12 @@
                         Regístrate aquí
                     </button>
                 </p>
+
+                <!-- Enlace de recuperación de contraseña — aparece bajo los botones de login -->
+                <!-- Al hacer clic abre el modal olvidoPasswordModal con el flujo de 3 pasos -->
+                <p class="link-acceso">
+                    <button type="button" class="btn-link" id="btnOlvidoPassword">¿Olvidó su contraseña?</button>
+                </p>
             </div>
 
             <p class="inicio__nota">*Solo personal autorizado.*</p>
@@ -845,6 +851,72 @@
                     <button type="submit" class="btn btn--admin-primary">Cambiar Contraseña</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL OLVIDÓ CONTRASEÑA — 3 pasos secuenciales -->
+<div class="modal-overlay hidden" id="olvidoPasswordModal">
+    <div class="modal">
+        <div class="modal__header">
+            <h2 class="modal__title" id="olvidoPasswordTitulo">Recuperar contraseña</h2>
+            <button class="modal__close" id="olvidoPasswordClose" type="button">✕</button>
+        </div>
+        <div class="modal__body">
+
+            <!-- PASO 1: ingresar el email -->
+            <div id="olvidoPaso1">
+                <p class="form__ayuda">Ingresa tu correo electrónico y te enviaremos un código de verificación.</p>
+                <form id="olvidoEmailForm" class="form" novalidate>
+                    <div class="form__group">
+                        <label for="olvidoEmail" class="form__label">Correo electrónico</label>
+                        <input type="email" id="olvidoEmail" class="form__input" placeholder="tu@correo.com" autocomplete="email">
+                        <span class="form__error" id="olvidoEmailError"></span>
+                    </div>
+                    <div class="modal__actions">
+                        <button type="button" class="btn btn--cancelar" id="olvidoPaso1Cancelar">Cancelar</button>
+                        <button type="submit" class="btn btn--admin-primary">Enviar código</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- PASO 2: ingresar el código (oculto hasta que se complete el paso 1) -->
+            <div id="olvidoPaso2" class="hidden">
+                <p class="form__ayuda">Ingresa el código de 6 dígitos que recibiste en tu correo.</p>
+                <form id="olvidoCodigoForm" class="form" novalidate>
+                    <div class="form__group">
+                        <label for="olvidoCodigo" class="form__label">Código de verificación</label>
+                        <input type="text" id="olvidoCodigo" class="form__input" placeholder="123456" maxlength="6" autocomplete="one-time-code">
+                        <span class="form__error" id="olvidoCodigoError"></span>
+                    </div>
+                    <div class="modal__actions">
+                        <button type="button" class="btn btn--cancelar" id="olvidoPaso2Volver">Volver</button>
+                        <button type="submit" class="btn btn--admin-primary">Verificar código</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- PASO 3: ingresar nueva contraseña (oculto hasta que se complete el paso 2) -->
+            <div id="olvidoPaso3" class="hidden">
+                <p class="form__ayuda">Ingresa y confirma tu nueva contraseña.</p>
+                <form id="olvidoNuevaPasswordForm" class="form" novalidate>
+                    <div class="form__group">
+                        <label for="olvidoNuevaPassword" class="form__label">Nueva contraseña</label>
+                        <input type="password" id="olvidoNuevaPassword" class="form__input" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                        <span class="form__error" id="olvidoNuevaPasswordError"></span>
+                    </div>
+                    <div class="form__group">
+                        <label for="olvidoConfirmarPassword" class="form__label">Confirmar contraseña</label>
+                        <input type="password" id="olvidoConfirmarPassword" class="form__input" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+                        <span class="form__error" id="olvidoConfirmarPasswordError"></span>
+                    </div>
+                    <div class="modal__actions">
+                        <button type="button" class="btn btn--cancelar" id="olvidoPaso3Cancelar">Cancelar</button>
+                        <button type="submit" class="btn btn--admin-primary">Cambiar contraseña</button>
+                    </div>
+                </form>
+            </div>
+
         </div>
     </div>
 </div>

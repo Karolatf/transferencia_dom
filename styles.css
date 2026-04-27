@@ -1743,3 +1743,15 @@ body[data-modo="instructor"] { background-color: var(--color-instructor-suave); 
 .btn-perfil-circular {
     margin-top: var(--espacio-xs);
 }
+
+/* Botón de texto para enlace de recuperación de contraseña */
+.btn-link {
+    background: none;
+    border:     none;
+    color:      var(--color-primario);
+    cursor:     pointer;
+    font-size:  var(--texto-md);
+    text-decoration: underline;
+    padding:    0;
+}
+.btn-link:hover { color: var(--color-primario-oscuro); }
