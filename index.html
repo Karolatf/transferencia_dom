@@ -102,6 +102,10 @@
             <button class="btn-logout-circular" id="btnLogoutUsuario" type="button" aria-label="Cerrar sesión">
                 <span class="btn-logout-circular__icono">⏻</span>
             </button>
+
+            <button class="btn-logout-circular btn-perfil-circular" id="btnPerfilUsuario" type="button" aria-label="Cambiar contraseña">
+                <span class="btn-logout-circular__icono">👤</span>
+            </button>
         </div>
         <h1 class="header__title">Mi Portal de Tareas</h1>
         <p class="header__subtitle">Gestiona tus tareas asignadas</p>
@@ -213,6 +217,10 @@
             <!-- La clase btn-logout-circular--admin aplica el color azul del admin -->
             <button class="btn-logout-circular btn-logout-circular--admin" id="btnLogoutAdmin" type="button" aria-label="Cerrar sesión">
                 <span class="btn-logout-circular__icono">⏻</span>
+            </button>
+            <!-- Agrega debajo del botón de logout del admin -->
+            <button class="btn-logout-circular btn-perfil-circular btn-logout-circular--admin" id="btnPerfilAdmin" type="button" aria-label="Cambiar contraseña">
+                <span class="btn-logout-circular__icono">👤</span>
             </button>
         </div>
         <h1 class="header__title">Panel de Administracion</h1>
@@ -472,6 +480,10 @@
             <!-- Botón de cerrar sesión circular — color verde del instructor -->
             <button class="btn-logout-circular btn-logout-circular--instructor" id="btnLogoutInstructor" type="button" aria-label="Cerrar sesión">
                 <span class="btn-logout-circular__icono">⏻</span>
+            </button>
+
+            <button class="btn-logout-circular btn-perfil-circular btn-logout-circular--instructor" id="btnPerfilInstructor" type="button" aria-label="Cambiar contraseña">
+                <span class="btn-logout-circular__icono">👤</span>
             </button>
         </div>
         <h1 class="header__title">Panel Docente</h1>
@@ -800,6 +812,40 @@
             </button>
 
         </form>
+    </div>
+</div>
+
+<!-- MODAL CAMBIO DE CONTRASEÑA -->
+<!-- Se abre desde el botón de perfil circular en los 3 paneles -->
+<div class="modal-overlay hidden" id="cambioPasswordModal">
+    <div class="modal">
+        <div class="modal__header">
+            <h2 class="modal__title">Cambiar Contraseña</h2>
+            <button class="modal__close" id="cambioPasswordClose" type="button">✕</button>
+        </div>
+        <div class="modal__body">
+            <form id="cambioPasswordForm" class="form" novalidate>
+                <div class="form__group">
+                    <label for="passwordActual" class="form__label">Contraseña actual</label>
+                    <input type="password" id="passwordActual" class="form__input" placeholder="Ingresa tu contraseña actual" autocomplete="current-password">
+                    <span class="form__error" id="passwordActualError"></span>
+                </div>
+                <div class="form__group">
+                    <label for="passwordNueva" class="form__label">Nueva contraseña</label>
+                    <input type="password" id="passwordNueva" class="form__input" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                    <span class="form__error" id="passwordNuevaError"></span>
+                </div>
+                <div class="form__group">
+                    <label for="passwordConfirmar" class="form__label">Confirmar nueva contraseña</label>
+                    <input type="password" id="passwordConfirmar" class="form__input" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+                    <span class="form__error" id="passwordConfirmarError"></span>
+                </div>
+                <div class="modal__actions">
+                    <button type="button" class="btn btn--cancelar" id="cambioPasswordCancelar">Cancelar</button>
+                    <button type="submit" class="btn btn--admin-primary">Cambiar Contraseña</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
