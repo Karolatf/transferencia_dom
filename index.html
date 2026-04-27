@@ -118,7 +118,33 @@
         </form>
     </header>
 
-    <main class="contenido-vista">
+    <main class="contenido-vista contenido-vista--usuario">
+
+        <!-- Dashboard de estadísticas del panel usuario -->
+        <!-- Mismas 5 tarjetas que el panel admin pero con IDs únicos prefijados con "userDash" -->
+        <!-- Los IDs distintos evitan conflicto con los IDs del dashboard del panel admin -->
+        <section class="dashboard-stats">
+            <div class="stat-card">
+                <span class="stat-card__label">Total tareas</span>
+                <span class="stat-card__valor" id="userDashTotal">—</span>
+            </div>
+            <div class="stat-card stat-card--pendiente">
+                <span class="stat-card__label">Pendientes</span>
+                <span class="stat-card__valor" id="userDashPendiente">—</span>
+            </div>
+            <div class="stat-card stat-card--progreso">
+                <span class="stat-card__label">En Progreso</span>
+                <span class="stat-card__valor" id="userDashProgreso">—</span>
+            </div>
+            <div class="stat-card stat-card--aprobacion">
+                <span class="stat-card__label">Por aprobar</span>
+                <span class="stat-card__valor" id="userDashAprobacion">—</span>
+            </div>
+            <div class="stat-card stat-card--completada">
+                <span class="stat-card__label">Completadas</span>
+                <span class="stat-card__valor" id="userDashCompletada">—</span>
+            </div>
+        </section>
 
         <!-- Datos del usuario encontrado -->
         <section class="hidden" id="userDataSection">
@@ -230,42 +256,6 @@
                 <span class="stat-card__valor" id="dashboardCompletada">—</span>
             </div>
         </section>
-
-        <!-- Fila de cards del panel admin — cada card es contraíble con la flechita -->
-        <div class="admin-fila">
-            <!-- Card de crear usuario — se puede contraer para ahorrar espacio -->
-            <section class="admin-card" id="cardCrearUsuario">
-                <!-- Encabezado contraíble: título + botón flecha -->
-                <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleCrearUsuario">
-                    <h2 class="admin-card__titulo">Crear Usuario</h2>
-                    <!-- Flecha que rota al contraer o desplegar la card -->
-                    <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Crear Usuario">▼</button>
-                </div>
-                <!-- Cuerpo contraíble: todo el contenido de la card -->
-                <div class="admin-card__cuerpo" id="cuerpoCrearUsuario">
-                    <form id="createUserForm" class="form" novalidate>
-                        <div class="form__group">
-                            <label for="newUserId" class="form__label">Numero de documento</label>
-                            <input type="text" id="newUserId" class="form__input" placeholder="Ej: 1097497124" autocomplete="off">
-                            <span class="form__error" id="newUserIdError"></span>
-                        </div>
-                        <div class="form__group">
-                            <label for="newUserName" class="form__label">Nombre completo</label>
-                            <input type="text" id="newUserName" class="form__input" placeholder="Ej: Karol Torres">
-                            <span class="form__error" id="newUserNameError"></span>
-                        </div>
-                        <div class="form__group">
-                            <label for="newUserEmail" class="form__label">Correo electronico</label>
-                            <input type="email" id="newUserEmail" class="form__input" placeholder="Ej: usuario@correo.com">
-                            <span class="form__error" id="newUserEmailError"></span>
-                        </div>
-                        <button type="submit" class="btn btn--admin-primary">
-                            <span class="btn__text">Crear Usuario</span>
-                        </button>
-                    </form>
-                </div>
-            </section>
-        </div>
 
         <!-- Card de crear tareas — contraíble (la lógica la registra registrarCardsContraibles en modoUI.js) -->
         <section class="admin-card admin-card--full" id="cardCrearTareas">
