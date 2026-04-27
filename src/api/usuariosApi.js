@@ -115,28 +115,52 @@ export async function eliminarUsuario(id) {
 }
 
 // ── CAMBIAR ROL DE USUARIO ────────────────────────────────────────────────────
-    // PATCH /api/users/:id/role
-    // Este endpoint fue creado por Sebastián en el Issue B-3.
-    // Solo funciona si el token del usuario autenticado tiene role = 'admin'.
-    //
-    // Parámetros:
-    //   id   — id numérico del usuario a modificar
-    //   role — nuevo rol: 'admin' o 'user'
-    //
-    // Retorna el usuario actualizado con el nuevo rol, o null si hubo error.
-    export async function cambiarRolUsuario(id, role) {
-        try {
-            const url = `${API_BASE_URL}${API_PREFIX}/users/${id}/role`;
-            const response = await fetchConAuth(url, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ role }),
-            });
-            const json = await response.json();
-            if (!response.ok) throw new Error(json.message || `Error al cambiar el rol del usuario ${id}`);
-            return json.data;
-        } catch (error) {
-            console.error('cambiarRolUsuario:', error);
-            return null;
-        }
+// PATCH /api/users/:id/role
+// Este endpoint fue creado por Sebastián en el Issue B-3.
+// Solo funciona si el token del usuario autenticado tiene role = 'admin'.
+//
+// Parámetros:
+//   id   — id numérico del usuario a modificar
+//   role — nuevo rol: 'admin' o 'user'
+//
+// Retorna el usuario actualizado con el nuevo rol, o null si hubo error.
+export async function cambiarRolUsuario(id, role) {
+    try {
+        const url = `${API_BASE_URL}${API_PREFIX}/users/${id}/role`;
+        const response = await fetchConAuth(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role }),
+        });
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || `Error al cambiar el rol del usuario ${id}`);
+        return json.data;
+    } catch (error) {
+        console.error('cambiarRolUsuario:', error);
+        return null;
     }
+}
+
+// ── CAMBIAR CONTRASEÑA DEL USUARIO LOGUEADO ───────────────────────────────────
+// PATCH /api/users/:id/password
+// Cuerpo: { currentPassword, newPassword }
+// Requiere que el usuario esté autenticado (Bearer Token en el header).
+// El id es el del usuario logueado — se obtiene desde obtenerUsuarioSesion().
+export async function cambiarPassword(userId, datos) {
+    try {
+        const url = `${API_BASE_URL}${API_PREFIX}/users/${userId}/password`;
+        const response = await fetchConAuth(url, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            // datos: { currentPassword, newPassword }
+            body: JSON.stringify(datos),
+        });
+        const json = await response.json();
+        if (!response.ok) throw new Error(json.message || 'Error al cambiar la contraseña');
+        return true;
+    } catch (error) {
+        console.error('cambiarPassword:', error);
+        // Retornar el mensaje de error para que el modal lo muestre al usuario
+        return { error: error.message };
+    }
+}

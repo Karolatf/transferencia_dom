@@ -1736,3 +1736,10 @@ body[data-modo="instructor"] { background-color: var(--color-instructor-suave); 
     font-weight:      600;
 }
 .btn--instr-primary:hover { background-color: var(--color-instructor-oscuro); }
+
+/* ── BOTÓN CIRCULAR DE PERFIL ──────────────────────────────────────────────── */
+/* Misma estructura visual que el btn-logout-circular pero para perfil */
+/* Se posiciona debajo del botón de logout en el header */
+.btn-perfil-circular {
+    margin-top: var(--espacio-xs);
+}

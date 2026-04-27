@@ -21,6 +21,7 @@ import {
     eliminarUsuario,
     actualizarUsuario,
     cambiarRolUsuario,          // ← nueva función
+    cambiarPassword,
 } from '../api/usuariosApi.js';
 
 import {
@@ -1734,6 +1735,112 @@ async function validarFormularioRegistroLocal() {
     return esValido;
 }
 
+// registrarListenerCambioPassword — registra todos los eventos del modal de cambio de contraseña.
+// Se llama una sola vez al inicio desde registrarEventosNavegacion().
+// El modal se abre desde los 3 botones de perfil circular (admin, usuario, instructor).
+function registrarListenerCambioPassword() {
+    const modal          = document.getElementById('cambioPasswordModal');
+    const btnCerrar      = document.getElementById('cambioPasswordClose');
+    const btnCancelar    = document.getElementById('cambioPasswordCancelar');
+    const form           = document.getElementById('cambioPasswordForm');
+
+    // Función auxiliar para abrir el modal — limpia el formulario antes de mostrarlo
+    function abrirModalPassword() {
+        if (form) form.reset();
+        // Limpiar mensajes de error del formulario anterior
+        const errores = modal.querySelectorAll('.form__error');
+        errores.forEach(el => { el.textContent = ''; });
+        // Limpiar clases de error de los inputs
+        const inputs = modal.querySelectorAll('.form__input');
+        inputs.forEach(el => el.classList.remove('error'));
+        modal.classList.remove('hidden');
+    }
+
+    // Función auxiliar para cerrar el modal
+    function cerrarModalPassword() {
+        modal.classList.add('hidden');
+    }
+
+    // Abrir el modal desde el botón de perfil del panel admin
+    const btnPerfilAdmin = document.getElementById('btnPerfilAdmin');
+    if (btnPerfilAdmin) btnPerfilAdmin.addEventListener('click', abrirModalPassword);
+
+    // Abrir el modal desde el botón de perfil del panel usuario
+    const btnPerfilUsuario = document.getElementById('btnPerfilUsuario');
+    if (btnPerfilUsuario) btnPerfilUsuario.addEventListener('click', abrirModalPassword);
+
+    // Abrir el modal desde el botón de perfil del panel instructor
+    const btnPerfilInstructor = document.getElementById('btnPerfilInstructor');
+    if (btnPerfilInstructor) btnPerfilInstructor.addEventListener('click', abrirModalPassword);
+
+    // Cerrar el modal con el botón X
+    if (btnCerrar) btnCerrar.addEventListener('click', cerrarModalPassword);
+
+    // Cerrar el modal con el botón Cancelar
+    if (btnCancelar) btnCancelar.addEventListener('click', cerrarModalPassword);
+
+    // Cerrar el modal al hacer clic fuera del contenido del modal
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            // Solo cerrar si el clic fue en el overlay (fondo oscuro), no en el contenido
+            if (e.target === modal) cerrarModalPassword();
+        });
+    }
+
+    // Submit del formulario de cambio de contraseña
+    if (form) {
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const actual     = document.getElementById('passwordActual').value;
+            const nueva      = document.getElementById('passwordNueva').value;
+            const confirmar  = document.getElementById('passwordConfirmar').value;
+
+            // Limpiar errores anteriores antes de validar
+            document.getElementById('passwordActualError').textContent    = '';
+            document.getElementById('passwordNuevaError').textContent     = '';
+            document.getElementById('passwordConfirmarError').textContent = '';
+
+            // Validación de campos obligatorios
+            let esValido = true;
+            if (!actual) {
+                document.getElementById('passwordActualError').textContent = 'La contraseña actual es obligatoria';
+                esValido = false;
+            }
+            if (!nueva || nueva.length < 6) {
+                document.getElementById('passwordNuevaError').textContent = 'La nueva contraseña debe tener al menos 6 caracteres';
+                esValido = false;
+            }
+            if (nueva !== confirmar) {
+                document.getElementById('passwordConfirmarError').textContent = 'Las contraseñas no coinciden';
+                esValido = false;
+            }
+            if (!esValido) return;
+
+            // Obtener el id del usuario logueado desde sesion.js
+            const usuarioSesion = obtenerUsuarioSesion();
+            if (!usuarioSesion) {
+                await mostrarNotificacion('No hay sesión activa. Por favor inicia sesión.', 'error');
+                return;
+            }
+
+            // Llamar al endpoint PATCH /api/users/:id/password
+            const resultado = await cambiarPassword(usuarioSesion.id, {
+                currentPassword: actual,
+                newPassword:     nueva,
+            });
+
+            if (resultado === true) {
+                cerrarModalPassword();
+                await mostrarNotificacion('Contraseña actualizada correctamente', 'exito');
+            } else {
+                // El backend respondió con un error específico (ej: contraseña actual incorrecta)
+                await mostrarNotificacion(resultado.error || 'Error al cambiar la contraseña', 'error');
+            }
+        });
+    }
+}
+
 // ── REGISTRO DE EVENTOS DE NAVEGACIÓN ────────────────────────────────────────
 
 export function registrarEventosNavegacion() {
@@ -2226,6 +2333,9 @@ export function registrarEventosNavegacion() {
             }
         });
     }
+
+    // Al final del cuerpo de registrarEventosNavegacion():
+    registrarListenerCambioPassword();
 }
 
 // cargarDashboardUsuario — carga las estadísticas del dashboard en el panel de usuario.
