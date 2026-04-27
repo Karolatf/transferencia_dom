@@ -3,7 +3,8 @@
 
 import { registrarEventListeners }          from './services/tareasService.js';
 import { mostrarEstadoVacio }               from './ui/tareasUI.js';
-import { activarModoInicio, activarModoAdmin, activarModoUsuario } from './ui/modoUI.js';
+// MODIFICAR la importación al inicio del archivo — agregar activarModoInstructor:
+import { activarModoInicio, activarModoAdmin, activarModoUsuario, activarModoInstructor } from './ui/modoUI.js';
 import { API_BASE_URL }                     from './utils/config.js';
 import { haySesionActiva, obtenerUsuarioSesion } from './utils/sesion.js';
 
@@ -20,6 +21,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (usuario && usuario.role === 'admin') {
             // El usuario guardado es admin → abrir el panel de administrador
             activarModoAdmin();
+        } else if (usuario && usuario.role === 'instructor') {
+            // El usuario es instructor — abrir el panel de docente con paleta verde
+            activarModoInstructor();
         } else if (usuario) {
             // El usuario guardado es un usuario normal → abrir la vista de usuario
             activarModoUsuario();
