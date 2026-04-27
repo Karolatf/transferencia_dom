@@ -42,7 +42,7 @@ import { exportarTareasJSON } from '../utils/exportacion.js';
 import { validarFormularioUsuario, validarFormularioTarea, validarFormularioLogin, validarFormularioRegistro } from '../utils/validaciones.js';
 
 // Agregar junto a los otros imports al inicio de modoUI.js:
-import { loginUsuario, registrarUsuario } from '../api/authApi.js';
+import { loginUsuario, registrarUsuario, forgotPassword, verifyResetCode, resetPassword } from '../api/authApi.js';
 
 import { guardarSesion, cerrarSesion, obtenerUsuarioSesion } from '../utils/sesion.js';
 
@@ -2336,6 +2336,7 @@ export function registrarEventosNavegacion() {
 
     // Al final del cuerpo de registrarEventosNavegacion():
     registrarListenerCambioPassword();
+    registrarListenerOlvidoPassword();
 }
 
 // cargarDashboardUsuario — carga las estadísticas del dashboard en el panel de usuario.
@@ -2364,4 +2365,182 @@ async function cargarDashboardUsuario() {
     if (el.progreso)   el.progreso.textContent    = data.enProgreso;
     if (el.aprobacion) el.aprobacion.textContent  = data.aprobacion ?? 0;
     if (el.completada) el.completada.textContent  = data.completadas;
+}
+
+// registrarListenerOlvidoPassword — registra todos los eventos del flujo de recuperación.
+// Se llama una sola vez desde registrarEventosNavegacion().
+// El flujo tiene 3 pasos secuenciales: email → código → nueva contraseña.
+function registrarListenerOlvidoPassword() {
+    const modal     = document.getElementById('olvidoPasswordModal');
+    const btnAbrir  = document.getElementById('btnOlvidoPassword');
+    const btnCerrar = document.getElementById('olvidoPasswordClose');
+    const titulo    = document.getElementById('olvidoPasswordTitulo');
+
+    // Variable para recordar el email entre los 3 pasos
+    // Se usa let porque cambia durante el flujo
+    let emailRecuperacion = '';
+
+    // Función para mostrar solo el paso indicado y ocultar los demás
+    // pasoVisible: 1, 2 o 3
+    function mostrarPaso(pasoVisible) {
+        const titulosPasos = {
+            1: 'Recuperar contraseña',
+            2: 'Verificar código',
+            3: 'Nueva contraseña',
+        };
+        if (titulo) titulo.textContent = titulosPasos[pasoVisible];
+
+        [1, 2, 3].forEach(function(num) {
+            const el = document.getElementById(`olvidoPaso${num}`);
+            if (el) {
+                if (num === pasoVisible) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            }
+        });
+    }
+
+    // Función para abrir el modal en el paso 1
+    function abrirModalOlvido() {
+        emailRecuperacion = '';
+        mostrarPaso(1);
+        // Limpiar los campos del formulario del paso 1
+        const emailInput = document.getElementById('olvidoEmail');
+        if (emailInput) emailInput.value = '';
+        const emailError = document.getElementById('olvidoEmailError');
+        if (emailError) emailError.textContent = '';
+        modal.classList.remove('hidden');
+    }
+
+    // Función para cerrar el modal completamente
+    function cerrarModalOlvido() {
+        modal.classList.add('hidden');
+        emailRecuperacion = '';
+    }
+
+    // Abrir el modal al hacer clic en el enlace
+    if (btnAbrir) btnAbrir.addEventListener('click', abrirModalOlvido);
+
+    // Cerrar con el botón X
+    if (btnCerrar) btnCerrar.addEventListener('click', cerrarModalOlvido);
+
+    // Cerrar al hacer clic en el overlay
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) cerrarModalOlvido();
+        });
+    }
+
+    // Botones de cancelar/volver en cada paso
+    const paso1Cancelar = document.getElementById('olvidoPaso1Cancelar');
+    if (paso1Cancelar) paso1Cancelar.addEventListener('click', cerrarModalOlvido);
+
+    const paso2Volver = document.getElementById('olvidoPaso2Volver');
+    if (paso2Volver) paso2Volver.addEventListener('click', function() { mostrarPaso(1); });
+
+    const paso3Cancelar = document.getElementById('olvidoPaso3Cancelar');
+    if (paso3Cancelar) paso3Cancelar.addEventListener('click', cerrarModalOlvido);
+
+    // ── PASO 1: enviar el email ────────────────────────────────────────────────
+    const formEmail = document.getElementById('olvidoEmailForm');
+    if (formEmail) {
+        formEmail.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const emailInput = document.getElementById('olvidoEmail');
+            const emailError = document.getElementById('olvidoEmailError');
+            const valor      = emailInput.value.trim();
+
+            // Validar formato de email con regex básica
+            const formatoEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!valor || !formatoEmail.test(valor)) {
+                emailError.textContent = 'Ingresa un correo electrónico válido';
+                return;
+            }
+            emailError.textContent = '';
+
+            // Llamar al endpoint forgot-password
+            const resultado = await forgotPassword(valor);
+
+            if (resultado === true) {
+                // Guardar el email para usarlo en los siguientes pasos
+                emailRecuperacion = valor;
+                mostrarPaso(2);
+                // Limpiar el campo de código
+                const codigoInput = document.getElementById('olvidoCodigo');
+                if (codigoInput) codigoInput.value = '';
+            } else {
+                await mostrarNotificacion(resultado.error || 'Error al enviar el correo', 'error');
+            }
+        });
+    }
+
+    // ── PASO 2: verificar el código ───────────────────────────────────────────
+    const formCodigo = document.getElementById('olvidoCodigoForm');
+    if (formCodigo) {
+        formCodigo.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const codigoInput = document.getElementById('olvidoCodigo');
+            const codigoError = document.getElementById('olvidoCodigoError');
+            const valor       = codigoInput.value.trim();
+
+            // Validar que sean exactamente 6 dígitos numéricos
+            if (!valor || !/^\d{6}$/.test(valor)) {
+                codigoError.textContent = 'El código debe tener exactamente 6 dígitos numéricos';
+                return;
+            }
+            codigoError.textContent = '';
+
+            const resultado = await verifyResetCode(emailRecuperacion, valor);
+
+            if (resultado === true) {
+                mostrarPaso(3);
+                // Limpiar los campos de contraseña
+                const nuevaInput     = document.getElementById('olvidoNuevaPassword');
+                const confirmarInput = document.getElementById('olvidoConfirmarPassword');
+                if (nuevaInput)     nuevaInput.value     = '';
+                if (confirmarInput) confirmarInput.value = '';
+            } else {
+                await mostrarNotificacion(resultado.error || 'Código incorrecto o expirado', 'error');
+            }
+        });
+    }
+
+    // ── PASO 3: cambiar la contraseña ─────────────────────────────────────────
+    const formNuevaPassword = document.getElementById('olvidoNuevaPasswordForm');
+    if (formNuevaPassword) {
+        formNuevaPassword.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const nuevaInput      = document.getElementById('olvidoNuevaPassword');
+            const confirmarInput  = document.getElementById('olvidoConfirmarPassword');
+            const nuevaError      = document.getElementById('olvidoNuevaPasswordError');
+            const confirmarError  = document.getElementById('olvidoConfirmarPasswordError');
+            const nueva           = nuevaInput.value;
+            const confirmar       = confirmarInput.value;
+
+            let esValido = true;
+            nuevaError.textContent    = '';
+            confirmarError.textContent = '';
+
+            if (!nueva || nueva.length < 6) {
+                nuevaError.textContent = 'La contraseña debe tener al menos 6 caracteres';
+                esValido = false;
+            }
+            if (nueva !== confirmar) {
+                confirmarError.textContent = 'Las contraseñas no coinciden';
+                esValido = false;
+            }
+            if (!esValido) return;
+
+            const resultado = await resetPassword(emailRecuperacion, nueva);
+
+            if (resultado === true) {
+                cerrarModalOlvido();
+                await mostrarNotificacion('Contraseña restablecida correctamente. Ya puedes iniciar sesión.', 'exito');
+            } else {
+                await mostrarNotificacion(resultado.error || 'Error al restablecer la contraseña', 'error');
+            }
+        });
+    }
 }
