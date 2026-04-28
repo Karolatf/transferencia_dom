@@ -54,10 +54,20 @@ const vistaAdmin     = document.getElementById('vistaAdmin');
 // Busca donde están definidas vistaAdmin, vistaUsuario, pantallaInicio y agrega:
 const vistaInstructor = document.getElementById('vistaInstructor');
 
+// Oculta todas las vistas del sistema antes de mostrar la activa
+// IMPORTANTE: incluir vistaInstructor en esta función es crítico
+// Sin esta línea, al cerrar sesión el instructor la página quedaba visualmente rota
+// porque vistaInstructor permanecía visible detrás de la pantalla de inicio
 function ocultarTodo() {
+    // Ocultar la pantalla de inicio (formulario de login)
     pantallaInicio.classList.add('hidden');
+    // Ocultar la vista del panel de usuario normal
     vistaUsuario.classList.add('hidden');
+    // Ocultar la vista del panel de administrador
     vistaAdmin.classList.add('hidden');
+    // Ocultar la vista del panel instructor — faltaba esta línea
+    // Su ausencia causaba que el panel verde quedara visible al cerrar sesión
+    if (vistaInstructor) vistaInstructor.classList.add('hidden');
 }
 
 export function activarModoInicio() {
