@@ -81,6 +81,7 @@ body[data-modo="inicio"]  { background: linear-gradient(135deg, #c794f9 0%, #b9f
 body[data-modo="usuario"] { background-color: #f3e8ff; }
 body[data-modo="admin"]   { background-color: #e0f2fe; }
 
+
 /* HIDDEN */
 .hidden { display: none !important; }
 
@@ -183,23 +184,36 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     text-align: center;
     position: relative;
     border-radius: var(--radio-2xl);
-    margin-bottom: var(--espacio-lg);
+    margin: var(--espacio-lg) auto 0 auto;
+
+    width: calc(100% - 48px);
+    max-width: 95%;
 }
 
 .header--usuario {
-    background:    white;
-    box-shadow:    var(--sombra-md);
-    border-radius: var(--radio-xl);
-    margin:        var(--espacio-xl);
-}
+    background: hsl(0, 0%, 100%);
 
-.header--admin {
-    background: var(--color-admin);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--espacio-md);
+
     padding-bottom: var(--espacio-xl);
+    margin-top: var(--espacio-md);
+    margin-bottom: var(--espacio-lg)
+}
+
+.header--admin {
+    background: var(--color-admin);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--espacio-md);
+
+    padding-bottom: var(--espacio-xl);
+    margin-top: var(--espacio-md);
+    margin-bottom: var(--espacio-lg)
 }
 
 .header--admin .header__title,
@@ -221,8 +235,15 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 .header__nav {
     position: absolute;
-    left: var(--espacio-lg);
-    top: var(--espacio-lg);
+    left: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
 }
 
 /* Botón volver rediseñado: flechita + texto, redondeado */
@@ -317,8 +338,10 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 }
 
 .contenido-vista--admin,
-.contenido-vista--usuario { max-width: 1200px; }
-
+.contenido-vista--usuario,
+.contenido-vista--instructor {
+    max-width: 1200px;
+}
 
 /* CARD BASE */
 .card {
@@ -924,12 +947,32 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     color: var(--texto-claro);
 }
 
-.footer--admin {
-    background-color: var(--color-admin-oscuro);
+.footer--admin,
+.footer--usuario,
+.footer--instructor {
     border-radius: var(--radio-xl);
+    width: calc(100% - 48px);
+    max-width: 95%;
+    margin: var(--espacio-lg) auto;
 }
 
+.footer--admin {
+    background: var(--color-admin);
+}
+
+.footer--usuario {
+    background: white;
+}
+
+.footer--instructor {
+    background: var(--color-instructor-oscuro);
+}
+
+
 .footer--admin .footer__text { color: rgba(255,255,255,0.85); }
+.footer--instructor .footer__text { color: rgba(255,255,255,0.85); }
+.footer--usuario .footer__text { color: rgba(66, 61, 61, 0.85); }
+
 
 
 /* SWEETALERT2 custom */
@@ -991,30 +1034,18 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
    de salida sin necesidad de leer el texto. */
 
 .btn-logout-circular {
-    /* Forma circular fija: mismo ancho y alto, border-radius al 50% */
-    width:  40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
+    border: 2px solid white;
+    background: transparent;
 
-    /* Sin fondo sólido — transparente para que se vea el header detrás */
-    background:  transparent;
-
-    /* Borde del color primario (morado del proyecto) */
-    border: 2px solid var(--color-primario);
-
-    /* El cursor de puntero indica que es clickeable */
-    cursor: pointer;
-
-    /* Centrar el ícono dentro del círculo */
-    display:         flex;
-    align-items:     center;
+    display: flex;
+    align-items: center;
     justify-content: center;
 
-    /* Transición suave al hacer hover */
-    transition: background-color var(--transicion), transform var(--transicion);
-
-    /* Evitar que el botón se encoja en layouts flex */
-    flex-shrink: 0;
+    cursor: pointer;
+    padding: 0;
 }
 
 .btn-logout-circular:hover {
@@ -1028,7 +1059,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     /* El ícono hereda el color del botón (morado por defecto, blanco al hover) */
     font-size:   1.1rem;
     line-height: 1;
-    color:       var(--color-primario);
+    color:       #f0f9ff;
     transition:  color var(--transicion);
 }
 
@@ -1054,6 +1085,23 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     color: var(--color-admin);
 }
 
+/* Variante para panel de usuario: usa color morado */
+.btn-logout-circular--usuario {
+    border-color: var(--color-primario);
+}
+
+.btn-logout-circular--usuario .btn-logout-circular__icono {
+    color: var(--color-primario);
+}
+
+.btn-logout-circular--usuario:hover {
+    background-color: var(--color-primario);
+}
+
+.btn-logout-circular--usuario:hover .btn-logout-circular__icono {
+    color: white;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
     body { padding: var(--espacio-md); }
@@ -1065,13 +1113,35 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     .acceso-card { max-width: 100%; }
 
     .header__nav {
-        position: static;
+        position: absolute;
         transform: none;
         margin-bottom: var(--espacio-sm);
     }
 
+    .header--admin,
     .header--usuario,
-    .header--admin { padding-top: var(--espacio-md); }
+    .header--instructor {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--espacio-md);
+
+        padding-bottom: var(--espacio-xl);
+        margin-top: var(--espacio-md);
+        margin-bottom: var(--espacio-lg);
+    }
+
+    .header--admin {
+        background: var(--color-admin);
+    }
+
+    .header--usuario {
+        background: white;
+    }
+
+    .header--instructor {
+        background: var(--color-instructor);
+    }
 
     .admin-card__cabecera {
         flex-direction: column;
@@ -1504,7 +1574,9 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .login-form {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    /* Reducido de 1rem a 0.5rem — los campos quedan más juntos y menos dispersos */
+    /* Antes el espacio se veía raro y desproporcionado entre los campos */
+    gap: 0.1rem;
 }
 
 /* Botón principal — gradiente morado-azul de la paleta del proyecto */
@@ -1579,6 +1651,16 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Contenedor del enlace "¿Olvidó su contraseña?" — centrado horizontalmente */
+/* El texto-align center asegura que el botón .btn-link quede centrado */
+/* Se usa text-align porque .btn-link es un elemento inline-level */
+.link-acceso {
+    text-align: center;
+    width: 100%;
+    display: block;
+}
+
+
 /* ── MODAL DE REGISTRO ───────────────────────────────────────────────────────
    Estilos específicos para el modal de creación de cuenta.
    Hereda los estilos base de .modal-overlay y .modal pero añade
@@ -1625,8 +1707,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     display:     flex;
     align-items: center;
     gap:         var(--espacio-sm);
-    background:  rgba(255, 255, 255, 0.15);
-    border:      1.5px solid rgba(199, 98, 227, 0.5);
+    background:  #fff5fe26;
+    border:      1.5px solid rgba(88, 8, 110, 0.5);
     border-radius: var(--radio-full);
     padding:     var(--espacio-xs) var(--espacio-md);
     width:       100%;
@@ -1646,6 +1728,16 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 .header__busqueda-usuario input::placeholder {
     color: var(--texto-claro);
+}
+
+.header__busqueda-usuario button {
+    border: none;
+    border-radius: 999px;
+    padding: 8px 18px;
+    color: #000000;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 /* Botón de cambio de rol en la tabla de usuarios del admin */
@@ -1681,47 +1773,94 @@ body[data-modo="instructor"] { background-color: var(--color-instructor-suave); 
 /* Header del panel instructor con color verde principal */
 .header--instructor {
     background: var(--color-instructor);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--espacio-md);
+
+    padding-bottom: var(--espacio-xl);
+    margin-top: var(--espacio-md);
+    margin-bottom: var(--espacio-lg)
 }
+
 .header--instructor .header__title,
-.header--instructor .header__subtitle { color: white; }
+.header--instructor .header__subtitle {
+    color: white;
+}
 
-/* Buscador del header del panel instructor — misma estructura que el admin */
+.header--instructor .header__subtitle {
+    color: rgba(255,255,255,0.85);
+}
+
+/* Buscador del instructor con misma proporción visual que admin */
 .header__busqueda-instructor {
-    display:     flex;
-    gap:         var(--espacio-sm);
-    margin-top:  var(--espacio-md);
-}
-.header__busqueda-instructor input {
-    flex:            1;
-    padding:         var(--espacio-sm) var(--espacio-md);
-    border:          none;
-    border-radius:   var(--radio-sm);
-    background:      rgba(255,255,255,0.2);
-    color:           white;
-    font-size:       var(--texto-md);
-}
-.header__busqueda-instructor input::placeholder { color: rgba(255,255,255,0.7); }
-.header__busqueda-instructor button {
-    padding:         var(--espacio-sm) var(--espacio-md);
-    border:          none;
-    border-radius:   var(--radio-sm);
-    background:      white;
-    cursor:          pointer;
-    font-size:       var(--texto-md);
-    color:           var(--color-instructor);
-    font-weight:     600;
-}
-.header__busqueda-instructor button:hover { background-color: var(--color-instructor-suave); }
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
 
-/* Botón de logout circular con color del instructor */
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: var(--radio-full);
+
+    padding: var(--espacio-xs) var(--espacio-md);
+
+    width: 100%;
+    max-width: 400px;
+
+    margin-top: var(--espacio-sm);
+}
+
+.header__busqueda-instructor input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+
+    color: white;
+    font-size: var(--texto-sm);
+    font-family: var(--fuente);
+}
+
+.header__busqueda-instructor input::placeholder {
+    color: rgba(255,255,255,0.7);
+}
+
+.header__busqueda-instructor button {
+    background: white;
+    border: none;
+    border-radius: var(--radio-full);
+
+    padding: var(--espacio-xs) var(--espacio-sm);
+
+    cursor: pointer;
+    font-size: var(--texto-sm);
+    color: var(--color-instructor);
+    font-weight: 600;
+
+    white-space: nowrap;
+    transition: background-color var(--transicion);
+}
+
+.header__busqueda-instructor button:hover {
+    background-color: var(--color-instructor-suave);
+}
+
+/* Botón logout igual en proporción que admin */
 .btn-logout-circular--instructor {
-    border-color:     var(--color-instructor);
-    color:            var(--color-instructor);
+    border-color: white;
+}
+
+.btn-logout-circular--instructor .btn-logout-circular__icono {
+    color: white;
+}
+
+.btn-logout-circular--instructor:hover {
     background-color: white;
 }
-.btn-logout-circular--instructor:hover {
-    background-color: var(--color-instructor);
-    color:            white;
+
+.btn-logout-circular--instructor:hover .btn-logout-circular__icono {
+    color: var(--color-instructor);
 }
 
 /* Botón principal del panel instructor — mismo estilo que btn--admin-primary pero verde */
@@ -1755,3 +1894,4 @@ body[data-modo="instructor"] { background-color: var(--color-instructor-suave); 
     padding:    0;
 }
 .btn-link:hover { color: var(--color-primario-oscuro); }
+

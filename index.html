@@ -105,27 +105,34 @@
         <div class="header__nav">
             <!-- Botón circular de cierre de sesión en el panel de usuario -->
             <!-- El ícono de flecha de salida comunica visualmente la acción de salir -->
-            <button class="btn-logout-circular" id="btnLogoutUsuario" type="button" aria-label="Cerrar sesión">
+            <button class="btn-logout-circular btn-logout-circular--usuario" id="btnLogoutUsuario">
                 <span class="btn-logout-circular__icono">⏻</span>
             </button>
 
-            <button class="btn-logout-circular btn-perfil-circular" id="btnPerfilUsuario" type="button" aria-label="Cambiar contraseña">
-                <span class="btn-logout-circular__icono">👤</span>
+            <button class="btn-logout-circular btn-perfil-circular btn-logout-circular--usuario" id="btnPerfilUsuario">
+                <span class="btn-logout-circular__icono"><img width="30" height="30" src="https://img.icons8.com/sf-ultralight/50/show-password.png" alt="show-password"/></span>
             </button>
         </div>
+        
         <h1 class="header__title">Mi Portal de Tareas</h1>
         <p class="header__subtitle">Gestiona tus tareas asignadas</p>
         <!-- Barra de búsqueda de tareas en el panel de usuario -->
         <!-- Filtra en tiempo real las tareas ya cargadas en pantalla -->
         <!-- El evento input se registra en tareasService.js -->
         <form class="header__busqueda-usuario" id="userSearchTaskForm" novalidate>
-            <input
-                type="text"
-                id="userSearchTaskInput"
-                placeholder="Buscar tarea por id, título o estado..."
-                autocomplete="off"
-            >
-        </form>
+                <input
+                    type="text"
+                    id="userSearchTaskInput"
+                    placeholder="Buscar tarea por id, título o estado..."
+                    autocomplete="off"
+                >
+
+                <button type="submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.398a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+                    </svg>
+                </button>
+            </form>
     </header>
 
     <main class="contenido-vista contenido-vista--usuario">
@@ -206,7 +213,7 @@
 
     </main>
 
-    <footer class="footer">
+    <footer class="footer footer--usuario">
         <p class="footer__text">
             Ejercicio de Manipulacion del DOM - Transferencia del Conocimiento |
             SENA - Tecnico en Programacion de Software
@@ -239,7 +246,11 @@
                 placeholder="Buscar usuario por nombre, doc o ID..."
                 autocomplete="off"
             >
-            <button type="submit">Buscar</button>
+            <button type="submit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.398a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+                </svg>
+            </button>
         </form>
     </header>
 
@@ -502,11 +513,15 @@
                 placeholder="Buscar usuario por nombre, doc o ID..."
                 autocomplete="off"
             >
-            <button type="submit">Buscar</button>
+            <button type="submit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.398a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+                </svg>
+            </button>
         </form>
     </header>
 
-    <main class="contenido-vista contenido-vista--admin">
+    <main class="contenido-vista contenido-vista--instructor">
 
         <!-- Dashboard de estadísticas del instructor — mismas 5 tarjetas que admin -->
         <!-- IDs con prefijo "instr" para no colisionar con los del panel admin -->
@@ -661,7 +676,7 @@
 
     </main>
 
-    <footer class="footer footer--admin">
+    <footer class="footer footer--instructor">
         <p class="footer__text">
             Panel Docente · Sistema de Gestión de Tareas |
             SENA - Técnico en Programación de Software
