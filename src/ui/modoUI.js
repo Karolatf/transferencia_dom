@@ -1917,9 +1917,17 @@ export function registrarEventosNavegacion() {
                 await new Promise(resolve => setTimeout(resolve, 1200));
 
                 // Redirigir al modo que corresponde según el rol del usuario
+                // Se evalúan los 3 roles posibles: admin, instructor y user
+                // Sin este bloque completo, el instructor aterrizaba en la vista de usuario
                 if (datos.user.role === 'admin') {
+                    // El rol admin activa el panel de administración con CRUD completo
                     await activarModoAdmin();
+                } else if (datos.user.role === 'instructor') {
+                    // El rol instructor activa el panel docente con paleta verde
+                    // Esta línea faltaba — causaba que instructor viera la vista de usuario
+                    await activarModoInstructor();
                 } else {
+                    // El rol user activa el panel personal con solo sus tareas
                     activarModoUsuario();
                 }
 
