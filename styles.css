@@ -1696,7 +1696,6 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 /* Texto y botón de enlace de "Regístrate aquí" debajo del login */
 .login-registro-texto {
     text-align:  center;
-    font-size:   var(--texto-sm);
     color:       var(--texto-medio);
     margin-top:  var(--espacio-sm);
 }
