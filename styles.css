@@ -1029,6 +1029,190 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     border-color: var(--color-error) !important;
 }
 
+/* ── MODAL DE REGISTRO V2 — Rediseño M7 ────────────────────────────────────────
+   Clases nuevas con prefijo modal--registro-v2 para no afectar los estilos
+   del modal base (.modal, .modal__header, etc.) que usan los otros modales.
+   Todos los colores respetan la paleta del proyecto definida en :root. */
+
+/* Tarjeta del modal — más ancha que el modal base para acomodar el grid de 2 columnas */
+.modal--registro-v2 {
+    max-width:  520px;        /* Más ancho que el modal--registro original (420px) */
+    width:      95%;          /* En móvil usa casi todo el ancho disponible */
+    padding:    0;            /* El padding lo da cada sección internamente */
+    overflow:   hidden;       /* Para que el header con fondo de color no se salga */
+    border-radius: var(--radio-2xl);
+}
+
+/* Encabezado del modal — fondo con gradiente suave de la paleta del proyecto */
+.modal--registro-v2__header {
+    display:         flex;
+    align-items:     center;
+    gap:             var(--espacio-md);
+    padding:         var(--espacio-lg) var(--espacio-xl);
+    background:      linear-gradient(135deg, var(--color-primario-suave) 0%, #e0f2fe 100%);
+    border-bottom:   1px solid var(--borde-suave);
+    position:        relative;     /* Para el botón de cierre posicionado absolutamente */
+}
+
+/* Círculo con el ícono de usuario — da identidad visual al modal */
+.modal--registro-v2__icono {
+    width:           48px;
+    height:          48px;
+    border-radius:   50%;
+    background:      white;
+    border:          2px solid var(--color-primario);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       1.5rem;
+    flex-shrink:     0;            /* No se encoge en layouts flex */
+    box-shadow:      var(--sombra-sm);
+}
+
+/* Título del modal en el header */
+.modal--registro-v2__titulo {
+    font-size:   var(--texto-xl);
+    font-weight: 700;
+    color:       var(--texto-oscuro);
+    margin:      0;
+}
+
+/* Subtítulo descriptivo debajo del título */
+.modal--registro-v2__subtitulo {
+    font-size:  var(--texto-sm);
+    color:      var(--texto-medio);
+    margin:     var(--espacio-xs) 0 0;
+}
+
+/* Botón X de cierre — posicionado en la esquina superior derecha del header */
+.modal--registro-v2__cerrar {
+    position:    absolute;
+    top:         var(--espacio-md);
+    right:       var(--espacio-md);
+    background:  none;
+    border:      none;
+    font-size:   var(--texto-lg);
+    color:       var(--texto-claro);
+    cursor:      pointer;
+    padding:     var(--espacio-xs);
+    border-radius: var(--radio-md);
+    line-height: 1;
+    transition:  color var(--transicion), background-color var(--transicion);
+}
+
+.modal--registro-v2__cerrar:hover {
+    color:            var(--texto-oscuro);
+    background-color: var(--borde-suave);
+}
+
+/* Formulario — padding interno y columna flex */
+.modal--registro-v2__form {
+    display:         flex;
+    flex-direction:  column;
+    gap:             var(--espacio-md);
+    padding:         var(--espacio-xl);
+}
+
+/* Fila de dos columnas para nombre+documento y contraseña+confirmar */
+.modal--registro-v2__fila {
+    display:   grid;
+    grid-template-columns: 1fr 1fr;   /* Dos columnas de igual tamaño */
+    gap:       var(--espacio-md);     /* Espacio entre las dos columnas */
+}
+
+/* Grupo de campo: label + input + span de error */
+.modal--registro-v2__grupo {
+    display:        flex;
+    flex-direction: column;
+    gap:            var(--espacio-xs);
+}
+
+/* Label del campo */
+.modal--registro-v2__label {
+    font-size:   var(--texto-sm);
+    font-weight: 600;
+    color:       var(--texto-oscuro);
+}
+
+/* Input del campo — hereda el estilo de .form__input pero con borde de color primario al focus */
+.modal--registro-v2__input {
+    width:         100%;
+    padding:       var(--espacio-sm) var(--espacio-md);
+    font-size:     var(--texto-md);
+    font-family:   var(--fuente);
+    color:         var(--texto-oscuro);
+    background:    white;
+    border:        2px solid var(--borde-suave);
+    border-radius: var(--radio-md);
+    transition:    border-color var(--transicion), box-shadow var(--transicion);
+    outline:       none;
+}
+
+.modal--registro-v2__input:focus {
+    border-color: var(--color-primario);
+    box-shadow:   0 0 0 3px var(--color-primario-suave);
+}
+
+.modal--registro-v2__input::placeholder {
+    color: var(--texto-claro);
+}
+
+/* Span de error con ícono de advertencia para feedback más claro */
+.modal--registro-v2__error {
+    font-size:  var(--texto-sm);
+    color:      var(--color-error);
+    min-height: 1.2em;              /* Reserva espacio para que el layout no salte */
+}
+
+/* Antes del texto del error se agrega un ícono de advertencia automáticamente */
+/* Solo se muestra si el span tiene contenido (la pseudoclase :not(:empty) lo activa) */
+.modal--registro-v2__error:not(:empty)::before {
+    content: '⚠ ';               /* Ícono de advertencia seguido de espacio */
+}
+
+/* Botón de envío — ocupa todo el ancho con el color primario del proyecto */
+.modal--registro-v2__btn-submit {
+    width:           100%;
+    padding:         var(--espacio-md) var(--espacio-lg);
+    background:      var(--color-primario);
+    color:           white;
+    border:          none;
+    border-radius:   var(--radio-lg);
+    font-size:       var(--texto-md);
+    font-weight:     600;
+    cursor:          pointer;
+    transition:      background-color var(--transicion), transform var(--transicion);
+    margin-top:      var(--espacio-sm);
+}
+
+.modal--registro-v2__btn-submit:hover {
+    background-color: var(--color-primario-oscuro);
+    transform:        translateY(-1px);
+}
+
+.modal--registro-v2__btn-submit:disabled {
+    opacity:  0.6;
+    cursor:   not-allowed;
+    transform: none;
+}
+
+/* Nota de privacidad al final del formulario */
+.modal--registro-v2__nota {
+    font-size:  var(--texto-sm);
+    color:      var(--texto-claro);
+    text-align: center;
+    margin:     0;
+}
+
+/* Responsividad: en móvil las dos columnas pasan a una */
+@media (max-width: 480px) {
+    .modal--registro-v2__fila {
+        grid-template-columns: 1fr;    /* Una sola columna en pantallas pequeñas */
+    }
+    .modal--registro-v2 {
+        max-width: 100%;
+    }
+}
 
 /* ANIMACIONES */
 @keyframes slideIn {

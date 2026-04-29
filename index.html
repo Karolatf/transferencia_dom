@@ -746,92 +746,124 @@
     </div>
 </div>
 
-<!-- MODAL DE REGISTRO -->
-<!-- Se muestra como overlay encima de la pantalla de inicio al hacer clic en "Regístrate" -->
-<!-- Tiene el mismo estilo glass que la card del login para coherencia visual -->
+<!-- MODAL DE REGISTRO — Rediseñado en M7 -->
+<!-- Conserva los mismos IDs en todos los campos para no romper la lógica de modoUI.js -->
+<!-- Solo cambia el HTML estructural y las clases CSS — la funcionalidad es idéntica -->
 <div class="modal-overlay hidden" id="registroModal">
-    <div class="modal modal--registro">
+    <div class="modal modal--registro modal--registro-v2">
 
-        <!-- Encabezado del modal con título y botón de cierre -->
-        <div class="modal__header">
-            <h2 class="modal__title">Crear cuenta</h2>
-            <button class="modal__close" id="registroCloseBtn" type="button">✕</button>
+        <!-- Encabezado con ícono y título estilizado -->
+        <div class="modal--registro-v2__header">
+            <!-- Ícono de usuario que da identidad visual al modal -->
+            <div class="modal--registro-v2__icono" aria-hidden="true">👤</div>
+            <div>
+                <h2 class="modal--registro-v2__titulo">Crear cuenta</h2>
+                <p class="modal--registro-v2__subtitulo">Completa los datos para registrarte</p>
+            </div>
+            <!-- Botón de cierre — mismo ID que antes para que modoUI.js lo encuentre -->
+            <button class="modal--registro-v2__cerrar" id="registroCloseBtn" type="button" aria-label="Cerrar modal de registro">✕</button>
         </div>
 
-        <!-- Formulario de registro con validaciones en cada campo -->
-        <form id="registroForm" class="form" novalidate>
+        <!-- Formulario de registro — mismos IDs de campos que antes -->
+        <form id="registroForm" class="modal--registro-v2__form" novalidate>
 
-            <!-- Campo nombre: solo letras y espacios, mínimo 3 caracteres -->
-            <div class="form__group">
-                <label for="registroNombre" class="form__label">Nombre completo</label>
-                <input
-                    type="text"
-                    id="registroNombre"
-                    class="form__input"
-                    placeholder="Ej: María López"
-                    autocomplete="name"
-                >
-                <span class="form__error" id="registroNombreError"></span>
+            <!-- Fila 1: Nombre y Documento en dos columnas -->
+            <div class="modal--registro-v2__fila">
+
+                <!-- Campo nombre: solo letras y espacios, mínimo 3 caracteres -->
+                <div class="modal--registro-v2__grupo">
+                    <label for="registroNombre" class="modal--registro-v2__label">
+                        Nombre completo
+                    </label>
+                    <input
+                        type="text"
+                        id="registroNombre"
+                        class="modal--registro-v2__input"
+                        placeholder="María López"
+                        autocomplete="name"
+                    >
+                    <span class="modal--registro-v2__error" id="registroNombreError"></span>
+                </div>
+
+                <!-- Campo documento: solo números, mínimo 5 dígitos -->
+                <div class="modal--registro-v2__grupo">
+                    <label for="registroDocumento" class="modal--registro-v2__label">
+                        Documento
+                    </label>
+                    <input
+                        type="text"
+                        id="registroDocumento"
+                        class="modal--registro-v2__input"
+                        placeholder="1097497124"
+                        autocomplete="off"
+                    >
+                    <span class="modal--registro-v2__error" id="registroDocumentoError"></span>
+                </div>
+
             </div>
 
-            <!-- Campo documento: solo números, mínimo 5 dígitos -->
-            <div class="form__group">
-                <label for="registroDocumento" class="form__label">Número de documento</label>
-                <input
-                    type="text"
-                    id="registroDocumento"
-                    class="form__input"
-                    placeholder="Ej: 1097497124"
-                    autocomplete="off"
-                >
-                <span class="form__error" id="registroDocumentoError"></span>
-            </div>
-
-            <!-- Campo email: debe tener @ y dominio válido -->
-            <div class="form__group">
-                <label for="registroEmail" class="form__label">Correo electrónico</label>
+            <!-- Fila 2: Email en ancho completo -->
+            <div class="modal--registro-v2__grupo">
+                <label for="registroEmail" class="modal--registro-v2__label">
+                    Correo electrónico
+                </label>
                 <input
                     type="text"
                     id="registroEmail"
-                    class="form__input"
+                    class="modal--registro-v2__input"
                     placeholder="ejemplo@correo.com"
                     autocomplete="email"
                 >
-                <span class="form__error" id="registroEmailError"></span>
+                <span class="modal--registro-v2__error" id="registroEmailError"></span>
             </div>
 
-            <!-- Campo contraseña: mínimo 6 caracteres -->
-            <div class="form__group">
-                <label for="registroPassword" class="form__label">Contraseña</label>
-                <input
-                    type="password"
-                    id="registroPassword"
-                    class="form__input"
-                    placeholder="Mínimo 6 caracteres"
-                    autocomplete="new-password"
-                >
-                <span class="form__error" id="registroPasswordError"></span>
+            <!-- Fila 3: Contraseña y Confirmar contraseña en dos columnas -->
+            <div class="modal--registro-v2__fila">
+
+                <!-- Campo contraseña: mínimo 6 caracteres -->
+                <div class="modal--registro-v2__grupo">
+                    <label for="registroPassword" class="modal--registro-v2__label">
+                        Contraseña
+                    </label>
+                    <input
+                        type="password"
+                        id="registroPassword"
+                        class="modal--registro-v2__input"
+                        placeholder="Mínimo 6 caracteres"
+                        autocomplete="new-password"
+                    >
+                    <span class="modal--registro-v2__error" id="registroPasswordError"></span>
+                </div>
+
+                <!-- Campo confirmar contraseña: debe coincidir con el campo anterior -->
+                <div class="modal--registro-v2__grupo">
+                    <label for="registroConfirmar" class="modal--registro-v2__label">
+                        Confirmar
+                    </label>
+                    <input
+                        type="password"
+                        id="registroConfirmar"
+                        class="modal--registro-v2__input"
+                        placeholder="Repite la contraseña"
+                        autocomplete="new-password"
+                    >
+                    <span class="modal--registro-v2__error" id="registroConfirmarError"></span>
+                </div>
+
             </div>
 
-            <!-- Campo confirmar contraseña: debe coincidir con el campo anterior -->
-            <div class="form__group">
-                <label for="registroConfirmar" class="form__label">Confirmar contraseña</label>
-                <input
-                    type="password"
-                    id="registroConfirmar"
-                    class="form__input"
-                    placeholder="Repite tu contraseña"
-                    autocomplete="new-password"
-                >
-                <span class="form__error" id="registroConfirmarError"></span>
-            </div>
-
-            <!-- Botón de envío del formulario de registro -->
-            <button type="submit" class="btn-acceso btn-acceso--login" id="btnRegistrar">
+            <!-- Botón de envío — mismo ID que antes para que modoUI.js lo encuentre -->
+            <button type="submit" class="modal--registro-v2__btn-submit" id="btnRegistrar">
                 Crear cuenta
             </button>
 
+            <!-- Nota de privacidad -->
+            <p class="modal--registro-v2__nota">
+                Tus datos solo se usan para acceder al sistema. No los compartimos con terceros.
+            </p>
+
         </form>
+
     </div>
 </div>
 
