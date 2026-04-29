@@ -1343,12 +1343,18 @@ function cerrarModalUsuarioExistente() {
 //   - Se alterna la clase "contraido" en la flecha para rotarla
 //   - Se alterna la clase "sin-borde" en el encabezado para quitar el separador
 function registrarCardsContraibles() {
-    // Pares de [id del encabezado, id del cuerpo] de cada card contraíble
+     // Pares de [id del encabezado, id del cuerpo] de cada card contraíble.
+    // Se agregan aquí los pares del instructor con prefijo "instr" para que
+    // la misma función maneje ambos paneles (admin e instructor) sin duplicar código.
     const pares = [
-        ['toggleUsuarios',     'cuerpoUsuarios'],
-        ['toggleTareas',       'cuerpoTareas'],
-        // La card de crear tareas se agrega aquí cuando Sebastián la cree
-        ['toggleCrearTareas',  'cuerpoCrearTareas'],
+        // Cards del panel admin
+        ['toggleUsuarios',          'cuerpoUsuarios'],
+        ['toggleTareas',            'cuerpoTareas'],
+        ['toggleCrearTareas',       'cuerpoCrearTareas'],
+        // Cards del panel instructor — mismos IDs que el HTML del vistaInstructor
+        ['instrToggleCrearTareas',  'instrCuerpoCrearTareas'],
+        ['instrToggleUsuarios',     'instrCuerpoUsuarios'],
+        ['instrToggleTareas',       'instrCuerpoTareas'],
     ];
 
     pares.forEach(function(par) {
@@ -2236,56 +2242,98 @@ export function registrarEventosNavegacion() {
         });
     }
 
-    // Formulario de crear tarea del instructor
+        // Formulario de crear tarea del instructor — con validaciones y spans de error
     const instrCreateTaskForm = document.getElementById('instrCreateTaskForm');
     if (instrCreateTaskForm) {
         instrCreateTaskForm.addEventListener('submit', async function(event) {
             event.preventDefault();
 
-            const titulo     = document.getElementById('instrNewTaskTitle').value.trim();
-            const desc       = document.getElementById('instrNewTaskDescription').value.trim();
-            const estado     = document.getElementById('instrNewTaskStatus').value;
-            const comentario = document.getElementById('instrNewTaskComment').value.trim();
+            // Referencias a los campos del formulario del instructor
+            const tituloInput    = document.getElementById('instrNewTaskTitle');
+            const estadoInput    = document.getElementById('instrNewTaskStatus');
+            const instrComentEl  = document.getElementById('instrNewTaskComment');
 
-            // Validación: estado obligatorio
-            if (!estado) {
-                await mostrarNotificacion('Selecciona un estado para la tarea', 'error');
-                return;
-            }
+            // Referencias a los spans de error de cada campo
+            // Estos IDs deben existir en index.html debajo de cada campo
+            const errorTitulo    = document.getElementById('instrNewTaskTitleError');
+            const errorEstado    = document.getElementById('instrNewTaskStatusError');
+            const errorUsuarios  = document.getElementById('instrNewTaskUsersError');
+
+            // Limpiar todos los spans de error antes de validar
+            // Así los errores del intento anterior desaparecen al intentar de nuevo
+            if (errorTitulo)   errorTitulo.textContent   = '';
+            if (errorEstado)   errorEstado.textContent   = '';
+            if (errorUsuarios) errorUsuarios.textContent = '';
+
+            // Leer los valores de los campos
+            const titulo    = tituloInput   ? tituloInput.value.trim()   : '';
+            const estado    = estadoInput   ? estadoInput.value          : '';
+            // Comentario: null si está vacío (el backend lo acepta así)
+            const comentario = instrComentEl && instrComentEl.value.trim() !== ''
+                ? instrComentEl.value.trim()
+                : null;
+
+            // Variable para controlar si el formulario es válido
+            let esValido = true;
+
+            // Validar título: obligatorio, mínimo 3 caracteres
             if (!titulo || titulo.length < 3) {
-                await mostrarNotificacion('El título debe tener al menos 3 caracteres', 'error');
-                return;
+                if (errorTitulo) errorTitulo.textContent = 'El título es obligatorio (mínimo 3 caracteres)';
+                if (tituloInput) tituloInput.classList.add('error');
+                esValido = false;
+            } else {
+                // Limpiar el estilo de error si el campo es válido
+                if (tituloInput) tituloInput.classList.remove('error');
+            }
+
+            // Validar estado: obligatorio — no puede ser el placeholder vacío
+            if (!estado) {
+                if (errorEstado) errorEstado.textContent = 'Debes seleccionar un estado para la tarea';
+                if (estadoInput) estadoInput.classList.add('error');
+                esValido = false;
+            } else {
+                if (estadoInput) estadoInput.classList.remove('error');
             }
 
             // Obtener los usuarios seleccionados en el dropdown del instructor
             const checkboxes = document.querySelectorAll('#instrUsuariosDropdownPanel input:checked');
-            const usuariosSeleccionados = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
+            const usuariosSeleccionados = Array.from(checkboxes).map(function(cb) {
+                return parseInt(cb.value, 10);
+            });
 
+            // Validar usuarios: debe haber al menos uno seleccionado
             if (usuariosSeleccionados.length === 0) {
-                await mostrarNotificacion('Selecciona al menos un usuario para asignar la tarea', 'error');
-                return;
+                if (errorUsuarios) errorUsuarios.textContent = 'Selecciona al menos un usuario para la tarea';
+                esValido = false;
             }
 
+            // Si hay errores, detener el envío — el usuario ve los spans de error
+            if (!esValido) return;
+
+            // Construir el objeto de tarea para enviar al backend
+            const desc = document.getElementById('instrNewTaskDescription');
             const datosTarea = {
                 title:         titulo,
-                description:   desc || undefined,
+                description:   desc && desc.value.trim() !== '' ? desc.value.trim() : undefined,
                 status:        estado,
-                comment:       comentario || null,
+                comment:       comentario,
                 assignedUsers: usuariosSeleccionados,
             };
 
             const tareaCreada = await registrarTarea(datosTarea);
             if (tareaCreada) {
-                // Limpiar el formulario tras crear la tarea
+                // Limpiar el formulario y el dropdown tras crear la tarea exitosamente
                 instrCreateTaskForm.reset();
-                // Deseleccionar los checkboxes del dropdown
-                document.querySelectorAll('#instrUsuariosDropdownPanel input').forEach(cb => { cb.checked = false; });
-                const texto = document.getElementById('instrUsuariosDropdownTexto');
-                if (texto) texto.textContent = 'Seleccionar usuarios...';
+                document.querySelectorAll('#instrUsuariosDropdownPanel input').forEach(function(cb) {
+                    cb.checked = false;
+                });
+                const textoDropdown = document.getElementById('instrUsuariosDropdownTexto');
+                if (textoDropdown) textoDropdown.textContent = 'Seleccionar usuarios...';
 
+                // Recargar las tablas del instructor para mostrar la nueva tarea
                 cargarTareasInstructor();
                 cargarDashboardInstructor();
-                await mostrarNotificacion(`Tarea "${titulo}" creada correctamente`, 'exito');
+                await mostrarNotificacion(`Tarea "${datosTarea.title}" creada correctamente`, 'exito');
             } else {
                 await mostrarNotificacion('Error al crear la tarea', 'error');
             }
