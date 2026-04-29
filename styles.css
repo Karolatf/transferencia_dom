@@ -488,6 +488,23 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 .btn--admin-secondary:hover { background-color: var(--color-admin); color: white; }
 
+/* Botón secundario del panel instructor */
+.btn--instructor-secondary {
+    background-color: transparent;
+    color: var(--color-instructor);
+    border: 2px solid var(--color-instructor);
+    padding: var(--espacio-xs) var(--espacio-md);
+    border-radius: var(--radio-full);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transicion), color var(--transicion);
+}
+
+.btn--instructor-secondary:hover {
+    background-color: var(--color-instructor);
+    color: white;
+}
 
 /* USER INFO */
 .user-info {
@@ -1679,26 +1696,23 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 /* Texto y botón de enlace de "Regístrate aquí" debajo del login */
 .login-registro-texto {
     text-align:  center;
-    font-size:   var(--texto-sm);
     color:       var(--texto-medio);
     margin-top:  var(--espacio-sm);
 }
 
 /* El botón de registro parece un enlace pero es un button para semántica correcta */
 .login-registro-btn {
-    background:  none;
-    border:      none;
-    color:       var(--color-primario);
-    cursor:      pointer;
-    font-size:   var(--texto-sm);
-    font-weight: 600;
-    padding:     0;
+    background: none;
+    border:     none;
+    color:      #929aa5;
+    cursor:     pointer;
+    font-size:  var(--texto-md);
     text-decoration: underline;
-    transition:  color var(--transicion);
+    padding:    0;;
 }
 
 .login-registro-btn:hover {
-    color: var(--color-primario-oscuro);
+    color: #4b5563;
 }
 
 /* Barra de búsqueda del panel de usuario — misma apariencia que la del admin
@@ -1868,12 +1882,14 @@ body[data-modo="instructor"] { background-color: var(--color-instructor-suave); 
     background-color: var(--color-instructor);
     color:            white;
     border:           none;
-    padding:          var(--espacio-sm) var(--espacio-md);
-    border-radius:    var(--radio-sm);
+    padding:          var(--espacio-xs) var(--espacio-md);
+    border-radius: var(--radio-full);
     cursor:           pointer;
-    font-size:        var(--texto-md);
+    font-size:        var(--texto-sm);
     font-weight:      600;
+
 }
+
 .btn--instr-primary:hover { background-color: var(--color-instructor-oscuro); }
 
 /* ── BOTÓN CIRCULAR DE PERFIL ──────────────────────────────────────────────── */
@@ -1887,11 +1903,10 @@ body[data-modo="instructor"] { background-color: var(--color-instructor-suave); 
 .btn-link {
     background: none;
     border:     none;
-    color:      var(--color-primario);
+    color:      #929aa5;
     cursor:     pointer;
     font-size:  var(--texto-md);
     text-decoration: underline;
     padding:    0;
 }
-.btn-link:hover { color: var(--color-primario-oscuro); }
-
+.btn-link:hover { color: #4b5563 }
