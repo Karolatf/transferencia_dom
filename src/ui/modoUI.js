@@ -20,7 +20,7 @@ import {
     obtenerTodosLosUsuarios,
     eliminarUsuario,
     actualizarUsuario,
-    cambiarRolUsuario,          // ← nueva función
+    cambiarRolUsuario,
     cambiarPassword,
 } from '../api/usuariosApi.js';
 
@@ -1019,7 +1019,68 @@ function manejarEdicionTareaAdmin(tarea) {
 
     formulario.addEventListener('submit', guardarCambiosAdmin);
 }
+// manejarEdicionTareaInstructor — abre el modal compartido de edición para el instructor.
+// Diferencia con manejarEdicionTareaAdmin:
+//   - Al guardar, recarga cargarTareasInstructor() y cargarDashboardInstructor()
+//   - No actualiza todasLasTareas (esa variable es privada del panel admin)
+// Usa el mismo modal editModal y el mismo formulario editTaskForm del index.html.
+function manejarEdicionTareaInstructor(tarea) {
+    // Abrir el modal con los datos de la tarea precargados
+    // mostrarModalEdicion viene de tareasUI.js y rellena los campos del formulario
+    mostrarModalEdicion(tarea);
 
+    // Referencia al formulario compartido de edición
+    const formulario = document.getElementById('editTaskForm');
+    if (!formulario) return;
+
+    // Función que se ejecuta al guardar los cambios desde el instructor
+    // Se define como función nombrada para poder removerla después del submit
+    // y evitar que se acumule un listener por cada edición
+    async function guardarCambiosInstructor(event) {
+        event.preventDefault();
+
+        // Leer los valores actuales del formulario de edición
+        const tareaId     = document.getElementById('editTaskId').value;
+        const titulo      = document.getElementById('editTaskTitle').value.trim();
+        const descripcion = document.getElementById('editTaskDescription').value.trim();
+        const estado      = document.getElementById('editTaskStatus').value;
+
+        // El campo comentario puede no existir en todos los formularios de edición
+        const comentEl   = document.getElementById('editTaskComment');
+        const comentario = comentEl && comentEl.value.trim() !== ''
+            ? comentEl.value.trim()
+            : null;
+
+        // Construir el objeto con los datos actualizados
+        const datosActualizados = {
+            title:       titulo,
+            description: descripcion,
+            status:      estado,
+            comment:     comentario,
+        };
+
+        // Llamar al backend para actualizar la tarea
+        const tareaActualizada = await actualizarTarea(tareaId, datosActualizados);
+
+        if (tareaActualizada) {
+            // Cerrar el modal y recargar las tablas del instructor
+            ocultarModalEdicion();
+            // Se recargan ambas tablas para reflejar los cambios de forma consistente
+            cargarTareasInstructor();
+            cargarDashboardInstructor();
+            await mostrarNotificacion('Tarea actualizada exitosamente', 'exito');
+        } else {
+            await mostrarNotificacion('Error al actualizar la tarea', 'error');
+        }
+
+        // Remover el listener después de ejecutarse para evitar duplicados
+        // en la próxima edición desde el panel instructor
+        formulario.removeEventListener('submit', guardarCambiosInstructor);
+    }
+
+    // Registrar el listener del submit para esta edición del instructor
+    formulario.addEventListener('submit', guardarCambiosInstructor);
+}           
 
 function crearFilaTareaAdmin(tarea, indice) {
     const fila = document.createElement('tr');
