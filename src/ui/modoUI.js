@@ -35,7 +35,9 @@ import { mostrarModalEdicion, ocultarModalEdicion, agregarTareaATabla } from './
 
 import { ordenarTareas }  from '../utils/ordenamiento.js';
 
-import { exportarTareasJSON } from '../utils/exportacion.js';
+// Se importan las dos funciones de exportación — la específica de tareas y la genérica
+// exportarListaJSON es la nueva función para exportar usuarios y cualquier otro recurso
+import { exportarTareasJSON, exportarListaJSON } from '../utils/exportacion.js';
 
 // Se agrega validarFormularioRegistro a los imports de validaciones
 // Este import conecta modoUI.js con la nueva función que valida los 5 campos del modal
@@ -271,6 +273,61 @@ async function cargarTablaUsuariosInstructor() {
     });
 }
 
+// aplicarFiltrosInstructor — filtra la tabla de tareas del instructor por estado
+// Es equivalente a aplicarFiltrosAdmin del panel admin pero para el instructor.
+// Lee el valor del select instrFiltroEstado y recarga las filas del tbody
+// mostrando solo las tareas que coincidan con el estado seleccionado.
+//
+// Si el filtro está vacío (valor '') muestra todas las tareas sin filtrar.
+async function aplicarFiltrosInstructor() {
+    const tbody = document.getElementById('instrTasksTableBody');
+    if (!tbody) return; // Salir si el tbody no existe en el DOM
+
+    // Leer el valor actual del select de estado del instructor
+    const filtroEstado = document.getElementById('instrFiltroEstado');
+    const estado       = filtroEstado ? filtroEstado.value : '';
+
+    // Obtener todas las tareas del backend (sin caché para datos frescos)
+    const tareas = await obtenerTodasLasTareas();
+    if (!tareas) return;
+
+    // Filtrar por estado si hay un estado seleccionado, o usar todas las tareas si no
+    // Un estado vacío ('') significa "Todos" — no se aplica ningún filtro
+    const resultado = estado
+        ? tareas.filter(function(t) { return t.status === estado; })
+        : tareas;
+
+    // Vaciar el tbody antes de repintar con los resultados filtrados
+    // Se usa removeChild en bucle en lugar de innerHTML = '' para respetar el estándar del proyecto
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+    // Actualizar el contador de tareas en el encabezado de la card
+    const contador = document.getElementById('instrTasksCount');
+    if (contador) {
+        const cantidad = resultado.length;
+        contador.textContent = `${cantidad} ${cantidad === 1 ? 'tarea' : 'tareas'}`;
+    }
+
+    // Si no hay resultados mostrar fila indicativa en lugar de tabla vacía
+    if (resultado.length === 0) {
+        const fila = document.createElement('tr');
+        const td   = document.createElement('td');
+        td.colSpan        = 6; // 6 columnas: #, Titulo, Descripcion, Estado, Usuario, Acciones
+        td.textContent    = 'No hay tareas que coincidan con el filtro seleccionado';
+        td.style.textAlign = 'center';
+        td.style.color    = '#9ca3af';
+        fila.appendChild(td);
+        tbody.appendChild(fila);
+        return;
+    }
+
+    // Pintar cada tarea filtrada usando la función ya existente para construir las filas
+    resultado.forEach(function(tarea, indice) {
+        const fila = crearFilaTareaInstructor(tarea, indice);
+        tbody.appendChild(fila);
+    });
+}
+
 // cargarTareasInstructor — llena la tabla de tareas del panel instructor.
 // Es equivalente a cargarTodasLasTareas del admin pero usa los IDs del instructor.
 async function cargarTareasInstructor() {
@@ -312,10 +369,15 @@ function crearFilaTareaInstructor(tarea, indice) {
     celdaDesc.textContent = tarea.description || '—';
 
     const celdaEstado = document.createElement('td');
-    // Reutilizar la misma función de formato de estado que el panel admin
+    // Construir el badge de estado con los mismos colores que el panel admin
+    // CORRECCIÓN: la clase CSS es 'status-pendiente', 'status-completada', etc.
+    // No 'status-badge--pendiente' — ese era el bug que causaba que no se vieran los colores
     const badgeEstado = document.createElement('span');
-    badgeEstado.classList.add('status-badge', `status-badge--${tarea.status}`);
-    badgeEstado.textContent = tarea.status.replace(/_/g, ' ');
+    // Dos clases: status-badge (estilos base del badge) y status-${tarea.status} (color específico)
+    // Esto es exactamente lo mismo que hace crearFilaTareaAdmin — mantiene coherencia visual
+    badgeEstado.classList.add('status-badge', `status-${tarea.status}`);
+    // Usar la misma función formatearEstado que usa el admin para el texto del badge
+    badgeEstado.textContent = formatearEstado(tarea.status);
     celdaEstado.appendChild(badgeEstado);
 
     const celdaUsuario = document.createElement('td');
@@ -1997,6 +2059,65 @@ export function registrarEventosNavegacion() {
             mostrarNotificacion('Exportación completada', 'exito');
         }
     });
+
+      // ── EXPORTAR USUARIOS — PANEL ADMIN ───────────────────────────────────────
+    // Listener del botón "Exportar JSON" en la card de Usuarios del Sistema del admin
+    // exportarListaJSON es la función genérica de exportacion.js que descarga
+    // cualquier arreglo como archivo JSON con nombre y fecha en el nombre del archivo
+    const btnExportarUsuariosAdmin = document.getElementById('adminBtnExportarUsuarios');
+    if (btnExportarUsuariosAdmin) {
+        btnExportarUsuariosAdmin.addEventListener('click', async function() {
+            // Obtener la lista actualizada de usuarios desde el backend
+            // No usamos una variable local porque puede haber usuarios nuevos desde que cargó la tabla
+            const usuarios = await obtenerTodosLosUsuarios();
+            const exportado = exportarListaJSON(usuarios, 'usuarios');
+            if (!exportado) {
+                mostrarNotificacion('No hay usuarios para exportar', 'advertencia');
+            } else {
+                mostrarNotificacion('Lista de usuarios exportada correctamente', 'exito');
+            }
+        });
+    }
+
+    // ── EXPORTAR USUARIOS — PANEL INSTRUCTOR ──────────────────────────────────
+    // Igual que el de admin pero activado desde el panel del instructor
+    // Usa los mismos datos del backend (todos los usuarios del sistema)
+    const btnExportarUsuariosInstr = document.getElementById('instrBtnExportarUsuarios');
+    if (btnExportarUsuariosInstr) {
+        btnExportarUsuariosInstr.addEventListener('click', async function() {
+            const usuarios = await obtenerTodosLosUsuarios();
+            const exportado = exportarListaJSON(usuarios, 'usuarios');
+            if (!exportado) {
+                mostrarNotificacion('No hay usuarios para exportar', 'advertencia');
+            } else {
+                mostrarNotificacion('Lista de usuarios exportada correctamente', 'exito');
+            }
+        });
+    }
+
+    // ── FILTROS DE TAREAS — PANEL INSTRUCTOR ──────────────────────────────────
+    // El instructor ya tiene los botones en el HTML (instrBtnAplicarFiltros, instrBtnLimpiarFiltros)
+    // pero no tenían listeners — los registramos aquí igual que los del admin
+    // La diferencia es que llaman a aplicarFiltrosInstructor() (que crearemos abajo)
+    // en lugar de aplicarFiltrosAdmin()
+    const btnAplicarInstr = document.getElementById('instrBtnAplicarFiltros');
+    if (btnAplicarInstr) {
+        btnAplicarInstr.addEventListener('click', function() {
+            // Aplicar los filtros seleccionados en los controles del instructor
+            aplicarFiltrosInstructor();
+        });
+    }
+
+    const btnLimpiarInstr = document.getElementById('instrBtnLimpiarFiltros');
+    if (btnLimpiarInstr) {
+        btnLimpiarInstr.addEventListener('click', function() {
+            // Limpiar el select de estado y recargar todas las tareas sin filtro
+            const filtroEstadoInstr = document.getElementById('instrFiltroEstado');
+            if (filtroEstadoInstr) filtroEstadoInstr.value = '';
+            // Recargar la tabla del instructor sin filtros activos
+            cargarTareasInstructor();
+        });
+    }
 
     // Búsqueda de usuario en el header del admin
     const formBusqueda = document.getElementById('adminSearchUserForm');
