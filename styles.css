@@ -1376,6 +1376,17 @@ body[data-modo="admin"]   {
     .tasks-table-container {
         overflow-x: auto;
     }
+
+    .task-actions {
+        flex-wrap: wrap;
+        gap: var(--espacio-xs);
+    }
+    .inicio__columna-imagen {
+        display: none;
+    }
+    .inicio__columna-panel {
+        width: 100%;
+    }
 }
 
 
@@ -2191,4 +2202,45 @@ body[data-modo="instructor"] {
 .tasks-table td.col-estado,
 .tasks-table th.col-estado {
     min-width: 130px;
+}
+
+/* Breakpoint 1280px — laptops normales */
+@media (max-width: 1280px) {
+    .contenido-vista {
+        padding: var(--espacio-lg);
+    }
+}
+
+/* Breakpoint 1024px — tablets landscape, colapsa layout de 3 columnas */
+@media (max-width: 1024px) {
+    .admin-layout-tres-columnas {
+        flex-direction: column;
+    }
+    .columna-auditoria,
+    .columna-roles {
+        width: 100%;
+        max-height: none;
+        overflow-y: visible;
+    }
+}
+
+/* Breakpoint 480px — móviles pequeños */
+@media (max-width: 480px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+    .stat-card__valor {
+        font-size: 1.5rem;
+    }
+}
+
+/* Pantallas muy grandes */
+@media (min-width: 1400px) {
+    .stat-card { max-width: 200px; }
+}
+
+/* Proporciones desktop */
+.contenido-vista--admin,
+.contenido-vista--instructor {
+    max-width: 1400px;
 }
