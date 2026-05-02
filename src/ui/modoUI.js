@@ -767,47 +767,79 @@ async function inicializarDropdownInstructor() {
     if (!panel || !btn) return;
 
     const usuarios = await obtenerTodosLosUsuarios();
-    if (!usuarios) return;
 
-    // Limpiar el panel antes de rellenarlo
+    // Limpiar el panel
     while (panel.firstChild) panel.removeChild(panel.firstChild);
 
-    // Crear un checkbox por cada usuario
-    usuarios.forEach(function(usuario) {
-        const label = document.createElement('label');
-        label.classList.add('usuarios-dropdown__opcion');
+    if (!usuarios || usuarios.length === 0) {
+        const vacio = document.createElement('p');
+        vacio.className   = 'usuarios-dropdown__vacio-texto';
+        vacio.textContent = 'No hay usuarios disponibles';
+        panel.appendChild(vacio);
+    } else {
+        // Usar la misma estructura con avatares que el dropdown del admin
+        usuarios.forEach(function(usuario) {
+            const opcion   = document.createElement('label');
+            opcion.className = 'usuarios-dropdown__opcion';
 
-        const checkbox = document.createElement('input');
-        checkbox.type  = 'checkbox';
-        checkbox.value = String(usuario.id);
-        checkbox.classList.add('usuarios-dropdown__checkbox');
+            const checkbox = document.createElement('input');
+            checkbox.type      = 'checkbox';
+            checkbox.value     = String(usuario.id);
+            checkbox.className = 'usuarios-dropdown__checkbox';
+            checkbox.addEventListener('change', function() {
+                if (texto) {
+                    const seleccionados = Array.from(
+                        panel.querySelectorAll('input:checked')
+                    );
+                    texto.textContent = seleccionados.length === 0
+                        ? 'Seleccionar usuarios...'
+                        : seleccionados.map(function(cb) {
+                            return cb.closest('label')
+                                .querySelector('.usuarios-dropdown__nombre')
+                                .textContent;
+                          }).join(', ');
+                }
+            });
 
-        const spanNombre = document.createElement('span');
-        spanNombre.textContent = `${usuario.name} (${usuario.documento})`;
+            // Avatar circular con iniciales — igual que el admin
+            const avatar = document.createElement('span');
+            avatar.className   = 'usuarios-dropdown__avatar';
+            avatar.textContent = usuario.name
+                .trim().split(' ').slice(0, 2)
+                .map(function(p) { return p[0]; })
+                .join('').toUpperCase();
 
-        label.appendChild(checkbox);
-        label.appendChild(spanNombre);
-        panel.appendChild(label);
-    });
+            const info = document.createElement('div');
+            info.className = 'usuarios-dropdown__info';
+
+            const nombre = document.createElement('span');
+            nombre.className   = 'usuarios-dropdown__nombre';
+            nombre.textContent = usuario.name;
+
+            const doc = document.createElement('span');
+            doc.className   = 'usuarios-dropdown__doc';
+            doc.textContent = `Doc: ${usuario.documento}`;
+
+            info.appendChild(nombre);
+            info.appendChild(doc);
+
+            opcion.appendChild(checkbox);
+            opcion.appendChild(avatar);
+            opcion.appendChild(info);
+            panel.appendChild(opcion);
+        });
+    }
 
     // Abrir/cerrar el panel al hacer clic en el botón
     btn.addEventListener('click', function() {
-        const estaAbierto = !panel.classList.contains('hidden');
-        if (estaAbierto) {
+        const abierto = !panel.classList.contains('hidden');
+        if (abierto) {
             panel.classList.add('hidden');
             btn.setAttribute('aria-expanded', 'false');
         } else {
             panel.classList.remove('hidden');
             btn.setAttribute('aria-expanded', 'true');
         }
-    });
-
-    // Actualizar el texto del botón según los usuarios seleccionados
-    panel.addEventListener('change', function() {
-        const seleccionados = Array.from(panel.querySelectorAll('input:checked'));
-        texto.textContent = seleccionados.length === 0
-            ? 'Seleccionar usuarios...'
-            : seleccionados.map(cb => cb.nextSibling.textContent).join(', ');
     });
 }
 
