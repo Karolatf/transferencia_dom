@@ -495,6 +495,126 @@ export async function activarModoInstructor() {
     cargarTareasInstructor();
     // Inicializar el dropdown de usuarios para la card "Crear Tarea" del instructor
     await inicializarDropdownInstructor();
+
+    // Montar el calendario del instructor (puede agregar eventos, soloLectura = false)
+    crearCalendario({
+        contenedorId: 'instrCalendario',
+        paleta:       'instructor',
+        soloLectura:  false,
+        tareas:       [],
+    });
+
+    // Cargar el panel de calificación de tareas pendientes
+    await cargarPanelCalificacion();
+}
+
+// cargarPanelCalificacion — lista las tareas con status=pendiente_aprobacion
+// para que el instructor las apruebe con una nota del 0 al 100
+async function cargarPanelCalificacion() {
+    const panel = document.getElementById('instrPanelCalificacion');
+    if (!panel) return;
+    while (panel.firstChild) panel.removeChild(panel.firstChild);
+
+    const titulo = document.createElement('h3');
+    titulo.className   = 'panel-calificacion__titulo';
+    titulo.textContent = 'Entregas pendientes de revisión';
+    panel.appendChild(titulo);
+
+    try {
+        const todasLasTareas   = await obtenerTodasLasTareas();
+        const tareasPendientes = todasLasTareas
+            ? todasLasTareas.filter(function(t) { return t.status === 'pendiente_aprobacion'; })
+            : [];
+
+        if (tareasPendientes.length === 0) {
+            const vacio = document.createElement('p');
+            vacio.className   = 'texto-vacio';
+            vacio.textContent = 'No hay entregas pendientes de revisión';
+            panel.appendChild(vacio);
+            return;
+        }
+
+        const lista = document.createElement('div');
+        lista.className = 'panel-calificacion__lista';
+
+        tareasPendientes.forEach(function(tarea) {
+            const fila = document.createElement('div');
+            fila.className       = 'panel-calificacion__fila';
+            fila.dataset.tareaId = tarea.id;
+
+            const info = document.createElement('div');
+            info.className = 'panel-calificacion__info';
+
+            const tituloT = document.createElement('span');
+            tituloT.className   = 'panel-calificacion__tarea-titulo';
+            tituloT.textContent = tarea.title;
+            info.appendChild(tituloT);
+
+            if (tarea.assignedUsersDisplay) {
+                const asig = document.createElement('span');
+                asig.className   = 'panel-calificacion__asignados';
+                asig.textContent = tarea.assignedUsersDisplay;
+                info.appendChild(asig);
+            }
+            fila.appendChild(info);
+
+            // Input de nota 0-100
+            const inputNota       = document.createElement('input');
+            inputNota.type        = 'number';
+            inputNota.min         = '0';
+            inputNota.max         = '100';
+            inputNota.value       = '100';
+            inputNota.className   = 'panel-calificacion__input-nota';
+            inputNota.placeholder = 'Nota 0-100';
+            fila.appendChild(inputNota);
+
+            // Botón Aprobar
+            const btnAprobar   = document.createElement('button');
+            btnAprobar.className = 'btn btn--sm btn--primary';
+            btnAprobar.type      = 'button';
+            const iconoCheck     = document.createElement('i');
+            iconoCheck.setAttribute('data-lucide', 'check-circle');
+            iconoCheck.classList.add('icono-accion');
+            btnAprobar.appendChild(iconoCheck);
+            btnAprobar.appendChild(document.createTextNode(' Aprobar'));
+
+            btnAprobar.addEventListener('click', async function() {
+                const nota = parseInt(inputNota.value, 10);
+                if (isNaN(nota) || nota < 0 || nota > 100) {
+                    await mostrarNotificacion('La nota debe ser entre 0 y 100', 'error');
+                    return;
+                }
+                try {
+                    await actualizarTarea(tarea.id, { status: 'completada' });
+                    const filaActual = panel.querySelector(`[data-tarea-id="${tarea.id}"]`);
+                    if (filaActual && filaActual.parentNode) filaActual.parentNode.removeChild(filaActual);
+                    cargarDashboardInstructor();
+                    cargarTareasInstructor();
+                    await mostrarNotificacion(`Tarea aprobada con nota ${nota}/100`, 'exito');
+                    if (lista.querySelectorAll('.panel-calificacion__fila').length === 0) {
+                        const v = document.createElement('p');
+                        v.className   = 'texto-vacio';
+                        v.textContent = 'No hay entregas pendientes de revisión';
+                        lista.appendChild(v);
+                    }
+                } catch (error) {
+                    await mostrarNotificacion('Error al aprobar la tarea', 'error');
+                }
+            });
+
+            fila.appendChild(btnAprobar);
+            lista.appendChild(fila);
+        });
+
+        panel.appendChild(lista);
+        if (window.lucide) window.lucide.createIcons();
+
+    } catch (error) {
+        const err = document.createElement('p');
+        err.className   = 'texto-vacio';
+        err.textContent = 'Error al cargar las entregas pendientes';
+        panel.appendChild(err);
+    }
 }
 
 // cargarDashboardInstructor — actualiza las tarjetas de estadísticas del panel instructor.
