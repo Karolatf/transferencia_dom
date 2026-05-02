@@ -2607,6 +2607,38 @@ export function registrarEventosNavegacion() {
         });
     }
 
+    // Listener del buscador del instructor — previene recarga de página al dar Enter
+    // El input tiene id="instrUserDocument" (no instrSearchUserInput)
+    const formBuscadorInstructor = document.getElementById('instrSearchUserForm');
+    if (formBuscadorInstructor) {
+        formBuscadorInstructor.addEventListener('submit', async function(event) {
+            // Sin este preventDefault el navegador recarga la página al dar Enter
+            event.preventDefault();
+            const inputInstr = document.getElementById('instrUserDocument');
+            const termino    = inputInstr ? inputInstr.value.trim().toLowerCase() : '';
+            if (!termino) return;
+            try {
+                const usuarios  = await obtenerTodosLosUsuarios();
+                const encontrado = usuarios ? usuarios.find(function(u) {
+                    return u.id.toString() === termino
+                        || (u.documento && u.documento.toString().includes(termino))
+                        || u.name.toLowerCase().includes(termino);
+                }) : null;
+                if (encontrado) {
+                    if (inputInstr) inputInstr.value = '';
+                    abrirModalUsuario(encontrado);
+                } else {
+                    await mostrarNotificacion(
+                        `No se encontró ningún usuario con: "${inputInstr ? inputInstr.value.trim() : termino}"`,
+                        'advertencia'
+                    );
+                }
+            } catch (error) {
+                await mostrarNotificacion('Error al buscar el usuario', 'error');
+            }
+        });
+    }
+    
     // Formulario de crear tarea en la card "Crear Tarea" del panel admin
     const formCrearTarea = document.getElementById('createTaskForm');
     if (formCrearTarea) {
