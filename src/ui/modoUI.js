@@ -22,6 +22,8 @@ import {
     actualizarUsuario,
     cambiarRolUsuario,
     cambiarPassword,
+    desactivarUsuario,
+    reactivarUsuario,
 } from '../api/usuariosApi.js';
 
 import {
@@ -493,6 +495,126 @@ export async function activarModoInstructor() {
     cargarTareasInstructor();
     // Inicializar el dropdown de usuarios para la card "Crear Tarea" del instructor
     await inicializarDropdownInstructor();
+
+    // Montar el calendario del instructor (puede agregar eventos, soloLectura = false)
+    crearCalendario({
+        contenedorId: 'instrCalendario',
+        paleta:       'instructor',
+        soloLectura:  false,
+        tareas:       [],
+    });
+
+    // Cargar el panel de calificación de tareas pendientes
+    await cargarPanelCalificacion();
+}
+
+// cargarPanelCalificacion — lista las tareas con status=pendiente_aprobacion
+// para que el instructor las apruebe con una nota del 0 al 100
+async function cargarPanelCalificacion() {
+    const panel = document.getElementById('instrPanelCalificacion');
+    if (!panel) return;
+    while (panel.firstChild) panel.removeChild(panel.firstChild);
+
+    const titulo = document.createElement('h3');
+    titulo.className   = 'panel-calificacion__titulo';
+    titulo.textContent = 'Entregas pendientes de revisión';
+    panel.appendChild(titulo);
+
+    try {
+        const todasLasTareas   = await obtenerTodasLasTareas();
+        const tareasPendientes = todasLasTareas
+            ? todasLasTareas.filter(function(t) { return t.status === 'pendiente_aprobacion'; })
+            : [];
+
+        if (tareasPendientes.length === 0) {
+            const vacio = document.createElement('p');
+            vacio.className   = 'texto-vacio';
+            vacio.textContent = 'No hay entregas pendientes de revisión';
+            panel.appendChild(vacio);
+            return;
+        }
+
+        const lista = document.createElement('div');
+        lista.className = 'panel-calificacion__lista';
+
+        tareasPendientes.forEach(function(tarea) {
+            const fila = document.createElement('div');
+            fila.className       = 'panel-calificacion__fila';
+            fila.dataset.tareaId = tarea.id;
+
+            const info = document.createElement('div');
+            info.className = 'panel-calificacion__info';
+
+            const tituloT = document.createElement('span');
+            tituloT.className   = 'panel-calificacion__tarea-titulo';
+            tituloT.textContent = tarea.title;
+            info.appendChild(tituloT);
+
+            if (tarea.assignedUsersDisplay) {
+                const asig = document.createElement('span');
+                asig.className   = 'panel-calificacion__asignados';
+                asig.textContent = tarea.assignedUsersDisplay;
+                info.appendChild(asig);
+            }
+            fila.appendChild(info);
+
+            // Input de nota 0-100
+            const inputNota       = document.createElement('input');
+            inputNota.type        = 'number';
+            inputNota.min         = '0';
+            inputNota.max         = '100';
+            inputNota.value       = '100';
+            inputNota.className   = 'panel-calificacion__input-nota';
+            inputNota.placeholder = 'Nota 0-100';
+            fila.appendChild(inputNota);
+
+            // Botón Aprobar
+            const btnAprobar   = document.createElement('button');
+            btnAprobar.className = 'btn btn--sm btn--primary';
+            btnAprobar.type      = 'button';
+            const iconoCheck     = document.createElement('i');
+            iconoCheck.setAttribute('data-lucide', 'check-circle');
+            iconoCheck.classList.add('icono-accion');
+            btnAprobar.appendChild(iconoCheck);
+            btnAprobar.appendChild(document.createTextNode(' Aprobar'));
+
+            btnAprobar.addEventListener('click', async function() {
+                const nota = parseInt(inputNota.value, 10);
+                if (isNaN(nota) || nota < 0 || nota > 100) {
+                    await mostrarNotificacion('La nota debe ser entre 0 y 100', 'error');
+                    return;
+                }
+                try {
+                    await actualizarTarea(tarea.id, { status: 'completada' });
+                    const filaActual = panel.querySelector(`[data-tarea-id="${tarea.id}"]`);
+                    if (filaActual && filaActual.parentNode) filaActual.parentNode.removeChild(filaActual);
+                    cargarDashboardInstructor();
+                    cargarTareasInstructor();
+                    await mostrarNotificacion(`Tarea aprobada con nota ${nota}/100`, 'exito');
+                    if (lista.querySelectorAll('.panel-calificacion__fila').length === 0) {
+                        const v = document.createElement('p');
+                        v.className   = 'texto-vacio';
+                        v.textContent = 'No hay entregas pendientes de revisión';
+                        lista.appendChild(v);
+                    }
+                } catch (error) {
+                    await mostrarNotificacion('Error al aprobar la tarea', 'error');
+                }
+            });
+
+            fila.appendChild(btnAprobar);
+            lista.appendChild(fila);
+        });
+
+        panel.appendChild(lista);
+        if (window.lucide) window.lucide.createIcons();
+
+    } catch (error) {
+        const err = document.createElement('p');
+        err.className   = 'texto-vacio';
+        err.textContent = 'Error al cargar las entregas pendientes';
+        panel.appendChild(err);
+    }
 }
 
 // cargarDashboardInstructor — actualiza las tarjetas de estadísticas del panel instructor.
@@ -529,14 +651,20 @@ async function cargarTablaUsuariosInstructor() {
     const usuarios = await obtenerTodosLosUsuarios();
     if (!usuarios) return;
 
+    // Filtrar: solo mostrar estudiantes (role === 'user') y excluir al instructor logueado
+    const usuarioLogueado = obtenerUsuarioSesion();
+    const estudiantes = usuarios.filter(function(u) {
+        return u.role === 'user' && (!usuarioLogueado || u.id !== usuarioLogueado.id);
+    });
+
     // Actualizar el contador de usuarios en el header de la card
     const contador = document.getElementById('instrUsersCount');
     if (contador) {
-        const cantidad = usuarios.length;
+        const cantidad = estudiantes.length;
         contador.textContent = `${cantidad} ${cantidad === 1 ? 'usuario' : 'usuarios'}`;
     }
 
-    usuarios.forEach(function(usuario, indice) {
+    estudiantes.forEach(function(usuario, indice) {
         const fila = document.createElement('tr');
 
         const celdaNum = document.createElement('td');
@@ -759,47 +887,79 @@ async function inicializarDropdownInstructor() {
     if (!panel || !btn) return;
 
     const usuarios = await obtenerTodosLosUsuarios();
-    if (!usuarios) return;
 
-    // Limpiar el panel antes de rellenarlo
+    // Limpiar el panel
     while (panel.firstChild) panel.removeChild(panel.firstChild);
 
-    // Crear un checkbox por cada usuario
-    usuarios.forEach(function(usuario) {
-        const label = document.createElement('label');
-        label.classList.add('usuarios-dropdown__opcion');
+    if (!usuarios || usuarios.length === 0) {
+        const vacio = document.createElement('p');
+        vacio.className   = 'usuarios-dropdown__vacio-texto';
+        vacio.textContent = 'No hay usuarios disponibles';
+        panel.appendChild(vacio);
+    } else {
+        // Usar la misma estructura con avatares que el dropdown del admin
+        usuarios.forEach(function(usuario) {
+            const opcion   = document.createElement('label');
+            opcion.className = 'usuarios-dropdown__opcion';
 
-        const checkbox = document.createElement('input');
-        checkbox.type  = 'checkbox';
-        checkbox.value = String(usuario.id);
-        checkbox.classList.add('usuarios-dropdown__checkbox');
+            const checkbox = document.createElement('input');
+            checkbox.type      = 'checkbox';
+            checkbox.value     = String(usuario.id);
+            checkbox.className = 'usuarios-dropdown__checkbox';
+            checkbox.addEventListener('change', function() {
+                if (texto) {
+                    const seleccionados = Array.from(
+                        panel.querySelectorAll('input:checked')
+                    );
+                    texto.textContent = seleccionados.length === 0
+                        ? 'Seleccionar usuarios...'
+                        : seleccionados.map(function(cb) {
+                            return cb.closest('label')
+                                .querySelector('.usuarios-dropdown__nombre')
+                                .textContent;
+                          }).join(', ');
+                }
+            });
 
-        const spanNombre = document.createElement('span');
-        spanNombre.textContent = `${usuario.name} (${usuario.documento})`;
+            // Avatar circular con iniciales — igual que el admin
+            const avatar = document.createElement('span');
+            avatar.className   = 'usuarios-dropdown__avatar';
+            avatar.textContent = usuario.name
+                .trim().split(' ').slice(0, 2)
+                .map(function(p) { return p[0]; })
+                .join('').toUpperCase();
 
-        label.appendChild(checkbox);
-        label.appendChild(spanNombre);
-        panel.appendChild(label);
-    });
+            const info = document.createElement('div');
+            info.className = 'usuarios-dropdown__info';
+
+            const nombre = document.createElement('span');
+            nombre.className   = 'usuarios-dropdown__nombre';
+            nombre.textContent = usuario.name;
+
+            const doc = document.createElement('span');
+            doc.className   = 'usuarios-dropdown__doc';
+            doc.textContent = `Doc: ${usuario.documento}`;
+
+            info.appendChild(nombre);
+            info.appendChild(doc);
+
+            opcion.appendChild(checkbox);
+            opcion.appendChild(avatar);
+            opcion.appendChild(info);
+            panel.appendChild(opcion);
+        });
+    }
 
     // Abrir/cerrar el panel al hacer clic en el botón
     btn.addEventListener('click', function() {
-        const estaAbierto = !panel.classList.contains('hidden');
-        if (estaAbierto) {
+        const abierto = !panel.classList.contains('hidden');
+        if (abierto) {
             panel.classList.add('hidden');
             btn.setAttribute('aria-expanded', 'false');
         } else {
             panel.classList.remove('hidden');
             btn.setAttribute('aria-expanded', 'true');
         }
-    });
-
-    // Actualizar el texto del botón según los usuarios seleccionados
-    panel.addEventListener('change', function() {
-        const seleccionados = Array.from(panel.querySelectorAll('input:checked'));
-        texto.textContent = seleccionados.length === 0
-            ? 'Seleccionar usuarios...'
-            : seleccionados.map(cb => cb.nextSibling.textContent).join(', ');
     });
 }
 
@@ -871,152 +1031,202 @@ export async function cargarTablaUsuarios() {
     });
 }
 
+// crearBadgeRol — badge visual con el nombre y color del rol del usuario
+function crearBadgeRol(rol) {
+    const badge = document.createElement('span');
+    badge.className = 'status-badge';
+    const config = {
+        admin:      { texto: 'Admin',      clase: 'badge-rol--admin'      },
+        instructor: { texto: 'Instructor', clase: 'badge-rol--instructor' },
+        user:       { texto: 'Estudiante', clase: 'badge-rol--user'       },
+    }[rol] || { texto: rol, clase: 'badge-rol--user' };
+    badge.textContent = config.texto;
+    badge.classList.add(config.clase);
+    return badge;
+}
+
+// crearBadgeEstado — badge verde (Activo) o rojo (Inactivo) según is_active
+function crearBadgeEstado(isActive) {
+    const badge = document.createElement('span');
+    badge.className = 'status-badge';
+    if (isActive === 1 || isActive === true) {
+        badge.textContent = 'Activo';
+        badge.classList.add('badge-estado--activo');
+    } else {
+        badge.textContent = 'Inactivo';
+        badge.classList.add('badge-estado--inactivo');
+    }
+    return badge;
+}
+
+// crearBotonIcono — botón circular 32x32 con ícono Lucide para la tabla de usuarios
+function crearBotonIcono(nombreIcono, tooltip, claseColor, handler) {
+    const btn = document.createElement('button');
+    btn.className = `btn-accion-icono ${claseColor}`;
+    btn.title     = tooltip;
+    btn.type      = 'button';
+    const icono   = document.createElement('i');
+    icono.setAttribute('data-lucide', nombreIcono);
+    icono.classList.add('icono-accion');
+    btn.appendChild(icono);
+    btn.addEventListener('click', handler);
+    return btn;
+}
+
 // Construye una fila de la tabla de usuarios del panel admin
 // Ahora incluye tres botones: Ver/Asignar, Editar y Eliminar
 // Parámetros:
 //   usuario — objeto del usuario a representar
 //   indice  — posición en la lista (para el # correlativo)
+// crearFilaUsuario — columnas: # | Nombre | Documento | Correo | Rol | Estado | Acciones
 function crearFilaUsuario(usuario, indice) {
     const fila = document.createElement('tr');
 
-    const celdaNum = document.createElement('td');
-    celdaNum.textContent = indice + 1;
+    // Columna #
+    const tdNum = document.createElement('td');
+    tdNum.textContent = indice + 1;
+    fila.appendChild(tdNum);
 
-    const celdaDoc = document.createElement('td');
-    celdaDoc.textContent = usuario.documento || usuario.id;
+    // Columna Nombre
+    const tdNombre = document.createElement('td');
+    tdNombre.textContent = usuario.name;
+    fila.appendChild(tdNombre);
 
-    const celdaNombre = document.createElement('td');
-    celdaNombre.textContent = usuario.name;
+    // Columna Documento
+    const tdDoc = document.createElement('td');
+    tdDoc.textContent = usuario.documento || usuario.id;
+    fila.appendChild(tdDoc);
 
-    const celdaEmail = document.createElement('td');
-    celdaEmail.textContent = usuario.email;
+    // Columna Correo
+    const tdEmail = document.createElement('td');
+    tdEmail.textContent = usuario.email;
+    fila.appendChild(tdEmail);
 
-    const celdaAcciones = document.createElement('td');
-    const contenedor    = document.createElement('div');
-    contenedor.classList.add('task-actions');
+    // Columna Rol (badge visual)
+    const tdRol = document.createElement('td');
+    tdRol.appendChild(crearBadgeRol(usuario.role));
+    fila.appendChild(tdRol);
 
-    // Botón Ver / Asignar — abre el modal de tareas del usuario
-    const btnVer = document.createElement('button');
-    while (btnVer.firstChild) btnVer.removeChild(btnVer.firstChild);
-    btnVer.appendChild(crearIconoLucide('eye'));
-    btnVer.appendChild(document.createTextNode(' Ver'));
-    if (window.lucide) window.lucide.createIcons();
-    btnVer.classList.add('btn-action', 'btn-action--edit');
-    btnVer.type = 'button';
-    btnVer.addEventListener('click', function() { abrirModalUsuario(usuario); });
+    // Columna Estado (badge activo/inactivo)
+    const tdEstado = document.createElement('td');
+    tdEstado.appendChild(crearBadgeEstado(usuario.is_active));
+    fila.appendChild(tdEstado);
 
-    // NUEVO: Botón Editar — abre el modal de edición de datos del usuario
-    // Sigue el mismo patrón de los demás botones de acción del proyecto
-    const btnEditar = document.createElement('button');
-    while (btnEditar.firstChild) btnEditar.removeChild(btnEditar.firstChild);
-    btnEditar.appendChild(crearIconoLucide('pencil'));
-    btnEditar.appendChild(document.createTextNode(' Editar'));
-    if (window.lucide) window.lucide.createIcons();
-    btnEditar.classList.add('btn-action', 'btn-action--edit');
-    btnEditar.type = 'button';
-    btnEditar.addEventListener('click', function() { abrirModalEditarUsuario(usuario); });
+    // Columna Acciones
+    const tdAcciones = document.createElement('td');
+    tdAcciones.className = 'acciones-columna';
 
-    // Botón/select para cambiar el rol — ahora soporta 3 opciones: admin, user, instructor
-    // Se usa un select para facilitar la elección entre 3 roles
-    const selectRol = document.createElement('select');
-    selectRol.classList.add('btn-action', 'btn-action--rol');
-    selectRol.title = 'Cambiar rol del usuario';
+    // Botón Ver / Asignar
+    tdAcciones.appendChild(crearBotonIcono('eye', 'Ver y asignar tareas', 'btn-accion--azul',
+        function() { abrirModalUsuario(usuario); }
+    ));
 
-    // Opción por defecto que muestra el rol actual (no se puede seleccionar)
-    const optDefault = document.createElement('option');
-    optDefault.value    = '';
-    optDefault.disabled = true;
-    optDefault.selected = true;
-    const etiquetasRol = { admin: '👑 Admin', user: '👤 User', instructor: '📚 Instructor' };
-    optDefault.textContent = etiquetasRol[usuario.role] || usuario.role;
-    selectRol.appendChild(optDefault);
+    // Botón Editar datos
+    tdAcciones.appendChild(crearBotonIcono('pencil', 'Editar usuario', 'btn-accion--amarillo',
+        function() { abrirModalEditarUsuario(usuario); }
+    ));
 
-    // Opciones de los otros roles (excluyendo el rol actual del usuario)
-    const todosLosRoles = [
-        { value: 'admin',      label: '👑 Hacer Admin' },
-        { value: 'user',       label: '👤 Hacer User' },
-        { value: 'instructor', label: '📚 Hacer Instructor' },
-    ];
+    // Botón Cambiar rol (mini-dropdown)
+    tdAcciones.appendChild(crearBotonIcono('user-check', 'Cambiar rol', 'btn-accion--azul',
+        function() { abrirDropdownRol(usuario, fila); }
+    ));
 
-    todosLosRoles.forEach(function(rolOpcion) {
-        // No mostrar el rol que el usuario ya tiene
-        if (rolOpcion.value === usuario.role) return;
-        const opt = document.createElement('option');
-        opt.value       = rolOpcion.value;
-        opt.textContent = rolOpcion.label;
-        selectRol.appendChild(opt);
-    });
+    // Botón Desactivar o Activar según estado actual
+    if (usuario.is_active === 1 || usuario.is_active === true) {
+        tdAcciones.appendChild(crearBotonIcono('user-x', 'Desactivar usuario', 'btn-accion--gris',
+            async function() {
+                const ok = await mostrarConfirmacion(
+                    `¿Desactivar a ${usuario.name}? No podrá iniciar sesión.`,
+                    'Desactivar', 'Cancelar'
+                );
+                if (!ok) return;
+                try {
+                    await desactivarUsuario(usuario.id);
+                    await mostrarNotificacion(`${usuario.name} fue desactivado`, 'exito');
+                    cargarTablaUsuarios();
+                } catch (error) {
+                    await mostrarNotificacion(error.message || 'No se pudo desactivar', 'error');
+                }
+            }
+        ));
+    } else {
+        tdAcciones.appendChild(crearBotonIcono('user-check', 'Activar usuario', 'btn-accion--verde',
+            async function() {
+                const ok = await mostrarConfirmacion(
+                    `¿Reactivar a ${usuario.name}?`, 'Activar', 'Cancelar'
+                );
+                if (!ok) return;
+                try {
+                    await reactivarUsuario(usuario.id);
+                    await mostrarNotificacion(`${usuario.name} fue reactivado`, 'exito');
+                    cargarTablaUsuarios();
+                } catch (error) {
+                    await mostrarNotificacion(error.message || 'No se pudo reactivar', 'error');
+                }
+            }
+        ));
+    }
 
-    // Al cambiar la selección, confirmar y ejecutar el cambio de rol
-    selectRol.addEventListener('change', async function() {
-        const nuevoRol    = selectRol.value;
-        if (!nuevoRol) return;
-        const etiquetaRol = etiquetasRol[nuevoRol] || nuevoRol;
-
-        const confirmado = await mostrarConfirmacion(
-            `¿Cambiar rol de ${usuario.name}?`,
-            `El usuario pasará a ser ${etiquetaRol}. Tendrá efecto en su próximo inicio de sesión.`,
-            `Sí, hacer ${etiquetaRol}`
-        );
-
-        if (!confirmado) {
-            // Revertir el select si el usuario cancela
-            selectRol.value = '';
-            return;
+    // Botón Eliminar de raíz
+    tdAcciones.appendChild(crearBotonIcono('trash-2', 'Eliminar permanentemente', 'btn-accion--rojo',
+        async function() {
+            const ok = await mostrarConfirmacion(
+                `⚠ Eliminar a ${usuario.name} es PERMANENTE. ¿Continuar?`,
+                'Sí, eliminar', 'Cancelar'
+            );
+            if (!ok) return;
+            try {
+                await eliminarUsuario(usuario.id);
+                await mostrarNotificacion(`${usuario.name} eliminado`, 'exito');
+                cargarTablaUsuarios();
+                cargarTodasLasTareas();
+                cargarDashboard();
+            } catch (error) {
+                await mostrarNotificacion(
+                    'No se puede eliminar: el usuario tiene datos relacionados. Desactívalo en su lugar.',
+                    'error'
+                );
+            }
         }
+    ));
 
-        const usuarioActualizado = await cambiarRolUsuario(usuario.id, nuevoRol);
-        if (usuarioActualizado) {
-            await mostrarNotificacion(`Rol de ${usuario.name} actualizado a ${etiquetaRol}`, 'exito');
-            cargarTablaUsuarios();
-        } else {
-            await mostrarNotificacion('Error al cambiar el rol del usuario', 'error');
-            selectRol.value = '';
-        }
-    });
-
-    contenedor.appendChild(selectRol);
-
-    // Botón Eliminar — pide confirmación antes de eliminar
-    const btnEliminar = document.createElement('button');
-    while (btnEliminar.firstChild) btnEliminar.removeChild(btnEliminar.firstChild);
-    btnEliminar.appendChild(crearIconoLucide('trash-2'));
-    btnEliminar.appendChild(document.createTextNode(' Eliminar'));
+    fila.appendChild(tdAcciones);
     if (window.lucide) window.lucide.createIcons();
-    btnEliminar.classList.add('btn-action', 'btn-action--delete');
-    btnEliminar.type = 'button';
-    btnEliminar.addEventListener('click', async function() {
-        const confirmado = await mostrarConfirmacion(
-            '¿Eliminar usuario?',
-            `"${usuario.name}" será eliminado permanentemente.`,
-            'Sí, eliminar'
-        );
-        if (!confirmado) return;
-
-        const eliminado = await eliminarUsuario(usuario.id);
-        if (eliminado) {
-            await mostrarNotificacion('Usuario eliminado correctamente', 'exito');
-            cargarTablaUsuarios();
-            cargarTodasLasTareas();
-            cargarDashboard();
-        } else {
-            await mostrarNotificacion('Error al eliminar el usuario', 'error');
-        }
-    });
-
-    // Se agregan los tres botones al contenedor de acciones
-    contenedor.appendChild(btnVer);
-    contenedor.appendChild(btnEditar);
-    contenedor.appendChild(btnEliminar);
-    celdaAcciones.appendChild(contenedor);
-
-    fila.appendChild(celdaNum);
-    fila.appendChild(celdaDoc);
-    fila.appendChild(celdaNombre);
-    fila.appendChild(celdaEmail);
-    fila.appendChild(celdaAcciones);
-
     return fila;
+}
+
+// abrirDropdownRol — mini-dropdown inline para cambiar el rol de un usuario
+function abrirDropdownRol(usuario, filaEl) {
+    const anterior = document.querySelector('.dropdown-rol');
+    if (anterior && anterior.parentNode) anterior.parentNode.removeChild(anterior);
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'dropdown-rol';
+
+    [
+        { valor: 'user',       texto: 'Estudiante'    },
+        { valor: 'instructor', texto: 'Instructor'    },
+        { valor: 'admin',      texto: 'Administrador' },
+    ].forEach(function(opcion) {
+        if (opcion.valor === usuario.role) return;
+        const item = document.createElement('button');
+        item.className   = 'dropdown-rol__opcion';
+        item.textContent = opcion.texto;
+        item.type        = 'button';
+        item.addEventListener('click', async function() {
+            if (dropdown.parentNode) dropdown.parentNode.removeChild(dropdown);
+            try {
+                await cambiarRolUsuario(usuario.id, opcion.valor);
+                await mostrarNotificacion(`Rol de ${usuario.name} → ${opcion.texto}`, 'exito');
+                cargarTablaUsuarios();
+            } catch (error) {
+                await mostrarNotificacion('No se pudo cambiar el rol', 'error');
+            }
+        });
+        dropdown.appendChild(item);
+    });
+
+    filaEl.parentNode.insertBefore(dropdown, filaEl.nextSibling);
 }
 
 // ── MODAL EDITAR USUARIO ──────────────────────────────────────────────────────
@@ -1309,9 +1519,9 @@ function manejarEdicionTareaAdmin(tarea) {
 
         const datosActualizados = {
             title:       titulo,
-            description: descripcion,
+            description: descripcion !== '' ? descripcion : undefined,
             status:      estado,
-            comment:     comentario,
+            comment:     comentario !== '' ? comentario : undefined,
         };
 
         const tareaActualizada = await actualizarTarea(tareaId, datosActualizados);
@@ -1372,12 +1582,12 @@ function manejarEdicionTareaInstructor(tarea) {
         const comentEl   = document.getElementById('editTaskComment');
         const comentario = comentEl && comentEl.value.trim() !== ''
             ? comentEl.value.trim()
-            : null;
+            : undefined;
 
         // Construir el objeto con los datos actualizados
         const datosActualizados = {
             title:       titulo,
-            description: descripcion,
+            description: descripcion !== '' ? descripcion : undefined,
             status:      estado,
             comment:     comentario,
         };
@@ -1690,11 +1900,13 @@ export async function abrirModalUsuario(usuario) {
 
         const datosTarea = {
             title:         titulo,
-            description:   desc,
+            description:   desc !== '' ? desc : undefined,
             status:        estado,
-            comment:       comentario || null,
-            assignedUsers: [parseInt(usuario.id, 10) || usuario.id],
+            comment:       comentario !== '' ? comentario : undefined,
+            assignedUsers: [Number(usuario.id)],
         };
+
+        console.log('datosTarea enviado:', JSON.stringify(datosTarea));
 
         const tareaCreada = await registrarTarea(datosTarea);
 
@@ -2555,6 +2767,38 @@ export function registrarEventosNavegacion() {
         });
     }
 
+    // Listener del buscador del instructor — previene recarga de página al dar Enter
+    // El input tiene id="instrUserDocument" (no instrSearchUserInput)
+    const formBuscadorInstructor = document.getElementById('instrSearchUserForm');
+    if (formBuscadorInstructor) {
+        formBuscadorInstructor.addEventListener('submit', async function(event) {
+            // Sin este preventDefault el navegador recarga la página al dar Enter
+            event.preventDefault();
+            const inputInstr = document.getElementById('instrUserDocument');
+            const termino    = inputInstr ? inputInstr.value.trim().toLowerCase() : '';
+            if (!termino) return;
+            try {
+                const usuarios  = await obtenerTodosLosUsuarios();
+                const encontrado = usuarios ? usuarios.find(function(u) {
+                    return u.id.toString() === termino
+                        || (u.documento && u.documento.toString().includes(termino))
+                        || u.name.toLowerCase().includes(termino);
+                }) : null;
+                if (encontrado) {
+                    if (inputInstr) inputInstr.value = '';
+                    abrirModalUsuario(encontrado);
+                } else {
+                    await mostrarNotificacion(
+                        `No se encontró ningún usuario con: "${inputInstr ? inputInstr.value.trim() : termino}"`,
+                        'advertencia'
+                    );
+                }
+            } catch (error) {
+                await mostrarNotificacion('Error al buscar el usuario', 'error');
+            }
+        });
+    }
+    
     // Formulario de crear tarea en la card "Crear Tarea" del panel admin
     const formCrearTarea = document.getElementById('createTaskForm');
     if (formCrearTarea) {
@@ -2593,9 +2837,9 @@ export function registrarEventosNavegacion() {
             // Se construye el objeto de la nueva tarea para enviar al backend
             const datosTarea = {
                 title:         titulo,
-                description:   descInput  ? descInput.value.trim()   : '',
+                description:   descInput && descInput.value.trim() !== '' ? descInput.value.trim() : undefined,
                 status:        estado,
-                comment:       commentInput ? commentInput.value.trim() : '',
+                comment:       commentInput && commentInput.value.trim() !== '' ? commentInput.value.trim() : null,
                 assignedUsers: assignedUsers,
             };
 
