@@ -262,6 +262,17 @@
 
     <main class="contenido-vista contenido-vista--admin">
 
+        <div class="admin-layout-tres-columnas">
+
+        <!-- COLUMNA IZQUIERDA: Registro de auditoría -->
+        <aside class="columna-auditoria" id="columnaAuditoria">
+            <h3 class="columna__titulo">Actividad reciente</h3>
+            <div id="auditoriaContenedor"></div>
+        </aside>
+
+        <!-- COLUMNA CENTRAL: todo el contenido actual del admin va aquí dentro -->
+        <div class="columna-central">
+
         <!-- Dashboard de estadísticas -->
         <section class="dashboard-stats">
             <div class="stat-card">
@@ -483,6 +494,16 @@
                 </div>
             </div>
         </section>
+
+        </div><!-- fin columna-central -->
+
+            <!-- COLUMNA DERECHA: Diccionario de roles -->
+            <aside class="columna-roles" id="columnaRoles">
+                <h3 class="columna__titulo">Roles del sistema</h3>
+                <div id="rolesContenedor"></div>
+            </aside>
+
+        </div><!-- fin admin-layout-tres-columnas -->
 
     </main>
 

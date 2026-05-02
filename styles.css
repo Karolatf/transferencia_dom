@@ -2244,3 +2244,46 @@ body[data-modo="instructor"] {
 .contenido-vista--instructor {
     max-width: 1400px;
 }
+
+/* Layout de tres columnas del panel admin */
+.admin-layout-tres-columnas {
+    display: flex;
+    flex-direction: row;
+    gap: var(--espacio-md);
+    align-items: flex-start;
+    width: 100%;
+}
+
+.columna-auditoria {
+    width: 220px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 180px);
+    position: sticky;
+    top: var(--espacio-md);
+}
+
+.columna-central {
+    flex: 1;
+    min-width: 0;
+}
+
+.columna-roles {
+    width: 220px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 180px);
+    position: sticky;
+    top: var(--espacio-md);
+}
+
+.columna__titulo {
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--texto-medio);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: var(--espacio-sm);
+    padding-bottom: var(--espacio-xs);
+    border-bottom: 1px solid var(--borde-suave);
+}
