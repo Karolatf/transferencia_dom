@@ -53,6 +53,9 @@
     --sombra-lg: 0 8px 20px rgba(0, 0, 0, 0.10);
 
     --transicion: 200ms ease;
+
+    /* Variable de acento para modales — cambia según el modo activo del body */
+    --color-modal-acento: var(--color-primario);
 }
 
 /* RESET */
@@ -77,9 +80,21 @@ body {
 
 /* FONDOS POR MODO */
 /* En modo inicio no hay padding ni fondo de color, la imagen lo cubre todo   */
-body[data-modo="inicio"]  { background: linear-gradient(135deg, #c794f9 0%, #b9f9e6 100%); padding: 0; }body[data-modo="admin"]   { background-color: #e0f2fe; padding: var(--espacio-lg); }
+/* Gradiente del body en la pantalla de inicio — 3 stops: morado, azul y verde pastel */
+body[data-modo="inicio"] {
+    background: linear-gradient(
+        135deg,
+        #c794f9 0%,
+        #93c5fd 50%,
+        #6ee7b7 100%
+    );
+    min-height: 100vh;
+}
 body[data-modo="usuario"] { background-color: #f3e8ff; }
-body[data-modo="admin"]   { background-color: #e0f2fe; }
+body[data-modo="admin"]   { 
+    background-color: #e0f2fe; 
+    --color-modal-acento: var(--color-admin);
+}
 
 
 /* HIDDEN */
@@ -229,6 +244,39 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     font-size: var(--texto-sm);
     color: var(--texto-medio);
     margin-top: var(--espacio-xs);
+}
+
+/* Saludo superior del header de usuario */
+.header__info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.header__greeting {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-primario);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+}
+
+/* En el header usuario: nombre grande, rol pequeño debajo */
+.header--usuario .header__title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    margin: 0;
+}
+
+.header--usuario .header__subtitle {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--texto-medio);
+    letter-spacing: 0.04em;
+    margin-top: 2px;
 }
 
 .header--admin .header__subtitle { color: rgba(255,255,255,0.85); }
@@ -615,7 +663,7 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .status-completada  { background: #d1fae5; color: #065f46; }
 /* Badge para el cuarto estado: naranja suave, diferente del amarillo de "pendiente" */
 /* Fondo #ffedd5 (naranja claro) — texto #9a3412 (naranja oscuro con buen contraste) */
-.status-pendiente_aprobacion { background: #ffedd5; color: #9a3412; }
+.status-pendiente_aprobacion { background: #ffedd5; color: #9a3412; font-size: 0.78rem; white-space: nowrap; }
 
 
 /* ACCIONES EN LA TABLA */
@@ -747,12 +795,13 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     position: relative;
 }
 
+/* Cabecera del modal — fondo blanco con borde inferior del color de acento del modo activo */
 .modal-usuario__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--espacio-lg);
-    gap: var(--espacio-md);
+    background: #ffffff;
+    border-bottom: 2px solid var(--color-modal-acento);
+    color: var(--color-modal-acento);
+    padding: var(--espacio-md) var(--espacio-lg);
+    border-radius: var(--radio-lg) var(--radio-lg) 0 0;
 }
 
 .modal-usuario__titulo {
@@ -925,6 +974,11 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .admin-card--full {
     flex: none;
     width: 100%;
+    margin-bottom: var(--espacio-md);
+}
+
+.admin-card--full:last-of-type {
+    margin-bottom: 0;
 }
 
 .admin-card__cabecera {
@@ -992,41 +1046,30 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 
 
-/* SWEETALERT2 custom */
-.swal-popup {
-    border-radius: var(--radio-xl) !important;
-    border: 1px solid var(--color-primario) !important;
-    box-shadow: var(--sombra-lg) !important;
+/* SweetAlert2 — botones uniformes en tamaño y alineación */
+.swal-acciones {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+    justify-content: center !important;
 }
 
-.swal-title {
-    color: var(--texto-oscuro) !important;
-    font-size: var(--texto-xl) !important;
-}
-
-.swal-btn-confirmar {
-    background-color: var(--color-primario) !important;
-    color: white !important;
-    border-radius: var(--radio-full) !important;
-    padding: var(--espacio-sm) var(--espacio-xl) !important;
-    font-weight: 600 !important;
-    transition: background-color var(--transicion) !important;
-}
-
-.swal-btn-confirmar:hover { background-color: var(--color-primario-oscuro) !important; }
-
+.swal-btn-confirmar,
 .swal-btn-cancelar {
-    background-color: white !important;
-    color: var(--color-primario) !important;
-    border: 2px solid var(--color-primario) !important;
+    height: 40px !important;
+    padding: 0 24px !important;
     border-radius: var(--radio-full) !important;
-    padding: var(--espacio-sm) var(--espacio-xl) !important;
+    font-size: var(--texto-sm) !important;
     font-weight: 600 !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: opacity 0.2s ease !important;
 }
 
-.swal-eliminar .swal2-icon.swal2-warning {
-    color: var(--color-error) !important;
-    border-color: var(--color-error) !important;
+.swal-btn-confirmar:hover,
+.swal-btn-cancelar:hover {
+    opacity: 0.88 !important;
 }
 
 /* ── MODAL DE REGISTRO V2 — Rediseño M7 ────────────────────────────────────────
@@ -1371,6 +1414,17 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     .tasks-table-container {
         overflow-x: auto;
     }
+
+    .task-actions {
+        flex-wrap: wrap;
+        gap: var(--espacio-xs);
+    }
+    .inicio__columna-imagen {
+        display: none;
+    }
+    .inicio__columna-panel {
+        width: 100%;
+    }
 }
 
 
@@ -1397,6 +1451,8 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    position: relative;
+    overflow: hidden;
 }
 
 /* Columna derecha: degradado suave con colores del proyecto                  */
@@ -1422,8 +1478,10 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     -webkit-backdrop-filter: blur(20px);
     border-radius: 2rem;
     border: 1.5px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 0 8px 40px rgba(123, 45, 139, 0.12),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.15);
     padding: var(--espacio-xl);
     display: flex;
     flex-direction: column;
@@ -1467,22 +1525,24 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
    GET /api/tasks/dashboard → { total, pendientes, enProgreso, completadas } */
 .dashboard-stats {
     display: grid;
-    /* 5 columnas: Total, Pendiente, En Progreso, Por aprobar, Completada */
     grid-template-columns: repeat(5, 1fr);
     gap: var(--espacio-md);
     margin-bottom: var(--espacio-lg);
+    align-items: stretch;   /* todas las cards a la misma altura */
 }
 
 .stat-card {
     background: white;
     border-radius: var(--radio-xl);
-    padding: var(--espacio-lg) var(--espacio-xl);
+    padding: var(--espacio-md) var(--espacio-lg);
     box-shadow: var(--sombra-sm);
     display: flex;
     flex-direction: column;
+    justify-content: center;   /* contenido centrado verticalmente */
     gap: var(--espacio-xs);
     border-left: 4px solid var(--borde-suave);
     transition: box-shadow var(--transicion);
+    min-height: 110px;         /* altura mínima uniforme */
 }
 
 .stat-card:hover { box-shadow: var(--sombra-md); }
@@ -1490,20 +1550,19 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .stat-card--pendiente  { border-left-color: var(--color-pendiente); }
 .stat-card--progreso   { border-left-color: var(--color-progreso); }
 .stat-card--completada { border-left-color: var(--color-completada); }
-/* Stat-card del dashboard para el estado "pendiente_aprobacion" */
-/* Color naranja para diferenciarlo del amarillo de "pendiente" */
 .stat-card--aprobacion { border-left-color: var(--color-aprobacion); }
 
 .stat-card__label {
-    font-size: var(--texto-sm);
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 700;
     color: var(--texto-claro);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
 }
 
 .stat-card__valor {
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 700;
     color: var(--texto-oscuro);
     line-height: 1;
@@ -1512,7 +1571,6 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 .stat-card--pendiente  .stat-card__valor { color: #92400e; }
 .stat-card--progreso   .stat-card__valor { color: #1e40af; }
 .stat-card--completada .stat-card__valor { color: #065f46; }
-/* Número grande de la stat-card de "Por aprobar" — color naranja oscuro */
 .stat-card--aprobacion .stat-card__valor { color: #9a3412; }
 
 @media (max-width: 768px) {
@@ -1782,7 +1840,11 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 /* Botón principal — gradiente morado-azul de la paleta del proyecto */
 .btn-acceso--login {
-    background-color: var(--color-primario);
+    background: linear-gradient(
+        90deg,
+        var(--color-primario) 0%,
+        var(--color-admin) 100%
+    );
     color: #fff;
     border: none;
     border-radius: 12px;
@@ -1966,7 +2028,10 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 /* ── PANEL INSTRUCTOR — paleta verde pastel ────────────────────────────────── */
 /* El fondo del panel instructor es verde pastel, diferenciándose del azul del admin */
-body[data-modo="instructor"] { background-color: var(--color-instructor-suave); }
+body[data-modo="instructor"] { 
+    background-color: var(--color-instructor-suave); 
+    --color-modal-acento: var(--color-instructor);
+}
 
 /* Header del panel instructor con color verde principal */
 .header--instructor {
@@ -2094,3 +2159,680 @@ body[data-modo="instructor"] { background-color: var(--color-instructor-suave); 
     padding:    0;
 }
 .btn-link:hover { color: #4b5563 }
+
+
+/* Clase base para todos los íconos de acción (Lucide Icons en botones) */
+/* stroke: currentColor hace que el ícono herede el color del elemento padre */
+.icono-accion {
+    width: 15px;
+    height: 15px;
+    vertical-align: middle;
+    stroke: currentColor;
+    /* fill: none evita que el ícono se rellene con color sólido — solo usa el trazo */
+    fill: none;
+    flex-shrink: 0;
+}
+
+/* Los botones de logout circular usan íconos más grandes */
+.btn-logout-circular .icono-accion {
+    width: 20px;
+    height: 20px;
+}
+
+
+/* Overlay de marca en la columna izquierda de la pantalla de inicio */
+.inicio__overlay-marca {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.40);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espacio-sm);
+    z-index: 1;
+    padding: var(--espacio-lg);
+    text-align: center;
+}
+
+.inicio__overlay-marca h1 {
+    color: #ffffff;
+    font-size: var(--texto-2xl);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.inicio__overlay-marca p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: var(--texto-sm);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.tarjeta-glass h1,
+.tarjeta-glass .titulo-bienvenida {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.modal__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    flex-wrap: wrap;
+    padding: var(--espacio-md) var(--espacio-lg);
+}
+
+.modal__actions button,
+.modal__actions .btn {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: var(--radio-full);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-xs);
+}
+
+/* Columna de estado — ancho mínimo para el badge "Por aprobar" */
+.tasks-table td.col-estado,
+.tasks-table th.col-estado {
+    min-width: 130px;
+}
+
+/* Breakpoint 1280px — laptops normales */
+@media (max-width: 1280px) {
+    .contenido-vista {
+        padding: var(--espacio-lg);
+    }
+}
+
+/* Breakpoint 1024px — tablets landscape, colapsa layout de 3 columnas */
+@media (max-width: 1024px) {
+    .admin-layout-tres-columnas {
+        flex-direction: column;
+    }
+    .columna-auditoria,
+    .columna-roles {
+        width: 100%;
+        max-height: none;
+        overflow-y: visible;
+    }
+}
+
+/* Breakpoint 480px — móviles pequeños */
+@media (max-width: 480px) {
+    .dashboard-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+    .stat-card__valor {
+        font-size: 1.5rem;
+    }
+}
+
+/* Pantallas muy grandes */
+@media (min-width: 1400px) {
+    .stat-card { max-width: 200px; }
+}
+
+/* Proporciones desktop */
+.contenido-vista--admin,
+.contenido-vista--instructor {
+    max-width: 1400px;
+}
+
+/* Layout de tres columnas del panel admin */
+.admin-layout-tres-columnas {
+    display: flex;
+    flex-direction: row;
+    gap: var(--espacio-md);
+    align-items: flex-start;
+    width: 100%;
+}
+
+.columna-auditoria {
+    width: 210px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+    position: sticky;
+    top: var(--espacio-md);
+    background: #ffffff;
+    border-radius: var(--radio-lg);
+    border: 1px solid var(--borde-suave);
+    box-shadow: var(--sombra-sm);
+    padding: var(--espacio-md);
+}
+
+.columna-central {
+    flex: 1;
+    min-width: 0;
+}
+
+.columna-roles {
+    width: 210px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+    position: sticky;
+    top: var(--espacio-md);
+    background: #ffffff;
+    border-radius: var(--radio-lg);
+    border: 1px solid var(--borde-suave);
+    box-shadow: var(--sombra-sm);
+    padding: var(--espacio-md);
+}
+
+.columna__titulo {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--color-admin);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--espacio-sm);
+    padding-bottom: var(--espacio-xs);
+    border-bottom: 2px solid var(--color-admin);
+    opacity: 0.7;
+}
+
+/* ── Auditoría ─────────────────────────────────── */
+.auditoria__lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-xs);
+}
+
+.auditoria__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radio-sm);
+    background: var(--fondo-claro, #f8f9fa);
+}
+
+.auditoria__punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.auditoria__contenido {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.auditoria__descripcion {
+    font-size: 0.75rem;
+    color: var(--texto-oscuro);
+    line-height: 1.35;
+    font-weight: 500;
+}
+
+.auditoria__tiempo {
+    font-size: 0.67rem;
+    color: var(--texto-claro);
+}
+
+.auditoria__vacio {
+    font-size: 0.78rem;
+    color: var(--texto-claro);
+    text-align: center;
+    padding: var(--espacio-md) 0;
+    font-style: italic;
+}
+
+/* ── Rol-cards ─────────────────────────────────── */
+.rol-card {
+    background: var(--fondo-claro, #f8f9fa);
+    border-radius: var(--radio-md);
+    padding: var(--espacio-sm) var(--espacio-sm);
+    margin-bottom: var(--espacio-sm);
+    border: 1px solid var(--borde-suave);
+    transition: box-shadow 0.15s ease;
+}
+
+.rol-card:last-child { margin-bottom: 0; }
+
+.rol-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.rol-card__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+
+.rol-card__nombre {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+}
+
+.rol-card__descripcion {
+    font-size: 0.72rem;
+    color: var(--texto-medio);
+    margin-bottom: var(--espacio-xs);
+    line-height: 1.3;
+}
+
+.rol-card .btn--sm {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: var(--radio-full);
+    border: 1px solid var(--borde-suave);
+    background: #ffffff;
+    cursor: pointer;
+    color: var(--texto-medio);
+    transition: background 0.15s, color 0.15s;
+}
+
+.rol-card .btn--sm:hover {
+    background: var(--color-admin);
+    color: #ffffff;
+    border-color: var(--color-admin);
+}
+
+/* ── Permisos en modal ─────────────────────────── */
+.permisos-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.permisos-lista__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--texto-oscuro);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+.permisos-lista__item:last-child { border-bottom: none; }
+
+.icono--exito { color: #059669; }
+
+/* Calendario genérico */
+.calendario__cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--espacio-sm);
+}
+
+.calendario__titulo {
+    font-weight: 600;
+    font-size: var(--texto-base);
+}
+
+.calendario__nav-btn {
+    background: none;
+    border: 1px solid var(--borde-claro);
+    border-radius: var(--radio-md);
+    padding: 4px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendario__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.calendario__dia-nombre {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--texto-secundario);
+    padding: 4px 0;
+}
+
+.calendario__celda {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 4px 2px;
+    border-radius: var(--radio-sm);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    position: relative;
+}
+
+.calendario__celda:hover {
+    background-color: var(--fondo-hover, rgba(0,0,0,0.06));
+}
+
+.calendario__celda--vacia {
+    cursor: default;
+}
+
+.calendario__celda--vacia:hover {
+    background-color: transparent;
+}
+
+.calendario__numero-dia {
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.calendario__puntos {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+.calendario__punto {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.calendario__leyenda {
+    display: flex;
+    gap: var(--espacio-sm);
+    flex-wrap: wrap;
+    margin-top: var(--espacio-sm);
+}
+
+.calendario__leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    color: var(--texto-secundario);
+}
+
+/* Popover del calendario */
+.calendario__popover {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffff;
+    border: 1px solid var(--borde-claro);
+    border-radius: var(--radio-md);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    padding: var(--espacio-sm);
+    min-width: 180px;
+    z-index: 100;
+}
+
+.calendario__popover-titulo {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--texto-secundario);
+    margin-bottom: var(--espacio-xs);
+}
+
+.calendario__popover-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--espacio-xs) 0;
+    font-size: 0.78rem;
+}
+
+.calendario__popover-vacio {
+    font-size: 0.75rem;
+    color: var(--texto-claro);
+    margin-bottom: var(--espacio-xs);
+}
+
+.calendario__popover-input {
+    width: 100%;
+    border: 1px solid var(--borde-claro);
+    border-radius: var(--radio-sm);
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    margin-bottom: var(--espacio-xs);
+}
+
+/* Sección de post-its */
+.postits-seccion {
+    margin-top: var(--espacio-lg);
+}
+
+.postits__titulo {
+    font-size: var(--texto-base);
+    font-weight: 600;
+    margin-bottom: var(--espacio-sm);
+}
+
+.postits__grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-sm);
+    margin-bottom: var(--espacio-sm);
+}
+
+/* Card de cada post-it — el color de fondo viene de JS (dato del usuario) */
+.postit__card {
+    position: relative;
+    width: 180px;
+    min-height: 120px;
+    border-radius: var(--radio-md);
+    padding: var(--espacio-sm);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+
+.postit__texto {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--texto-primario);
+    margin-top: var(--espacio-xs);
+}
+
+.postit__btn-eliminar {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.12);
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.postit__btn-agregar {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-xs);
+    background: none;
+    border: 2px dashed var(--borde-claro);
+    border-radius: var(--radio-md);
+    padding: var(--espacio-xs) var(--espacio-sm);
+    cursor: pointer;
+    font-size: var(--texto-sm);
+    color: var(--texto-secundario);
+}
+
+.postit__formulario {
+    margin-top: var(--espacio-sm);
+    padding: var(--espacio-sm);
+    border: 1px solid var(--borde-claro);
+    border-radius: var(--radio-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-xs);
+    max-width: 320px;
+}
+
+.postit__textarea {
+    border: 1px solid var(--borde-claro);
+    border-radius: var(--radio-sm);
+    padding: var(--espacio-xs);
+    font-size: var(--texto-sm);
+    resize: vertical;
+}
+
+.postit__selectores-color {
+    display: flex;
+    gap: var(--espacio-xs);
+}
+
+.postit__selector-color {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.postit__selector-color--activo {
+    border-color: var(--texto-primario);
+}
+
+/* Clases utilitarias */
+.text-center    { text-align: center; }
+.texto-vacio    { color: var(--texto-claro); }
+.input-readonly { opacity: 0.55; cursor: not-allowed; pointer-events: none; }
+.col-span-full  { text-align: center; color: var(--texto-claro); font-style: italic; padding: var(--espacio-md) !important; }
+
+/* ============================================================
+   WIDGETS USUARIO — calendario + post-its lado a lado
+   ============================================================ */
+
+.usuario-widgets {
+    display: flex;
+    gap: var(--espacio-lg, 1.5rem);
+    align-items: flex-start;
+    margin-top: var(--espacio-lg, 1.5rem);
+}
+
+/* Columna izquierda: calendario — ancho fijo */
+.usuario-widget__calendario {
+    flex: 0 0 380px;
+    background: #ffffff;
+    border-radius: var(--radio-lg);
+    border: 1px solid var(--borde-claro);
+    padding: var(--espacio-md);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Columna derecha: post-its — ocupa el resto */
+.usuario-widget__postits {
+    flex: 1;
+    min-width: 0;
+    background: #ffffff;
+    border-radius: var(--radio-lg);
+    border: 1px solid var(--borde-claro);
+    padding: var(--espacio-md);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* En tablets y móvil: apilar verticalmente */
+@media (max-width: 900px) {
+    .usuario-widgets {
+        flex-direction: column;
+    }
+    .usuario-widget__calendario {
+        flex: none;
+        width: 100%;
+    }
+}
+
+/* Formulario: centrado con margen simétrico arriba y abajo */
+.buscador-tareas__form {
+    width: 100%;
+    margin: var(--espacio-md) 0;
+    display: flex;
+    justify-content: center;
+}
+
+/* Grupo: input + botón X + botón lupa alineados en fila */
+.buscador-tareas__grupo {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    max-width: 520px;
+    background: #ffffff;
+    border: 1.5px solid #e2c9f5;
+    border-radius: var(--radio-full);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(199, 98, 227, 0.08);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Foco en el conjunto cuando el input está activo */
+.buscador-tareas__grupo:focus-within {
+    border-color: var(--color-primario);
+    box-shadow: 0 2px 12px rgba(199, 98, 227, 0.16);
+}
+
+/* Input de texto */
+.buscador-tareas__grupo input[type="text"] {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.55rem 1rem;
+    font-size: var(--texto-sm);
+    background: transparent;
+    color: var(--texto-primario);
+    min-width: 0;
+}
+
+.buscador-tareas__grupo input[type="text"]::placeholder {
+    color: var(--texto-claro);
+}
+
+/* Botón X (limpiar) — solo visible cuando hay texto */
+.buscador-tareas__grupo button[type="button"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    padding: 0 0.5rem;
+    cursor: pointer;
+    color: var(--texto-claro);
+    transition: color 0.15s ease;
+}
+
+.buscador-tareas__grupo button[type="button"]:hover {
+    color: var(--color-error);
+}
+
+/* Botón lupa (submit) */
+.buscador-tareas__grupo button[type="submit"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: var(--color-primario);
+    color: #ffffff;
+    padding: 0.55rem 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    border-radius: 0 var(--radio-full) var(--radio-full) 0;
+}
+
+.buscador-tareas__grupo button[type="submit"]:hover {
+    background: var(--color-primario-oscuro);
+}

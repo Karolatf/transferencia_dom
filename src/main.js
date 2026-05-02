@@ -39,4 +39,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     console.log('Aplicación lista.');
+
+    // Inicializar todos los íconos Lucide en el DOM
+    // createIcons() busca todos los elementos con data-lucide y los convierte a SVG
+    // Se llama al final para que todos los elementos ya estén en el DOM
+    if (window.lucide) window.lucide.createIcons();
 });

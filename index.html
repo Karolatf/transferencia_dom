@@ -7,12 +7,20 @@
     <!-- Favicon del proyecto: icono de lista de tareas con paleta morada del sistema -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="stylesheet" href="styles.css">
+    <!-- Lucide Icons vía CDN — se carga antes del JS propio para que los iconos existan al inicializar -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body data-modo="inicio">
 
 <!-- PANTALLA DE INICIO -->
 <div class="pantalla-inicio" id="pantallaInicio">
-    <div class="inicio__columna-imagen"></div>
+    <div class="inicio__columna-imagen">
+        <!-- Overlay de marca: capa decorativa sobre la imagen de fondo -->
+        <div class="inicio__overlay-marca" aria-hidden="true">
+            <h1>Sistema de Gestión de Tareas</h1>
+            <p>SENA — 2026</p>
+        </div>
+    </div>
 
     <div class="inicio__columna-panel">
         <div class="inicio__glass-card">
@@ -104,33 +112,20 @@
             <!-- Botón circular de cierre de sesión en el panel de usuario -->
             <!-- El ícono de flecha de salida comunica visualmente la acción de salir -->
             <button class="btn-logout-circular btn-logout-circular--usuario" id="btnLogoutUsuario">
-                <span class="btn-logout-circular__icono">⏻</span>
+                <span class="btn-logout-circular__icono"><i data-lucide="power" class="icono-accion"></i></span>
             </button>
 
             <button class="btn-logout-circular btn-perfil-circular btn-logout-circular--usuario" id="btnPerfilUsuario">
-                <span class="btn-logout-circular__icono"><img width="30" height="30" src="https://img.icons8.com/sf-ultralight/50/show-password.png" alt="show-password"/></span>
+                <span class="btn-logout-circular__icono"><i data-lucide="user" class="icono-accion"></i></span>
             </button>
         </div>
         
-        <h1 class="header__title">Mi Portal de Tareas</h1>
-        <p class="header__subtitle">Gestiona tus tareas asignadas</p>
-        <!-- Barra de búsqueda de tareas en el panel de usuario -->
-        <!-- Filtra en tiempo real las tareas ya cargadas en pantalla -->
-        <!-- El evento input se registra en tareasService.js -->
-        <form class="header__busqueda-usuario" id="userSearchTaskForm" novalidate>
-                <input
-                    type="text"
-                    id="userSearchTaskInput"
-                    placeholder="Buscar tarea por id, título o estado..."
-                    autocomplete="off"
-                >
-
-                <button type="submit">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.398a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
-                    </svg>
-                </button>
-            </form>
+        <div class="header__info">
+            <p class="header__greeting">Bienvenido al Sistema de Gestión de Tareas</p>
+            <h1 class="header__title">Mi Portal de Tareas</h1>
+            <p class="header__subtitle">Gestiona tus tareas asignadas</p>
+        </div>
+        
     </header>
 
     <main class="contenido-vista contenido-vista--usuario">
@@ -188,6 +183,25 @@
                 <h2 class="tasks-header__title">Mis tareas asignadas</h2>
                 <span class="tasks-header__count" id="tasksCount">0 tareas</span>
             </div>
+
+            <!-- Buscador de tareas — movido del header a dentro de la sección de tareas -->
+            <form class="buscador-tareas__form" id="userSearchTaskForm" novalidate>
+                <div class="buscador-tareas__grupo">
+                    <input
+                        type="text"
+                        id="userSearchTaskInput"
+                        placeholder="Buscar tarea por id, título o estado..."
+                        autocomplete="off"
+                    >
+                    <button type="button" id="userSearchClearBtn" class="hidden" title="Limpiar">
+                        <i data-lucide="x" class="icono-accion"></i>
+                    </button>
+                    <button type="submit" title="Buscar">
+                        <i data-lucide="search" class="icono-accion"></i>
+                    </button>
+                </div>
+            </form>
+
             <div class="tasks-table-container">
                 <table class="tasks-table">
                     <thead class="tasks-table__head">
@@ -209,6 +223,16 @@
             </div>
         </section>
 
+        <!-- Calendario + Post-its: layout lado a lado debajo de la tabla -->
+        <div class="usuario-widgets">
+            <div class="usuario-widget__calendario">
+                <div id="usuarioCalendario" class="seccion-calendario"></div>
+            </div>
+            <div class="usuario-widget__postits">
+                <div id="postitsSeccion" class="postits-seccion"></div>
+            </div>
+        </div>
+
     </main>
 
     <footer class="footer footer--usuario">
@@ -227,11 +251,11 @@
         <div class="header__nav">
             <!-- La clase btn-logout-circular--admin aplica el color azul del admin -->
             <button class="btn-logout-circular btn-logout-circular--admin" id="btnLogoutAdmin" type="button" aria-label="Cerrar sesión">
-                <span class="btn-logout-circular__icono">⏻</span>
+                <span class="btn-logout-circular__icono"><i data-lucide="power" class="icono-accion"></i></span>
             </button>
             <!-- Agrega debajo del botón de logout del admin -->
             <button class="btn-logout-circular btn-perfil-circular btn-logout-circular--admin" id="btnPerfilAdmin" type="button" aria-label="Cambiar contraseña">
-                <span class="btn-logout-circular__icono">👤</span>
+                <span class="btn-logout-circular__icono"><i data-lucide="user" class="icono-accion"></i></span>
             </button>
         </div>
         <h1 class="header__title">Panel de Administracion</h1>
@@ -253,6 +277,17 @@
     </header>
 
     <main class="contenido-vista contenido-vista--admin">
+
+        <div class="admin-layout-tres-columnas">
+
+        <!-- COLUMNA IZQUIERDA: Registro de auditoría -->
+        <aside class="columna-auditoria" id="columnaAuditoria">
+            <h3 class="columna__titulo">Actividad reciente</h3>
+            <div id="auditoriaContenedor"></div>
+        </aside>
+
+        <!-- COLUMNA CENTRAL: todo el contenido actual del admin va aquí dentro -->
+        <div class="columna-central">
 
         <!-- Dashboard de estadísticas -->
         <section class="dashboard-stats">
@@ -476,6 +511,16 @@
             </div>
         </section>
 
+        </div><!-- fin columna-central -->
+
+            <!-- COLUMNA DERECHA: Diccionario de roles -->
+            <aside class="columna-roles" id="columnaRoles">
+                <h3 class="columna__titulo">Roles del sistema</h3>
+                <div id="rolesContenedor"></div>
+            </aside>
+
+        </div><!-- fin admin-layout-tres-columnas -->
+
     </main>
 
     <footer class="footer footer--admin">
@@ -495,11 +540,11 @@
         <div class="header__nav">
             <!-- Botón de cerrar sesión circular — color verde del instructor -->
             <button class="btn-logout-circular btn-logout-circular--instructor" id="btnLogoutInstructor" type="button" aria-label="Cerrar sesión">
-                <span class="btn-logout-circular__icono">⏻</span>
+                <span class="btn-logout-circular__icono"><i data-lucide="power" class="icono-accion"></i></span>
             </button>
 
             <button class="btn-logout-circular btn-perfil-circular btn-logout-circular--instructor" id="btnPerfilInstructor" type="button" aria-label="Cambiar contraseña">
-                <span class="btn-logout-circular__icono">👤</span>
+                <span class="btn-logout-circular__icono"><i data-lucide="user" class="icono-accion"></i></span>
             </button>
         </div>
         <h1 class="header__title">Panel Docente</h1>

@@ -48,6 +48,24 @@ import { loginUsuario, registrarUsuario, forgotPassword, verifyResetCode, resetP
 
 import { guardarSesion, cerrarSesion, obtenerUsuarioSesion } from '../utils/sesion.js';
 
+import { registrarEvento, renderizarAuditoria } from '../utils/auditoria.js';
+
+import { PERMISOS_POR_ROL, METADATOS_ROL } from '../utils/rolesPermisos.js';
+
+import { crearCalendario } from '../utils/eventosCalendario.js';
+
+// crearIconoLucide — función privada reutilizable para crear íconos Lucide en el DOM
+// Parámetro: nombreIcono — string con el nombre del ícono según la librería Lucide
+// Parámetro: claseExtra — string opcional con clases CSS adicionales
+function crearIconoLucide(nombreIcono, claseExtra) {
+    const icono = document.createElement('i');
+    icono.setAttribute('data-lucide', nombreIcono);
+    icono.classList.add('icono-accion');
+    if (claseExtra) icono.classList.add(claseExtra);
+    return icono;
+}
+
+
 // ── REFERENCIAS A VISTAS ──────────────────────────────────────────────────────
 
 const pantallaInicio = document.getElementById('pantallaInicio');
@@ -88,6 +106,183 @@ export function activarModoInicio() {
 //
 // Esto es más seguro y profesional: el usuario no puede buscar las tareas
 // de otra persona escribiendo un documento diferente.
+
+// cargarPostits — carga y renderiza los post-its personales del usuario
+// Los post-its se persisten en localStorage con la clave postits_${userId}
+// Parámetro: userId — id numérico del usuario logueado (para clave de localStorage única)
+// Este es el ÚNICO uso de localStorage permitido en el proyecto
+function cargarPostits(userId) {
+    // Clave única por usuario para que los post-its de un usuario no se mezclen con los de otro
+    const claveStorage = 'postits_' + userId;
+
+    // Obtener los post-its guardados — retorna arreglo vacío si no hay ninguno
+    let notas = JSON.parse(localStorage.getItem(claveStorage)) || [];
+
+    // Máximo de post-its permitidos por usuario
+    const MAXIMO_POSTITS = 12;
+
+    // Obtener el contenedor de post-its del DOM
+    const seccion = document.getElementById('postitsSeccion');
+    if (!seccion) return;
+
+    // Función interna que re-renderiza todos los post-its desde el arreglo notas
+    function renderizarPostits() {
+        // Limpiar el contenedor con removeChild para no usar innerHTML
+        while (seccion.firstChild) seccion.removeChild(seccion.firstChild);
+
+        // Título de la sección
+        const titulo = document.createElement('h3');
+        titulo.className   = 'postits__titulo';
+        titulo.textContent = 'Mis notas personales';
+        seccion.appendChild(titulo);
+
+        // Contenedor de las notas
+        const grid = document.createElement('div');
+        grid.className = 'postits__grid';
+
+        // Renderizar cada nota como una card
+        notas.forEach(function(nota, indice) {
+            const card = document.createElement('div');
+            card.className = 'postit__card';
+            // background-color es el ÚNICO uso permitido de e en este proyecto
+            // porque es un dato dinámico del usuario (color elegido por el usuario), no lógica de layout
+            card.style.backgroundColor = nota.color;
+
+            // Botón X para eliminar esta nota
+            const btnEliminar = document.createElement('button');
+            btnEliminar.className = 'postit__btn-eliminar';
+            btnEliminar.title     = 'Eliminar nota';
+            const iconoX = document.createElement('i');
+            iconoX.setAttribute('data-lucide', 'x');
+            iconoX.classList.add('icono-accion');
+            btnEliminar.appendChild(iconoX);
+
+            btnEliminar.addEventListener('click', function() {
+                // Eliminar la nota del arreglo por índice
+                notas.splice(indice, 1);
+                // Guardar el arreglo actualizado en localStorage
+                localStorage.setItem(claveStorage, JSON.stringify(notas));
+                // Re-renderizar para reflejar el cambio
+                renderizarPostits();
+            });
+            card.appendChild(btnEliminar);
+
+            // Texto de la nota
+            const texto = document.createElement('p');
+            texto.className   = 'postit__texto';
+            texto.textContent = nota.texto;
+            card.appendChild(texto);
+
+            grid.appendChild(card);
+        });
+
+        seccion.appendChild(grid);
+
+        // Botón "+" para agregar nueva nota (siempre visible)
+        const btnAgregar = document.createElement('button');
+        btnAgregar.className = 'postit__btn-agregar';
+        btnAgregar.title     = 'Agregar nota';
+        const iconoPlus = document.createElement('i');
+        iconoPlus.setAttribute('data-lucide', 'plus');
+        iconoPlus.classList.add('icono-accion');
+        btnAgregar.appendChild(iconoPlus);
+        const textoBtn = document.createTextNode(' Nueva nota');
+        btnAgregar.appendChild(textoBtn);
+
+        btnAgregar.addEventListener('click', function() {
+            // Si ya alcanzamos el máximo, notificar y no abrir el formulario
+            if (notas.length >= MAXIMO_POSTITS) {
+                mostrarNotificacion('Máximo de notas alcanzado (12)', 'advertencia');
+                return;
+            }
+            mostrarFormularioPostit();
+        });
+        seccion.appendChild(btnAgregar);
+
+        // Inicializar íconos Lucide recién agregados
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    // Función que muestra el formulario inline para agregar una nueva nota
+    function mostrarFormularioPostit() {
+        // Si ya hay un formulario abierto, no abrir otro
+        const formularioExistente = seccion.querySelector('.postit__formulario');
+        if (formularioExistente) return;
+
+        const formulario = document.createElement('div');
+        formulario.className = 'postit__formulario';
+
+        // Textarea para el texto de la nota
+        const textarea = document.createElement('textarea');
+        textarea.placeholder = 'Escribe tu nota aquí...';
+        textarea.className   = 'postit__textarea';
+        textarea.rows        = 3;
+        formulario.appendChild(textarea);
+
+        // Selectores de color — 4 opciones de colores pastel
+        const coloresPastel = [
+            '#fef3c7',  /* amarillo pastel */
+            '#fce7f3',  /* rosa pastel */
+            '#d1fae5',  /* verde pastel */
+            '#dbeafe',  /* celeste pastel */
+        ];
+
+        let colorSeleccionado = coloresPastel[0];
+
+        const selectoresColor = document.createElement('div');
+        selectoresColor.className = 'postit__selectores-color';
+
+        coloresPastel.forEach(function(color) {
+            const selector = document.createElement('button');
+            selector.type  = 'button';
+            selector.className = 'postit__selector-color';
+            selector.style.backgroundColor = color;
+            // El primer color está seleccionado por defecto
+            if (color === colorSeleccionado) selector.classList.add('postit__selector-color--activo');
+
+            selector.addEventListener('click', function() {
+                // Quitar la clase activo del selector anterior
+                selectoresColor.querySelectorAll('.postit__selector-color').forEach(function(s) {
+                    s.classList.remove('postit__selector-color--activo');
+                });
+                // Marcar este selector como activo
+                selector.classList.add('postit__selector-color--activo');
+                colorSeleccionado = color;
+            });
+            selectoresColor.appendChild(selector);
+        });
+        formulario.appendChild(selectoresColor);
+
+        // Botón guardar
+        const btnGuardar = document.createElement('button');
+        btnGuardar.className   = 'btn btn--sm btn--primary';
+        btnGuardar.textContent = 'Guardar';
+        btnGuardar.addEventListener('click', function() {
+            const texto = textarea.value.trim();
+            if (!texto) return;
+
+            // Crear la nueva nota y agregarla al arreglo
+            notas.push({
+                id:     Date.now(),
+                texto:  texto,
+                color:  colorSeleccionado,
+            });
+
+            // Persistir en localStorage
+            localStorage.setItem(claveStorage, JSON.stringify(notas));
+
+            // Re-renderizar los post-its con la nueva nota
+            renderizarPostits();
+        });
+        formulario.appendChild(btnGuardar);
+
+        seccion.appendChild(formulario);
+    }
+
+    // Renderizar los post-its al cargar la vista
+    renderizarPostits();
+}
+
 export async function activarModoUsuario() {
     ocultarTodo();
     vistaUsuario.classList.remove('hidden');
@@ -96,6 +291,14 @@ export async function activarModoUsuario() {
     // Leer los datos del usuario desde el token guardado en localStorage
     // obtenerUsuarioSesion() viene de src/utils/sesion.js y parsea el JSON del localStorage
     const usuarioSesion = obtenerUsuarioSesion();
+
+    // Mostrar saludo personalizado en el header
+    const vistaU      = document.getElementById('vistaUsuario');
+    const headerTitle = vistaU ? vistaU.querySelector('.header__title') : null;
+    const headerSub   = vistaU ? vistaU.querySelector('.header__subtitle') : null;
+    const rolesLeibles = { user: 'ESTUDIANTE', instructor: 'DOCENTE', admin: 'ADMINISTRADOR' };
+    if (headerTitle) headerTitle.textContent = usuarioSesion.name;
+    if (headerSub)   headerSub.textContent   = rolesLeibles[usuarioSesion.role] || usuarioSesion.role;
 
     // Si no hay sesión activa (el token expiró o fue borrado) redirigir al login
     if (!usuarioSesion) {
@@ -159,6 +362,99 @@ export async function activarModoUsuario() {
     // Se llama con los IDs del vistaUsuario (prefijo userDash) para no
     // sobreescribir los valores del dashboard del panel admin.
     cargarDashboardUsuario();   // ← AGREGAR ESTA LÍNEA
+
+    // Montar el calendario de prioridades del usuario
+    crearCalendario({
+        contenedorId: 'usuarioCalendario',
+        paleta:       'usuario',
+        soloLectura:  true,
+        tareas:       tareas,   // 'tareas' es la variable con las tareas del usuario en esta función
+    });
+
+    // Cargar los post-its personales
+    cargarPostits(usuarioSesion.id);
+}
+
+// renderizarDiccionarioRoles — cards de roles en la columna derecha del admin
+function renderizarDiccionarioRoles(contenedorEl) {
+    while (contenedorEl.firstChild) contenedorEl.removeChild(contenedorEl.firstChild);
+    Object.keys(METADATOS_ROL).forEach(function(rol) {
+        const meta = METADATOS_ROL[rol];
+        const card = document.createElement('div');
+        card.className = 'rol-card';
+        const headerCard = document.createElement('div');
+        headerCard.className = 'rol-card__header';
+        const icono = document.createElement('i');
+        icono.setAttribute('data-lucide', meta.icono);
+        icono.classList.add('icono-accion');
+        icono.style.color = meta.color;
+        headerCard.appendChild(icono);
+        const nombre = document.createElement('span');
+        nombre.className   = 'rol-card__nombre';
+        nombre.textContent = meta.nombre;
+        headerCard.appendChild(nombre);
+        card.appendChild(headerCard);
+        const desc = document.createElement('p');
+        desc.className   = 'rol-card__descripcion';
+        desc.textContent = meta.descripcion;
+        card.appendChild(desc);
+        const btn = document.createElement('button');
+        btn.className   = 'btn btn-sm';
+        btn.textContent = 'Ver permisos';
+        btn.addEventListener('click', function() { abrirModalPermisos(rol, meta); });
+        card.appendChild(btn);
+        contenedorEl.appendChild(card);
+    });
+    if (window.lucide) window.lucide.createIcons();
+}
+
+// abrirModalPermisos — modal con lista de permisos del rol
+function abrirModalPermisos(rol, meta) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-usuario-overlay';
+    const panel = document.createElement('div');
+    panel.className = 'modal-usuario';
+    const headerModal = document.createElement('div');
+    headerModal.className = 'modal-usuario__header';
+    const tituloModal = document.createElement('h3');
+    tituloModal.className   = 'modal-usuario__titulo';
+    tituloModal.textContent = `Permisos — ${meta.nombre}`;
+    headerModal.appendChild(tituloModal);
+    const btnCerrar = document.createElement('button');
+    btnCerrar.className = 'modal-usuario__cerrar';
+    btnCerrar.type      = 'button';
+    const iconoCerrar = document.createElement('i');
+    iconoCerrar.setAttribute('data-lucide', 'x');
+    iconoCerrar.classList.add('icono-accion');
+    btnCerrar.appendChild(iconoCerrar);
+    btnCerrar.addEventListener('click', function() { document.body.removeChild(overlay); });
+    headerModal.appendChild(btnCerrar);
+    panel.appendChild(headerModal);
+    const cuerpo = document.createElement('div');
+    cuerpo.className = 'modal-usuario__cuerpo';
+    const lista = document.createElement('ul');
+    lista.style.listStyle = 'none';
+    lista.style.padding   = '0';
+    (PERMISOS_POR_ROL[rol] || []).forEach(function(permiso) {
+        const item = document.createElement('li');
+        item.style.padding = '4px 0';
+        item.style.fontSize = '0.85rem';
+        const check = document.createElement('i');
+        check.setAttribute('data-lucide', 'check');
+        check.classList.add('icono-accion');
+        check.style.color = 'var(--color-completada)';
+        item.appendChild(check);
+        item.appendChild(document.createTextNode(' ' + permiso));
+        lista.appendChild(item);
+    });
+    cuerpo.appendChild(lista);
+    panel.appendChild(cuerpo);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    if (window.lucide) window.lucide.createIcons();
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) document.body.removeChild(overlay);
+    });
 }
 
 export async function activarModoAdmin() {
@@ -172,6 +468,14 @@ export async function activarModoAdmin() {
     // Se inicializa el dropdown de usuarios de la card "Crear Tarea"
     // await garantiza que los checkboxes están cargados antes de continuar
     await inicializarDropdownUsuarios();
+
+    // Inicializar la columna de auditoría vacía
+    const contenedorAuditoria = document.getElementById('auditoriaContenedor');
+    if (contenedorAuditoria) renderizarAuditoria(contenedorAuditoria);
+
+    // Inicializar la columna derecha de roles
+    const contenedorRoles = document.getElementById('rolesContenedor');
+    if (contenedorRoles) renderizarDiccionarioRoles(contenedorRoles);
 }
 
 // ── ACTIVAR MODO INSTRUCTOR ───────────────────────────────────────────────────
@@ -254,7 +558,10 @@ async function cargarTablaUsuariosInstructor() {
         // ÚNICO botón del instructor: "Ver / Asignar" — abre el modal de tareas del usuario
         // NO se crean botones de Editar, Cambiar Rol ni Eliminar
         const btnVer = document.createElement('button');
-        btnVer.textContent = 'Ver / Asignar';
+        while (btnVer.firstChild) btnVer.removeChild(btnVer.firstChild);
+        btnVer.appendChild(crearIconoLucide('eye'));
+        btnVer.appendChild(document.createTextNode(' Ver'));
+        if (window.lucide) window.lucide.createIcons();
         btnVer.classList.add('btn-action', 'btn-action--edit');
         btnVer.type = 'button';
         // abrirModalUsuario viene de modoUI.js — permite ver y asignar tareas al usuario
@@ -389,7 +696,10 @@ function crearFilaTareaInstructor(tarea, indice) {
 
     // Botón Editar — abre el modal de edición de tarea (el mismo del admin)
     const btnEditar = document.createElement('button');
-    btnEditar.textContent = '✏️ Editar';
+    while (btnEditar.firstChild) btnEditar.removeChild(btnEditar.firstChild);
+    btnEditar.appendChild(crearIconoLucide('pencil'));
+    btnEditar.appendChild(document.createTextNode(' Editar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEditar.classList.add('btn-action', 'btn-action--edit');
     btnEditar.type = 'button';
        btnEditar.addEventListener('click', function() {
@@ -401,7 +711,10 @@ function crearFilaTareaInstructor(tarea, indice) {
 
     // Botón Eliminar — pide confirmación antes de eliminar
     const btnEliminar = document.createElement('button');
-    btnEliminar.textContent = '🗑️ Eliminar';
+    while (btnEliminar.firstChild) btnEliminar.removeChild(btnEliminar.firstChild);
+    btnEliminar.appendChild(crearIconoLucide('trash-2'));
+    btnEliminar.appendChild(document.createTextNode(' Eliminar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEliminar.classList.add('btn-action', 'btn-action--delete');
     btnEliminar.type = 'button';
     btnEliminar.addEventListener('click', async function() {
@@ -584,7 +897,10 @@ function crearFilaUsuario(usuario, indice) {
 
     // Botón Ver / Asignar — abre el modal de tareas del usuario
     const btnVer = document.createElement('button');
-    btnVer.textContent = 'Ver / Asignar';
+    while (btnVer.firstChild) btnVer.removeChild(btnVer.firstChild);
+    btnVer.appendChild(crearIconoLucide('eye'));
+    btnVer.appendChild(document.createTextNode(' Ver'));
+    if (window.lucide) window.lucide.createIcons();
     btnVer.classList.add('btn-action', 'btn-action--edit');
     btnVer.type = 'button';
     btnVer.addEventListener('click', function() { abrirModalUsuario(usuario); });
@@ -592,7 +908,10 @@ function crearFilaUsuario(usuario, indice) {
     // NUEVO: Botón Editar — abre el modal de edición de datos del usuario
     // Sigue el mismo patrón de los demás botones de acción del proyecto
     const btnEditar = document.createElement('button');
-    btnEditar.textContent = '✏️ Editar';
+    while (btnEditar.firstChild) btnEditar.removeChild(btnEditar.firstChild);
+    btnEditar.appendChild(crearIconoLucide('pencil'));
+    btnEditar.appendChild(document.createTextNode(' Editar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEditar.classList.add('btn-action', 'btn-action--edit');
     btnEditar.type = 'button';
     btnEditar.addEventListener('click', function() { abrirModalEditarUsuario(usuario); });
@@ -660,7 +979,10 @@ function crearFilaUsuario(usuario, indice) {
 
     // Botón Eliminar — pide confirmación antes de eliminar
     const btnEliminar = document.createElement('button');
-    btnEliminar.textContent = '🗑️ Eliminar';
+    while (btnEliminar.firstChild) btnEliminar.removeChild(btnEliminar.firstChild);
+    btnEliminar.appendChild(crearIconoLucide('trash-2'));
+    btnEliminar.appendChild(document.createTextNode(' Eliminar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEliminar.classList.add('btn-action', 'btn-action--delete');
     btnEliminar.type = 'button';
     btnEliminar.addEventListener('click', async function() {
@@ -738,7 +1060,8 @@ async function abrirModalEditarUsuario(usuario) {
     const btnCerrar = document.createElement('button');
     btnCerrar.className   = 'modal-usuario__cerrar';
     btnCerrar.type        = 'button';
-    btnCerrar.textContent = '✕';
+    btnCerrar.appendChild(crearIconoLucide('x'));
+    if (window.lucide) window.lucide.createIcons();
     btnCerrar.addEventListener('click', cerrarModalEditarUsuarioExistente);
 
     header.appendChild(infoTexto);
@@ -961,7 +1284,7 @@ function formatearEstado(estado) {
         pendiente:            'Pendiente',
         en_progreso:          'En Progreso',
         // Estado que pone el usuario cuando considera que terminó su trabajo
-        pendiente_aprobacion: 'Pendiente por aprobar',
+        pendiente_aprobacion: 'Por aprobar',
         completada:           'Completada',
     };
     return mapa[estado] || estado;
@@ -1109,7 +1432,10 @@ function crearFilaTareaAdmin(tarea, indice) {
 
     // Botón Editar — abre el modal compartido con el modo usuario
     const btnEditar = document.createElement('button');
-    btnEditar.textContent = '✏️ Editar';
+    while (btnEditar.firstChild) btnEditar.removeChild(btnEditar.firstChild);
+    btnEditar.appendChild(crearIconoLucide('pencil'));
+    btnEditar.appendChild(document.createTextNode(' Editar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEditar.classList.add('btn-action', 'btn-action--edit');
     btnEditar.type = 'button';
     btnEditar.addEventListener('click', function() {
@@ -1117,7 +1443,10 @@ function crearFilaTareaAdmin(tarea, indice) {
     });
 
     const btnEliminar = document.createElement('button');
-    btnEliminar.textContent = '🗑️ Eliminar';
+    while (btnEliminar.firstChild) btnEliminar.removeChild(btnEliminar.firstChild);
+    btnEliminar.appendChild(crearIconoLucide('trash-2'));
+    btnEliminar.appendChild(document.createTextNode(' Eliminar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEliminar.classList.add('btn-action', 'btn-action--delete');
     btnEliminar.type = 'button';
     btnEliminar.addEventListener('click', async function() {
@@ -1183,7 +1512,8 @@ export async function abrirModalUsuario(usuario) {
     const btnCerrar = document.createElement('button');
     btnCerrar.className   = 'modal-usuario__cerrar';
     btnCerrar.type        = 'button';
-    btnCerrar.textContent = '✕';
+    btnCerrar.appendChild(crearIconoLucide('x'));
+    if (window.lucide) window.lucide.createIcons();
     btnCerrar.addEventListener('click', cerrarModalUsuarioExistente);
 
     header.appendChild(infoTexto);
@@ -1480,7 +1810,8 @@ async function recargarCheckboxesDropdown() {
 
         const icono = document.createElement('span');
         icono.className   = 'usuarios-dropdown__vacio-icono';
-        icono.textContent = '\u{1F465}';
+        icono.appendChild(crearIconoLucide('users'));
+        if (window.lucide) window.lucide.createIcons();
 
         const msg = document.createElement('p');
         msg.className   = 'usuarios-dropdown__vacio-texto';
@@ -1694,8 +2025,9 @@ async function manejarCerrarSesion() {
     // mostrarConfirmacion viene de notificaciones.js y usa SweetAlert2
     const confirmado = await mostrarConfirmacion(
         '¿Cerrar sesión?',
-        'Se cerrará tu sesión actual y volverás a la pantalla de inicio.',
-        'Sí, cerrar sesión'
+        'Sí, cerrar sesión',
+        'Cancelar',
+        'Se cerrará tu sesión actual y volverás a la pantalla de inicio.'
     );
 
     // Si el usuario canceló no se hace nada
@@ -2469,20 +2801,58 @@ export function registrarEventosNavegacion() {
     // El input filtra en tiempo real las filas ya pintadas en la tabla.
     // No hace peticiones al servidor — trabaja sobre el DOM directamente.
     // El id del input coincide con el que está en index.html
-    const userSearchTaskInput = document.getElementById('userSearchTaskInput');
-    if (userSearchTaskInput) {
-        userSearchTaskInput.addEventListener('input', function() {
-            const termino = this.value.trim().toLowerCase();
+    // Buscador de tareas del usuario — ahora responde a submit, no a input en vivo
+    const formBuscador     = document.getElementById('userSearchTaskForm');
+    const inputBuscador    = document.getElementById('userSearchTaskInput');
+    const btnLimpiarBuscador = document.getElementById('userSearchClearBtn');
 
-            // Se obtienen todas las filas del tbody del panel usuario
-            const filas = document.querySelectorAll('#tasksTableBody tr');
-
+    if (formBuscador) {
+        formBuscador.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const termino     = inputBuscador ? inputBuscador.value.trim().toLowerCase() : '';
+            const tablaTareas = document.querySelector('#tasksTableBody');
+            if (!tablaTareas) return;
+            const filas = Array.from(tablaTareas.querySelectorAll('tr'));
+            const anterior = tablaTareas.querySelector('.fila-sin-resultados');
+            if (anterior) tablaTareas.removeChild(anterior);
+            if (!termino) {
+                filas.forEach(function(f) { f.classList.remove('hidden'); });
+                if (btnLimpiarBuscador) btnLimpiarBuscador.classList.add('hidden');
+                return;
+            }
+            if (btnLimpiarBuscador) btnLimpiarBuscador.classList.remove('hidden');
+            let hayCoincidencias = false;
             filas.forEach(function(fila) {
-                // Se busca el término en todo el texto de la fila
-                // Así se puede buscar por id, título o estado en cualquier columna
-                const textoFila = fila.textContent.toLowerCase();
-                fila.style.display = textoFila.includes(termino) ? '' : 'none';
+                if (fila.textContent.toLowerCase().includes(termino)) {
+                    fila.classList.remove('hidden');
+                    hayCoincidencias = true;
+                } else {
+                    fila.classList.add('hidden');
+                }
             });
+            if (!hayCoincidencias) {
+                const tr = document.createElement('tr');
+                tr.className = 'fila-sin-resultados';
+                const td = document.createElement('td');
+                td.setAttribute('colspan', '6');
+                td.style.textAlign = 'center';
+                td.style.color     = 'var(--texto-claro)';
+                td.textContent = `Sin resultados para "${inputBuscador.value.trim()}"`;
+                tr.appendChild(td);
+                tablaTareas.appendChild(tr);
+            }
+        });
+    }
+
+    if (btnLimpiarBuscador) {
+        btnLimpiarBuscador.addEventListener('click', function() {
+            if (inputBuscador) inputBuscador.value = '';
+            btnLimpiarBuscador.classList.add('hidden');
+            const tablaTareas = document.querySelector('#tasksTableBody');
+            if (!tablaTareas) return;
+            Array.from(tablaTareas.querySelectorAll('tr')).forEach(function(f) { f.classList.remove('hidden'); });
+            const anterior = tablaTareas.querySelector('.fila-sin-resultados');
+            if (anterior) tablaTareas.removeChild(anterior);
         });
     }
 
