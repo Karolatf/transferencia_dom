@@ -61,7 +61,7 @@ export function formatearEstadoTarea(estado) {
         pendiente:            'Pendiente',
         en_progreso:          'En Progreso',
         // El usuario marca este estado cuando considera que terminó su trabajo
-        pendiente_aprobacion: 'Pendiente por aprobar',
+        pendiente_aprobacion: 'Por aprobar',
         completada:           'Completada',
     };
     // Si el estado no existe en el mapa se retorna el valor original como fallback

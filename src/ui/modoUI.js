@@ -993,7 +993,7 @@ function formatearEstado(estado) {
         pendiente:            'Pendiente',
         en_progreso:          'En Progreso',
         // Estado que pone el usuario cuando considera que terminó su trabajo
-        pendiente_aprobacion: 'Pendiente por aprobar',
+        pendiente_aprobacion: 'Por aprobar',
         completada:           'Completada',
     };
     return mapa[estado] || estado;

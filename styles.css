@@ -630,7 +630,7 @@ body[data-modo="admin"]   {
 .status-completada  { background: #d1fae5; color: #065f46; }
 /* Badge para el cuarto estado: naranja suave, diferente del amarillo de "pendiente" */
 /* Fondo #ffedd5 (naranja claro) — texto #9a3412 (naranja oscuro con buen contraste) */
-.status-pendiente_aprobacion { background: #ffedd5; color: #9a3412; }
+.status-pendiente_aprobacion { background: #ffedd5; color: #9a3412; font-size: 0.78rem; white-space: nowrap; }
 
 
 /* ACCIONES EN LA TABLA */
@@ -2185,4 +2185,10 @@ body[data-modo="instructor"] {
     display: inline-flex;
     align-items: center;
     gap: var(--espacio-xs);
+}
+
+/* Columna de estado — ancho mínimo para el badge "Por aprobar" */
+.tasks-table td.col-estado,
+.tasks-table th.col-estado {
+    min-width: 130px;
 }
