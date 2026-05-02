@@ -48,6 +48,19 @@ import { loginUsuario, registrarUsuario, forgotPassword, verifyResetCode, resetP
 
 import { guardarSesion, cerrarSesion, obtenerUsuarioSesion } from '../utils/sesion.js';
 
+
+// crearIconoLucide — función privada reutilizable para crear íconos Lucide en el DOM
+// Parámetro: nombreIcono — string con el nombre del ícono según la librería Lucide
+// Parámetro: claseExtra — string opcional con clases CSS adicionales
+function crearIconoLucide(nombreIcono, claseExtra) {
+    const icono = document.createElement('i');
+    icono.setAttribute('data-lucide', nombreIcono);
+    icono.classList.add('icono-accion');
+    if (claseExtra) icono.classList.add(claseExtra);
+    return icono;
+}
+
+
 // ── REFERENCIAS A VISTAS ──────────────────────────────────────────────────────
 
 const pantallaInicio = document.getElementById('pantallaInicio');
@@ -254,7 +267,10 @@ async function cargarTablaUsuariosInstructor() {
         // ÚNICO botón del instructor: "Ver / Asignar" — abre el modal de tareas del usuario
         // NO se crean botones de Editar, Cambiar Rol ni Eliminar
         const btnVer = document.createElement('button');
-        btnVer.textContent = 'Ver / Asignar';
+        while (btnVer.firstChild) btnVer.removeChild(btnVer.firstChild);
+        btnVer.appendChild(crearIconoLucide('eye'));
+        btnVer.appendChild(document.createTextNode(' Ver'));
+        if (window.lucide) window.lucide.createIcons();
         btnVer.classList.add('btn-action', 'btn-action--edit');
         btnVer.type = 'button';
         // abrirModalUsuario viene de modoUI.js — permite ver y asignar tareas al usuario
@@ -389,7 +405,10 @@ function crearFilaTareaInstructor(tarea, indice) {
 
     // Botón Editar — abre el modal de edición de tarea (el mismo del admin)
     const btnEditar = document.createElement('button');
-    btnEditar.textContent = '✏️ Editar';
+    while (btnEditar.firstChild) btnEditar.removeChild(btnEditar.firstChild);
+    btnEditar.appendChild(crearIconoLucide('pencil'));
+    btnEditar.appendChild(document.createTextNode(' Editar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEditar.classList.add('btn-action', 'btn-action--edit');
     btnEditar.type = 'button';
        btnEditar.addEventListener('click', function() {
@@ -401,7 +420,10 @@ function crearFilaTareaInstructor(tarea, indice) {
 
     // Botón Eliminar — pide confirmación antes de eliminar
     const btnEliminar = document.createElement('button');
-    btnEliminar.textContent = '🗑️ Eliminar';
+    while (btnEliminar.firstChild) btnEliminar.removeChild(btnEliminar.firstChild);
+    btnEliminar.appendChild(crearIconoLucide('trash-2'));
+    btnEliminar.appendChild(document.createTextNode(' Eliminar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEliminar.classList.add('btn-action', 'btn-action--delete');
     btnEliminar.type = 'button';
     btnEliminar.addEventListener('click', async function() {
@@ -584,7 +606,10 @@ function crearFilaUsuario(usuario, indice) {
 
     // Botón Ver / Asignar — abre el modal de tareas del usuario
     const btnVer = document.createElement('button');
-    btnVer.textContent = 'Ver / Asignar';
+    while (btnVer.firstChild) btnVer.removeChild(btnVer.firstChild);
+    btnVer.appendChild(crearIconoLucide('eye'));
+    btnVer.appendChild(document.createTextNode(' Ver'));
+    if (window.lucide) window.lucide.createIcons();
     btnVer.classList.add('btn-action', 'btn-action--edit');
     btnVer.type = 'button';
     btnVer.addEventListener('click', function() { abrirModalUsuario(usuario); });
@@ -592,7 +617,10 @@ function crearFilaUsuario(usuario, indice) {
     // NUEVO: Botón Editar — abre el modal de edición de datos del usuario
     // Sigue el mismo patrón de los demás botones de acción del proyecto
     const btnEditar = document.createElement('button');
-    btnEditar.textContent = '✏️ Editar';
+    while (btnEditar.firstChild) btnEditar.removeChild(btnEditar.firstChild);
+    btnEditar.appendChild(crearIconoLucide('pencil'));
+    btnEditar.appendChild(document.createTextNode(' Editar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEditar.classList.add('btn-action', 'btn-action--edit');
     btnEditar.type = 'button';
     btnEditar.addEventListener('click', function() { abrirModalEditarUsuario(usuario); });
@@ -660,7 +688,10 @@ function crearFilaUsuario(usuario, indice) {
 
     // Botón Eliminar — pide confirmación antes de eliminar
     const btnEliminar = document.createElement('button');
-    btnEliminar.textContent = '🗑️ Eliminar';
+    while (btnEliminar.firstChild) btnEliminar.removeChild(btnEliminar.firstChild);
+    btnEliminar.appendChild(crearIconoLucide('trash-2'));
+    btnEliminar.appendChild(document.createTextNode(' Eliminar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEliminar.classList.add('btn-action', 'btn-action--delete');
     btnEliminar.type = 'button';
     btnEliminar.addEventListener('click', async function() {
@@ -738,7 +769,8 @@ async function abrirModalEditarUsuario(usuario) {
     const btnCerrar = document.createElement('button');
     btnCerrar.className   = 'modal-usuario__cerrar';
     btnCerrar.type        = 'button';
-    btnCerrar.textContent = '✕';
+    btnCerrar.appendChild(crearIconoLucide('x'));
+    if (window.lucide) window.lucide.createIcons();
     btnCerrar.addEventListener('click', cerrarModalEditarUsuarioExistente);
 
     header.appendChild(infoTexto);
@@ -1109,7 +1141,10 @@ function crearFilaTareaAdmin(tarea, indice) {
 
     // Botón Editar — abre el modal compartido con el modo usuario
     const btnEditar = document.createElement('button');
-    btnEditar.textContent = '✏️ Editar';
+    while (btnEditar.firstChild) btnEditar.removeChild(btnEditar.firstChild);
+    btnEditar.appendChild(crearIconoLucide('pencil'));
+    btnEditar.appendChild(document.createTextNode(' Editar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEditar.classList.add('btn-action', 'btn-action--edit');
     btnEditar.type = 'button';
     btnEditar.addEventListener('click', function() {
@@ -1117,7 +1152,10 @@ function crearFilaTareaAdmin(tarea, indice) {
     });
 
     const btnEliminar = document.createElement('button');
-    btnEliminar.textContent = '🗑️ Eliminar';
+    while (btnEliminar.firstChild) btnEliminar.removeChild(btnEliminar.firstChild);
+    btnEliminar.appendChild(crearIconoLucide('trash-2'));
+    btnEliminar.appendChild(document.createTextNode(' Eliminar'));
+    if (window.lucide) window.lucide.createIcons();
     btnEliminar.classList.add('btn-action', 'btn-action--delete');
     btnEliminar.type = 'button';
     btnEliminar.addEventListener('click', async function() {
@@ -1183,7 +1221,8 @@ export async function abrirModalUsuario(usuario) {
     const btnCerrar = document.createElement('button');
     btnCerrar.className   = 'modal-usuario__cerrar';
     btnCerrar.type        = 'button';
-    btnCerrar.textContent = '✕';
+    btnCerrar.appendChild(crearIconoLucide('x'));
+    if (window.lucide) window.lucide.createIcons();
     btnCerrar.addEventListener('click', cerrarModalUsuarioExistente);
 
     header.appendChild(infoTexto);
@@ -1480,7 +1519,8 @@ async function recargarCheckboxesDropdown() {
 
         const icono = document.createElement('span');
         icono.className   = 'usuarios-dropdown__vacio-icono';
-        icono.textContent = '\u{1F465}';
+        icono.appendChild(crearIconoLucide('users'));
+        if (window.lucide) window.lucide.createIcons();
 
         const msg = document.createElement('p');
         msg.className   = 'usuarios-dropdown__vacio-texto';
