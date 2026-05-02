@@ -2537,3 +2537,9 @@ body[data-modo="instructor"] {
 .postit__selector-color--activo {
     border-color: var(--texto-primario);
 }
+
+/* Clases utilitarias */
+.text-center    { text-align: center; }
+.texto-vacio    { color: var(--texto-claro); }
+.input-readonly { opacity: 0.55; cursor: not-allowed; pointer-events: none; }
+.col-span-full  { text-align: center; color: var(--texto-claro); font-style: italic; padding: var(--espacio-md) !important; }
