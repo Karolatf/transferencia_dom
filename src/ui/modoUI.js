@@ -1519,9 +1519,9 @@ function manejarEdicionTareaAdmin(tarea) {
 
         const datosActualizados = {
             title:       titulo,
-            description: descripcion,
+            description: descripcion !== '' ? descripcion : undefined,
             status:      estado,
-            comment:     comentario,
+            comment:     comentario !== '' ? comentario : undefined,
         };
 
         const tareaActualizada = await actualizarTarea(tareaId, datosActualizados);
@@ -1582,12 +1582,12 @@ function manejarEdicionTareaInstructor(tarea) {
         const comentEl   = document.getElementById('editTaskComment');
         const comentario = comentEl && comentEl.value.trim() !== ''
             ? comentEl.value.trim()
-            : null;
+            : undefined;
 
         // Construir el objeto con los datos actualizados
         const datosActualizados = {
             title:       titulo,
-            description: descripcion,
+            description: descripcion !== '' ? descripcion : undefined,
             status:      estado,
             comment:     comentario,
         };
@@ -1902,9 +1902,11 @@ export async function abrirModalUsuario(usuario) {
             title:         titulo,
             description:   desc !== '' ? desc : undefined,
             status:        estado,
-            comment:       comentario || null,
-            assignedUsers: [parseInt(usuario.id, 10) || usuario.id],
+            comment:       comentario !== '' ? comentario : undefined,
+            assignedUsers: [Number(usuario.id)],
         };
+
+        console.log('datosTarea enviado:', JSON.stringify(datosTarea));
 
         const tareaCreada = await registrarTarea(datosTarea);
 
