@@ -1303,6 +1303,24 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     color: white;
 }
 
+/* Clase base para todos los íconos de acción (Lucide Icons en botones) */
+/* stroke: currentColor hace que el ícono herede el color del elemento padre */
+.icono-accion {
+    width: 15px;
+    height: 15px;
+    vertical-align: middle;
+    stroke: currentColor;
+    /* fill: none evita que el ícono se rellene con color sólido — solo usa el trazo */
+    fill: none;
+    flex-shrink: 0;
+}
+
+/* Los botones de logout circular usan íconos más grandes */
+.btn-logout-circular .icono-accion {
+    width: 20px;
+    height: 20px;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
     body { padding: var(--espacio-md); }
