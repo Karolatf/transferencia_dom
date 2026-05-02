@@ -113,6 +113,14 @@ export async function activarModoUsuario() {
     // obtenerUsuarioSesion() viene de src/utils/sesion.js y parsea el JSON del localStorage
     const usuarioSesion = obtenerUsuarioSesion();
 
+    // Mostrar saludo personalizado en el header
+    const vistaU      = document.getElementById('vistaUsuario');
+    const headerTitle = vistaU ? vistaU.querySelector('.header__title') : null;
+    const headerSub   = vistaU ? vistaU.querySelector('.header__subtitle') : null;
+    const rolesLeibles = { user: 'ESTUDIANTE', instructor: 'DOCENTE', admin: 'ADMINISTRADOR' };
+    if (headerTitle) headerTitle.textContent = usuarioSesion.name;
+    if (headerSub)   headerSub.textContent   = rolesLeibles[usuarioSesion.role] || usuarioSesion.role;
+
     // Si no hay sesión activa (el token expiró o fue borrado) redirigir al login
     if (!usuarioSesion) {
         activarModoInicio();
@@ -2602,20 +2610,58 @@ export function registrarEventosNavegacion() {
     // El input filtra en tiempo real las filas ya pintadas en la tabla.
     // No hace peticiones al servidor — trabaja sobre el DOM directamente.
     // El id del input coincide con el que está en index.html
-    const userSearchTaskInput = document.getElementById('userSearchTaskInput');
-    if (userSearchTaskInput) {
-        userSearchTaskInput.addEventListener('input', function() {
-            const termino = this.value.trim().toLowerCase();
+    // Buscador de tareas del usuario — ahora responde a submit, no a input en vivo
+    const formBuscador     = document.getElementById('userSearchTaskForm');
+    const inputBuscador    = document.getElementById('userSearchTaskInput');
+    const btnLimpiar       = document.getElementById('userSearchClearBtn');
 
-            // Se obtienen todas las filas del tbody del panel usuario
-            const filas = document.querySelectorAll('#tasksTableBody tr');
-
+    if (formBuscador) {
+        formBuscador.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const termino     = inputBuscador ? inputBuscador.value.trim().toLowerCase() : '';
+            const tablaTareas = document.querySelector('#tasksTableBody');
+            if (!tablaTareas) return;
+            const filas = Array.from(tablaTareas.querySelectorAll('tr'));
+            const anterior = tablaTareas.querySelector('.fila-sin-resultados');
+            if (anterior) tablaTareas.removeChild(anterior);
+            if (!termino) {
+                filas.forEach(function(f) { f.classList.remove('hidden'); });
+                if (btnLimpiar) btnLimpiar.classList.add('hidden');
+                return;
+            }
+            if (btnLimpiar) btnLimpiar.classList.remove('hidden');
+            let hayCoincidencias = false;
             filas.forEach(function(fila) {
-                // Se busca el término en todo el texto de la fila
-                // Así se puede buscar por id, título o estado en cualquier columna
-                const textoFila = fila.textContent.toLowerCase();
-                fila.style.display = textoFila.includes(termino) ? '' : 'none';
+                if (fila.textContent.toLowerCase().includes(termino)) {
+                    fila.classList.remove('hidden');
+                    hayCoincidencias = true;
+                } else {
+                    fila.classList.add('hidden');
+                }
             });
+            if (!hayCoincidencias) {
+                const tr = document.createElement('tr');
+                tr.className = 'fila-sin-resultados';
+                const td = document.createElement('td');
+                td.setAttribute('colspan', '6');
+                td.style.textAlign = 'center';
+                td.style.color     = 'var(--texto-claro)';
+                td.textContent = `Sin resultados para "${inputBuscador.value.trim()}"`;
+                tr.appendChild(td);
+                tablaTareas.appendChild(tr);
+            }
+        });
+    }
+
+    if (btnLimpiar) {
+        btnLimpiar.addEventListener('click', function() {
+            if (inputBuscador) inputBuscador.value = '';
+            btnLimpiar.classList.add('hidden');
+            const tablaTareas = document.querySelector('#tasksTableBody');
+            if (!tablaTareas) return;
+            Array.from(tablaTareas.querySelectorAll('tr')).forEach(function(f) { f.classList.remove('hidden'); });
+            const anterior = tablaTareas.querySelector('.fila-sin-resultados');
+            if (anterior) tablaTareas.removeChild(anterior);
         });
     }
 

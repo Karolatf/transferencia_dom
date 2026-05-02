@@ -122,23 +122,7 @@
         
         <h1 class="header__title">Mi Portal de Tareas</h1>
         <p class="header__subtitle">Gestiona tus tareas asignadas</p>
-        <!-- Barra de búsqueda de tareas en el panel de usuario -->
-        <!-- Filtra en tiempo real las tareas ya cargadas en pantalla -->
-        <!-- El evento input se registra en tareasService.js -->
-        <form class="header__busqueda-usuario" id="userSearchTaskForm" novalidate>
-                <input
-                    type="text"
-                    id="userSearchTaskInput"
-                    placeholder="Buscar tarea por id, título o estado..."
-                    autocomplete="off"
-                >
-
-                <button type="submit">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.398a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
-                    </svg>
-                </button>
-            </form>
+        
     </header>
 
     <main class="contenido-vista contenido-vista--usuario">
@@ -196,6 +180,25 @@
                 <h2 class="tasks-header__title">Mis tareas asignadas</h2>
                 <span class="tasks-header__count" id="tasksCount">0 tareas</span>
             </div>
+
+            <!-- Buscador de tareas — movido del header a dentro de la sección de tareas -->
+            <form class="buscador-tareas__form" id="userSearchTaskForm" novalidate>
+                <div class="buscador-tareas__grupo">
+                    <input
+                        type="text"
+                        id="userSearchTaskInput"
+                        placeholder="Buscar tarea por id, título o estado..."
+                        autocomplete="off"
+                    >
+                    <button type="button" id="userSearchClearBtn" class="hidden" title="Limpiar">
+                        <i data-lucide="x" class="icono-accion"></i>
+                    </button>
+                    <button type="submit" title="Buscar">
+                        <i data-lucide="search" class="icono-accion"></i>
+                    </button>
+                </div>
+            </form>
+
             <div class="tasks-table-container">
                 <table class="tasks-table">
                     <thead class="tasks-table__head">
