@@ -164,3 +164,25 @@ export async function cambiarPassword(userId, datos) {
         return { error: error.message };
     }
 }
+
+// desactivarUsuario — PATCH /api/users/:id/deactivate
+// Marca al usuario como inactivo (is_active = 0) sin eliminarlo
+// El backend responde 400 si tiene tareas activas — ese mensaje llega en error.message
+export async function desactivarUsuario(id) {
+    const url      = `${API_BASE_URL}${API_PREFIX}/users/${id}/deactivate`;
+    const respuesta = await fetchConAuth(url, { method: 'PATCH' });
+    const datos    = await respuesta.json();
+    // Si el backend rechaza (400 con tareas activas, 404 no existe), lanzar error
+    if (!respuesta.ok) throw new Error(datos.message || 'No se pudo desactivar el usuario');
+    return datos.data;
+}
+
+// reactivarUsuario — PATCH /api/users/:id/reactivate
+// Marca al usuario como activo (is_active = 1) para que pueda iniciar sesión nuevamente
+export async function reactivarUsuario(id) {
+    const url      = `${API_BASE_URL}${API_PREFIX}/users/${id}/reactivate`;
+    const respuesta = await fetchConAuth(url, { method: 'PATCH' });
+    const datos    = await respuesta.json();
+    if (!respuesta.ok) throw new Error(datos.message || 'No se pudo reactivar el usuario');
+    return datos.data;
+}
