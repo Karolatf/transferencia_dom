@@ -50,6 +50,8 @@ import { guardarSesion, cerrarSesion, obtenerUsuarioSesion } from '../utils/sesi
 
 import { registrarEvento, renderizarAuditoria } from '../utils/auditoria.js';
 
+import { PERMISOS_POR_ROL, METADATOS_ROL } from '../utils/rolesPermisos.js';
+
 // crearIconoLucide — función privada reutilizable para crear íconos Lucide en el DOM
 // Parámetro: nombreIcono — string con el nombre del ícono según la librería Lucide
 // Parámetro: claseExtra — string opcional con clases CSS adicionales
@@ -175,6 +177,88 @@ export async function activarModoUsuario() {
     cargarDashboardUsuario();   // ← AGREGAR ESTA LÍNEA
 }
 
+// renderizarDiccionarioRoles — cards de roles en la columna derecha del admin
+function renderizarDiccionarioRoles(contenedorEl) {
+    while (contenedorEl.firstChild) contenedorEl.removeChild(contenedorEl.firstChild);
+    Object.keys(METADATOS_ROL).forEach(function(rol) {
+        const meta = METADATOS_ROL[rol];
+        const card = document.createElement('div');
+        card.className = 'rol-card';
+        const headerCard = document.createElement('div');
+        headerCard.className = 'rol-card__header';
+        const icono = document.createElement('i');
+        icono.setAttribute('data-lucide', meta.icono);
+        icono.classList.add('icono-accion');
+        icono.style.color = meta.color;
+        headerCard.appendChild(icono);
+        const nombre = document.createElement('span');
+        nombre.className   = 'rol-card__nombre';
+        nombre.textContent = meta.nombre;
+        headerCard.appendChild(nombre);
+        card.appendChild(headerCard);
+        const desc = document.createElement('p');
+        desc.className   = 'rol-card__descripcion';
+        desc.textContent = meta.descripcion;
+        card.appendChild(desc);
+        const btn = document.createElement('button');
+        btn.className   = 'btn btn-sm';
+        btn.textContent = 'Ver permisos';
+        btn.addEventListener('click', function() { abrirModalPermisos(rol, meta); });
+        card.appendChild(btn);
+        contenedorEl.appendChild(card);
+    });
+    if (window.lucide) window.lucide.createIcons();
+}
+
+// abrirModalPermisos — modal con lista de permisos del rol
+function abrirModalPermisos(rol, meta) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-usuario-overlay';
+    const panel = document.createElement('div');
+    panel.className = 'modal-usuario';
+    const headerModal = document.createElement('div');
+    headerModal.className = 'modal-usuario__header';
+    const tituloModal = document.createElement('h3');
+    tituloModal.className   = 'modal-usuario__titulo';
+    tituloModal.textContent = `Permisos — ${meta.nombre}`;
+    headerModal.appendChild(tituloModal);
+    const btnCerrar = document.createElement('button');
+    btnCerrar.className = 'modal-usuario__cerrar';
+    btnCerrar.type      = 'button';
+    const iconoCerrar = document.createElement('i');
+    iconoCerrar.setAttribute('data-lucide', 'x');
+    iconoCerrar.classList.add('icono-accion');
+    btnCerrar.appendChild(iconoCerrar);
+    btnCerrar.addEventListener('click', function() { document.body.removeChild(overlay); });
+    headerModal.appendChild(btnCerrar);
+    panel.appendChild(headerModal);
+    const cuerpo = document.createElement('div');
+    cuerpo.className = 'modal-usuario__cuerpo';
+    const lista = document.createElement('ul');
+    lista.style.listStyle = 'none';
+    lista.style.padding   = '0';
+    (PERMISOS_POR_ROL[rol] || []).forEach(function(permiso) {
+        const item = document.createElement('li');
+        item.style.padding = '4px 0';
+        item.style.fontSize = '0.85rem';
+        const check = document.createElement('i');
+        check.setAttribute('data-lucide', 'check');
+        check.classList.add('icono-accion');
+        check.style.color = 'var(--color-completada)';
+        item.appendChild(check);
+        item.appendChild(document.createTextNode(' ' + permiso));
+        lista.appendChild(item);
+    });
+    cuerpo.appendChild(lista);
+    panel.appendChild(cuerpo);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    if (window.lucide) window.lucide.createIcons();
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) document.body.removeChild(overlay);
+    });
+}
+
 export async function activarModoAdmin() {
     ocultarTodo();
     vistaAdmin.classList.remove('hidden');
@@ -190,6 +274,10 @@ export async function activarModoAdmin() {
     // Inicializar la columna de auditoría vacía
     const contenedorAuditoria = document.getElementById('auditoriaContenedor');
     if (contenedorAuditoria) renderizarAuditoria(contenedorAuditoria);
+
+    // Inicializar la columna derecha de roles
+    const contenedorRoles = document.getElementById('rolesContenedor');
+    if (contenedorRoles) renderizarDiccionarioRoles(contenedorRoles);
 }
 
 // ── ACTIVAR MODO INSTRUCTOR ───────────────────────────────────────────────────
