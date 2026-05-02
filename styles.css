@@ -246,6 +246,39 @@ body[data-modo="admin"]   {
     margin-top: var(--espacio-xs);
 }
 
+/* Saludo superior del header de usuario */
+.header__info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.header__greeting {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--color-primario);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+}
+
+/* En el header usuario: nombre grande, rol pequeño debajo */
+.header--usuario .header__title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    margin: 0;
+}
+
+.header--usuario .header__subtitle {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--texto-medio);
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+}
+
 .header--admin .header__subtitle { color: rgba(255,255,255,0.85); }
 
 .header__nav {
@@ -941,6 +974,11 @@ body[data-modo="admin"]   {
 .admin-card--full {
     flex: none;
     width: 100%;
+    margin-bottom: var(--espacio-md);
+}
+
+.admin-card--full:last-of-type {
+    margin-bottom: 0;
 }
 
 .admin-card__cabecera {
@@ -1487,22 +1525,24 @@ body[data-modo="admin"]   {
    GET /api/tasks/dashboard → { total, pendientes, enProgreso, completadas } */
 .dashboard-stats {
     display: grid;
-    /* 5 columnas: Total, Pendiente, En Progreso, Por aprobar, Completada */
     grid-template-columns: repeat(5, 1fr);
     gap: var(--espacio-md);
     margin-bottom: var(--espacio-lg);
+    align-items: stretch;   /* todas las cards a la misma altura */
 }
 
 .stat-card {
     background: white;
     border-radius: var(--radio-xl);
-    padding: var(--espacio-lg) var(--espacio-xl);
+    padding: var(--espacio-md) var(--espacio-lg);
     box-shadow: var(--sombra-sm);
     display: flex;
     flex-direction: column;
+    justify-content: center;   /* contenido centrado verticalmente */
     gap: var(--espacio-xs);
     border-left: 4px solid var(--borde-suave);
     transition: box-shadow var(--transicion);
+    min-height: 110px;         /* altura mínima uniforme */
 }
 
 .stat-card:hover { box-shadow: var(--sombra-md); }
@@ -1510,20 +1550,19 @@ body[data-modo="admin"]   {
 .stat-card--pendiente  { border-left-color: var(--color-pendiente); }
 .stat-card--progreso   { border-left-color: var(--color-progreso); }
 .stat-card--completada { border-left-color: var(--color-completada); }
-/* Stat-card del dashboard para el estado "pendiente_aprobacion" */
-/* Color naranja para diferenciarlo del amarillo de "pendiente" */
 .stat-card--aprobacion { border-left-color: var(--color-aprobacion); }
 
 .stat-card__label {
-    font-size: var(--texto-sm);
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 700;
     color: var(--texto-claro);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
 }
 
 .stat-card__valor {
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 700;
     color: var(--texto-oscuro);
     line-height: 1;
@@ -1532,7 +1571,6 @@ body[data-modo="admin"]   {
 .stat-card--pendiente  .stat-card__valor { color: #92400e; }
 .stat-card--progreso   .stat-card__valor { color: #1e40af; }
 .stat-card--completada .stat-card__valor { color: #065f46; }
-/* Número grande de la stat-card de "Por aprobar" — color naranja oscuro */
 .stat-card--aprobacion .stat-card__valor { color: #9a3412; }
 
 @media (max-width: 768px) {
@@ -2255,12 +2293,17 @@ body[data-modo="instructor"] {
 }
 
 .columna-auditoria {
-    width: 220px;
+    width: 210px;
     flex-shrink: 0;
     overflow-y: auto;
-    max-height: calc(100vh - 180px);
+    max-height: calc(100vh - 200px);
     position: sticky;
     top: var(--espacio-md);
+    background: #ffffff;
+    border-radius: var(--radio-lg);
+    border: 1px solid var(--borde-suave);
+    box-shadow: var(--sombra-sm);
+    padding: var(--espacio-md);
 }
 
 .columna-central {
@@ -2269,33 +2312,160 @@ body[data-modo="instructor"] {
 }
 
 .columna-roles {
-    width: 220px;
+    width: 210px;
     flex-shrink: 0;
     overflow-y: auto;
-    max-height: calc(100vh - 180px);
+    max-height: calc(100vh - 200px);
     position: sticky;
     top: var(--espacio-md);
+    background: #ffffff;
+    border-radius: var(--radio-lg);
+    border: 1px solid var(--borde-suave);
+    box-shadow: var(--sombra-sm);
+    padding: var(--espacio-md);
 }
 
 .columna__titulo {
-    font-size: var(--texto-sm);
-    font-weight: 600;
-    color: var(--texto-medio);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--color-admin);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     margin-bottom: var(--espacio-sm);
     padding-bottom: var(--espacio-xs);
+    border-bottom: 2px solid var(--color-admin);
+    opacity: 0.7;
+}
+
+/* ── Auditoría ─────────────────────────────────── */
+.auditoria__lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-xs);
+}
+
+.auditoria__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radio-sm);
+    background: var(--fondo-claro, #f8f9fa);
+}
+
+.auditoria__punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.auditoria__contenido {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.auditoria__descripcion {
+    font-size: 0.75rem;
+    color: var(--texto-oscuro);
+    line-height: 1.35;
+    font-weight: 500;
+}
+
+.auditoria__tiempo {
+    font-size: 0.67rem;
+    color: var(--texto-claro);
+}
+
+.auditoria__vacio {
+    font-size: 0.78rem;
+    color: var(--texto-claro);
+    text-align: center;
+    padding: var(--espacio-md) 0;
+    font-style: italic;
+}
+
+/* ── Rol-cards ─────────────────────────────────── */
+.rol-card {
+    background: var(--fondo-claro, #f8f9fa);
+    border-radius: var(--radio-md);
+    padding: var(--espacio-sm) var(--espacio-sm);
+    margin-bottom: var(--espacio-sm);
+    border: 1px solid var(--borde-suave);
+    transition: box-shadow 0.15s ease;
+}
+
+.rol-card:last-child { margin-bottom: 0; }
+
+.rol-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.rol-card__header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+
+.rol-card__nombre {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+}
+
+.rol-card__descripcion {
+    font-size: 0.72rem;
+    color: var(--texto-medio);
+    margin-bottom: var(--espacio-xs);
+    line-height: 1.3;
+}
+
+.rol-card .btn--sm {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: var(--radio-full);
+    border: 1px solid var(--borde-suave);
+    background: #ffffff;
+    cursor: pointer;
+    color: var(--texto-medio);
+    transition: background 0.15s, color 0.15s;
+}
+
+.rol-card .btn--sm:hover {
+    background: var(--color-admin);
+    color: #ffffff;
+    border-color: var(--color-admin);
+}
+
+/* ── Permisos en modal ─────────────────────────── */
+.permisos-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.permisos-lista__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--texto-oscuro);
+    padding: 4px 0;
     border-bottom: 1px solid var(--borde-suave);
 }
 
-/* Auditoría */
-.auditoria__lista { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--espacio-xs); }
-.auditoria__item { display: flex; align-items: flex-start; gap: var(--espacio-xs); }
-.auditoria__punto { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
-.auditoria__contenido { display: flex; flex-direction: column; gap: 2px; }
-.auditoria__descripcion { font-size: 0.78rem; color: var(--texto-oscuro); line-height: 1.3; }
-.auditoria__tiempo { font-size: 0.7rem; color: var(--texto-claro); }
-.auditoria__vacio { font-size: 0.78rem; color: var(--texto-claro); text-align: center; padding: var(--espacio-sm) 0; }
+.permisos-lista__item:last-child { border-bottom: none; }
+
+.icono--exito { color: #059669; }
 
 /* Calendario genérico */
 .calendario__cabecera {
@@ -2543,3 +2713,126 @@ body[data-modo="instructor"] {
 .texto-vacio    { color: var(--texto-claro); }
 .input-readonly { opacity: 0.55; cursor: not-allowed; pointer-events: none; }
 .col-span-full  { text-align: center; color: var(--texto-claro); font-style: italic; padding: var(--espacio-md) !important; }
+
+/* ============================================================
+   WIDGETS USUARIO — calendario + post-its lado a lado
+   ============================================================ */
+
+.usuario-widgets {
+    display: flex;
+    gap: var(--espacio-lg, 1.5rem);
+    align-items: flex-start;
+    margin-top: var(--espacio-lg, 1.5rem);
+}
+
+/* Columna izquierda: calendario — ancho fijo */
+.usuario-widget__calendario {
+    flex: 0 0 380px;
+    background: #ffffff;
+    border-radius: var(--radio-lg);
+    border: 1px solid var(--borde-claro);
+    padding: var(--espacio-md);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Columna derecha: post-its — ocupa el resto */
+.usuario-widget__postits {
+    flex: 1;
+    min-width: 0;
+    background: #ffffff;
+    border-radius: var(--radio-lg);
+    border: 1px solid var(--borde-claro);
+    padding: var(--espacio-md);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* En tablets y móvil: apilar verticalmente */
+@media (max-width: 900px) {
+    .usuario-widgets {
+        flex-direction: column;
+    }
+    .usuario-widget__calendario {
+        flex: none;
+        width: 100%;
+    }
+}
+
+/* Formulario: centrado con margen simétrico arriba y abajo */
+.buscador-tareas__form {
+    width: 100%;
+    margin: var(--espacio-md) 0;
+    display: flex;
+    justify-content: center;
+}
+
+/* Grupo: input + botón X + botón lupa alineados en fila */
+.buscador-tareas__grupo {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    max-width: 520px;
+    background: #ffffff;
+    border: 1.5px solid #e2c9f5;
+    border-radius: var(--radio-full);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(199, 98, 227, 0.08);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Foco en el conjunto cuando el input está activo */
+.buscador-tareas__grupo:focus-within {
+    border-color: var(--color-primario);
+    box-shadow: 0 2px 12px rgba(199, 98, 227, 0.16);
+}
+
+/* Input de texto */
+.buscador-tareas__grupo input[type="text"] {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.55rem 1rem;
+    font-size: var(--texto-sm);
+    background: transparent;
+    color: var(--texto-primario);
+    min-width: 0;
+}
+
+.buscador-tareas__grupo input[type="text"]::placeholder {
+    color: var(--texto-claro);
+}
+
+/* Botón X (limpiar) — solo visible cuando hay texto */
+.buscador-tareas__grupo button[type="button"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    padding: 0 0.5rem;
+    cursor: pointer;
+    color: var(--texto-claro);
+    transition: color 0.15s ease;
+}
+
+.buscador-tareas__grupo button[type="button"]:hover {
+    color: var(--color-error);
+}
+
+/* Botón lupa (submit) */
+.buscador-tareas__grupo button[type="submit"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: var(--color-primario);
+    color: #ffffff;
+    padding: 0.55rem 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    border-radius: 0 var(--radio-full) var(--radio-full) 0;
+}
+
+.buscador-tareas__grupo button[type="submit"]:hover {
+    background: var(--color-primario-oscuro);
+}

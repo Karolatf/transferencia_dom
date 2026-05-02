@@ -144,7 +144,7 @@ function cargarPostits(userId) {
         notas.forEach(function(nota, indice) {
             const card = document.createElement('div');
             card.className = 'postit__card';
-            // background-color es el ÚNICO uso permitido de element.style en este proyecto
+            // background-color es el ÚNICO uso permitido de e en este proyecto
             // porque es un dato dinámico del usuario (color elegido por el usuario), no lógica de layout
             card.style.backgroundColor = nota.color;
 
@@ -2025,8 +2025,9 @@ async function manejarCerrarSesion() {
     // mostrarConfirmacion viene de notificaciones.js y usa SweetAlert2
     const confirmado = await mostrarConfirmacion(
         '¿Cerrar sesión?',
-        'Se cerrará tu sesión actual y volverás a la pantalla de inicio.',
-        'Sí, cerrar sesión'
+        'Sí, cerrar sesión',
+        'Cancelar',
+        'Se cerrará tu sesión actual y volverás a la pantalla de inicio.'
     );
 
     // Si el usuario canceló no se hace nada
@@ -2803,7 +2804,7 @@ export function registrarEventosNavegacion() {
     // Buscador de tareas del usuario — ahora responde a submit, no a input en vivo
     const formBuscador     = document.getElementById('userSearchTaskForm');
     const inputBuscador    = document.getElementById('userSearchTaskInput');
-    const btnLimpiar       = document.getElementById('userSearchClearBtn');
+    const btnLimpiarBuscador = document.getElementById('userSearchClearBtn');
 
     if (formBuscador) {
         formBuscador.addEventListener('submit', function(event) {
@@ -2816,10 +2817,10 @@ export function registrarEventosNavegacion() {
             if (anterior) tablaTareas.removeChild(anterior);
             if (!termino) {
                 filas.forEach(function(f) { f.classList.remove('hidden'); });
-                if (btnLimpiar) btnLimpiar.classList.add('hidden');
+                if (btnLimpiarBuscador) btnLimpiarBuscador.classList.add('hidden');
                 return;
             }
-            if (btnLimpiar) btnLimpiar.classList.remove('hidden');
+            if (btnLimpiarBuscador) btnLimpiarBuscador.classList.remove('hidden');
             let hayCoincidencias = false;
             filas.forEach(function(fila) {
                 if (fila.textContent.toLowerCase().includes(termino)) {
@@ -2843,10 +2844,10 @@ export function registrarEventosNavegacion() {
         });
     }
 
-    if (btnLimpiar) {
-        btnLimpiar.addEventListener('click', function() {
+    if (btnLimpiarBuscador) {
+        btnLimpiarBuscador.addEventListener('click', function() {
             if (inputBuscador) inputBuscador.value = '';
-            btnLimpiar.classList.add('hidden');
+            btnLimpiarBuscador.classList.add('hidden');
             const tablaTareas = document.querySelector('#tasksTableBody');
             if (!tablaTareas) return;
             Array.from(tablaTareas.querySelectorAll('tr')).forEach(function(f) { f.classList.remove('hidden'); });

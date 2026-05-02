@@ -120,8 +120,11 @@
             </button>
         </div>
         
-        <h1 class="header__title">Mi Portal de Tareas</h1>
-        <p class="header__subtitle">Gestiona tus tareas asignadas</p>
+        <div class="header__info">
+            <p class="header__greeting">Bienvenido al Sistema de Gestión de Tareas</p>
+            <h1 class="header__title">Mi Portal de Tareas</h1>
+            <p class="header__subtitle">Gestiona tus tareas asignadas</p>
+        </div>
         
     </header>
 
@@ -220,11 +223,15 @@
             </div>
         </section>
 
-        <!-- Calendario de prioridades del usuario -->
-        <div id="usuarioCalendario" class="seccion-calendario"></div>
-
-        <!-- Post-its personales del usuario -->
-        <div id="postitsSeccion" class="postits-seccion"></div>
+        <!-- Calendario + Post-its: layout lado a lado debajo de la tabla -->
+        <div class="usuario-widgets">
+            <div class="usuario-widget__calendario">
+                <div id="usuarioCalendario" class="seccion-calendario"></div>
+            </div>
+            <div class="usuario-widget__postits">
+                <div id="postitsSeccion" class="postits-seccion"></div>
+            </div>
+        </div>
 
     </main>
 

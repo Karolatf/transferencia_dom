@@ -2,6 +2,8 @@
 // CAPA: Utils — notificaciones globales del sistema
 // Los nombres de las funciones exportadas NO cambian — el resto del proyecto las llama igual.
 
+import Swal from 'sweetalert2';
+
 // obtenerPaletaSwal — lee el modo activo del body y retorna colores para SweetAlert2
 function obtenerPaletaSwal() {
     const modo = document.body.dataset.modo || 'inicio';
@@ -42,10 +44,11 @@ export async function mostrarNotificacion(mensaje, tipo = 'info') {
 
 // mostrarConfirmacion — diálogo bloqueante que espera la decisión del usuario
 // Retorna: true si confirma, false si cancela
-export async function mostrarConfirmacion(mensaje, textoConfirmar = 'Confirmar', textoCancelar = 'Cancelar') {
+export async function mostrarConfirmacion(mensaje, textoConfirmar = 'Confirmar', textoCancelar = 'Cancelar', subtexto = '') {
     const paleta = obtenerPaletaSwal();
     const resultado = await Swal.fire({
         title:              mensaje,
+        text:               subtexto || undefined,
         icon:               'question',
         showCancelButton:   true,
         confirmButtonText:  textoConfirmar,

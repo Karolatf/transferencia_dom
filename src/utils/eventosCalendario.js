@@ -256,13 +256,6 @@ function renderizarCalendario(contenedor, estado, paleta, soloLectura, tareas, c
 
     // Inicializar íconos Lucide en el calendario recién renderizado
     if (window.lucide) window.lucide.createIcons();
-
-    // Cerrar popover al hacer clic fuera del calendario
-    document.addEventListener('click', function cerrarPopoverGlobal() {
-        const popovers = document.querySelectorAll('.calendario__popover');
-        popovers.forEach(function(p) { if (p.parentNode) p.parentNode.removeChild(p); });
-        document.removeEventListener('click', cerrarPopoverGlobal);
-    }, { once: true });
 }
 
 // abrirPopover — muestra un panel flotante con los eventos del día
@@ -346,4 +339,15 @@ function abrirPopover(celdaEl, fecha, eventosDelDia, soloLectura, paleta, conten
     // Posicionar el popover absolutamente debajo de la celda
     celdaEl.style.position = 'relative';
     celdaEl.appendChild(popover);
+
+    // Registrar cierre al click fuera — setTimeout evita que capture el mismo click que abrió el popover
+    setTimeout(function() {
+        function cerrarAlClickFuera(e) {
+            if (!popover.contains(e.target)) {
+                if (popover.parentNode) popover.parentNode.removeChild(popover);
+                document.removeEventListener('click', cerrarAlClickFuera);
+            }
+        }
+        document.addEventListener('click', cerrarAlClickFuera);
+    }, 0);
 }
