@@ -77,7 +77,16 @@ body {
 
 /* FONDOS POR MODO */
 /* En modo inicio no hay padding ni fondo de color, la imagen lo cubre todo   */
-body[data-modo="inicio"]  { background: linear-gradient(135deg, #c794f9 0%, #b9f9e6 100%); padding: 0; }body[data-modo="admin"]   { background-color: #e0f2fe; padding: var(--espacio-lg); }
+/* Gradiente del body en la pantalla de inicio — 3 stops: morado, azul y verde pastel */
+body[data-modo="inicio"] {
+    background: linear-gradient(
+        135deg,
+        #c794f9 0%,
+        #93c5fd 50%,
+        #6ee7b7 100%
+    );
+    min-height: 100vh;
+}
 body[data-modo="usuario"] { background-color: #f3e8ff; }
 body[data-modo="admin"]   { background-color: #e0f2fe; }
 
@@ -1422,8 +1431,10 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     -webkit-backdrop-filter: blur(20px);
     border-radius: 2rem;
     border: 1.5px solid rgba(255, 255, 255, 0.6);
-    box-shadow: 0 8px 40px rgba(123, 45, 139, 0.12),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.15);
     padding: var(--espacio-xl);
     display: flex;
     flex-direction: column;
@@ -1782,7 +1793,11 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 /* Botón principal — gradiente morado-azul de la paleta del proyecto */
 .btn-acceso--login {
-    background-color: var(--color-primario);
+    background: linear-gradient(
+        90deg,
+        var(--color-primario) 0%,
+        var(--color-admin) 100%
+    );
     color: #fff;
     border: none;
     border-radius: 12px;
@@ -2095,6 +2110,7 @@ body[data-modo="instructor"] { background-color: var(--color-instructor-suave); 
 }
 .btn-link:hover { color: #4b5563 }
 
+
 /* Clase base para todos los íconos de acción (Lucide Icons en botones) */
 /* stroke: currentColor hace que el ícono herede el color del elemento padre */
 .icono-accion {
@@ -2111,4 +2127,43 @@ body[data-modo="instructor"] { background-color: var(--color-instructor-suave); 
 .btn-logout-circular .icono-accion {
     width: 20px;
     height: 20px;
+}
+
+
+/* Overlay de marca en la columna izquierda de la pantalla de inicio */
+.inicio__overlay-marca {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.40);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espacio-sm);
+    z-index: 1;
+    padding: var(--espacio-lg);
+    text-align: center;
+}
+
+.inicio__overlay-marca h1 {
+    color: #ffffff;
+    font-size: var(--texto-2xl);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.inicio__overlay-marca p {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: var(--texto-sm);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.tarjeta-glass h1,
+.tarjeta-glass .titulo-bienvenida {
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
