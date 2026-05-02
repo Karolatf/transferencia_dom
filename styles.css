@@ -2438,3 +2438,102 @@ body[data-modo="instructor"] {
     font-size: 0.78rem;
     margin-bottom: var(--espacio-xs);
 }
+
+/* Sección de post-its */
+.postits-seccion {
+    margin-top: var(--espacio-lg);
+}
+
+.postits__titulo {
+    font-size: var(--texto-base);
+    font-weight: 600;
+    margin-bottom: var(--espacio-sm);
+}
+
+.postits__grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espacio-sm);
+    margin-bottom: var(--espacio-sm);
+}
+
+/* Card de cada post-it — el color de fondo viene de JS (dato del usuario) */
+.postit__card {
+    position: relative;
+    width: 180px;
+    min-height: 120px;
+    border-radius: var(--radio-md);
+    padding: var(--espacio-sm);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+
+.postit__texto {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--texto-primario);
+    margin-top: var(--espacio-xs);
+}
+
+.postit__btn-eliminar {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.12);
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.postit__btn-agregar {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-xs);
+    background: none;
+    border: 2px dashed var(--borde-claro);
+    border-radius: var(--radio-md);
+    padding: var(--espacio-xs) var(--espacio-sm);
+    cursor: pointer;
+    font-size: var(--texto-sm);
+    color: var(--texto-secundario);
+}
+
+.postit__formulario {
+    margin-top: var(--espacio-sm);
+    padding: var(--espacio-sm);
+    border: 1px solid var(--borde-claro);
+    border-radius: var(--radio-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-xs);
+    max-width: 320px;
+}
+
+.postit__textarea {
+    border: 1px solid var(--borde-claro);
+    border-radius: var(--radio-sm);
+    padding: var(--espacio-xs);
+    font-size: var(--texto-sm);
+    resize: vertical;
+}
+
+.postit__selectores-color {
+    display: flex;
+    gap: var(--espacio-xs);
+}
+
+.postit__selector-color {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.postit__selector-color--activo {
+    border-color: var(--texto-primario);
+}

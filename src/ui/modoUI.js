@@ -52,6 +52,8 @@ import { registrarEvento, renderizarAuditoria } from '../utils/auditoria.js';
 
 import { PERMISOS_POR_ROL, METADATOS_ROL } from '../utils/rolesPermisos.js';
 
+import { crearCalendario } from '../utils/eventosCalendario.js';
+
 // crearIconoLucide — función privada reutilizable para crear íconos Lucide en el DOM
 // Parámetro: nombreIcono — string con el nombre del ícono según la librería Lucide
 // Parámetro: claseExtra — string opcional con clases CSS adicionales
@@ -104,6 +106,183 @@ export function activarModoInicio() {
 //
 // Esto es más seguro y profesional: el usuario no puede buscar las tareas
 // de otra persona escribiendo un documento diferente.
+
+// cargarPostits — carga y renderiza los post-its personales del usuario
+// Los post-its se persisten en localStorage con la clave postits_${userId}
+// Parámetro: userId — id numérico del usuario logueado (para clave de localStorage única)
+// Este es el ÚNICO uso de localStorage permitido en el proyecto
+function cargarPostits(userId) {
+    // Clave única por usuario para que los post-its de un usuario no se mezclen con los de otro
+    const claveStorage = 'postits_' + userId;
+
+    // Obtener los post-its guardados — retorna arreglo vacío si no hay ninguno
+    let notas = JSON.parse(localStorage.getItem(claveStorage)) || [];
+
+    // Máximo de post-its permitidos por usuario
+    const MAXIMO_POSTITS = 12;
+
+    // Obtener el contenedor de post-its del DOM
+    const seccion = document.getElementById('postitsSeccion');
+    if (!seccion) return;
+
+    // Función interna que re-renderiza todos los post-its desde el arreglo notas
+    function renderizarPostits() {
+        // Limpiar el contenedor con removeChild para no usar innerHTML
+        while (seccion.firstChild) seccion.removeChild(seccion.firstChild);
+
+        // Título de la sección
+        const titulo = document.createElement('h3');
+        titulo.className   = 'postits__titulo';
+        titulo.textContent = 'Mis notas personales';
+        seccion.appendChild(titulo);
+
+        // Contenedor de las notas
+        const grid = document.createElement('div');
+        grid.className = 'postits__grid';
+
+        // Renderizar cada nota como una card
+        notas.forEach(function(nota, indice) {
+            const card = document.createElement('div');
+            card.className = 'postit__card';
+            // background-color es el ÚNICO uso permitido de element.style en este proyecto
+            // porque es un dato dinámico del usuario (color elegido por el usuario), no lógica de layout
+            card.style.backgroundColor = nota.color;
+
+            // Botón X para eliminar esta nota
+            const btnEliminar = document.createElement('button');
+            btnEliminar.className = 'postit__btn-eliminar';
+            btnEliminar.title     = 'Eliminar nota';
+            const iconoX = document.createElement('i');
+            iconoX.setAttribute('data-lucide', 'x');
+            iconoX.classList.add('icono-accion');
+            btnEliminar.appendChild(iconoX);
+
+            btnEliminar.addEventListener('click', function() {
+                // Eliminar la nota del arreglo por índice
+                notas.splice(indice, 1);
+                // Guardar el arreglo actualizado en localStorage
+                localStorage.setItem(claveStorage, JSON.stringify(notas));
+                // Re-renderizar para reflejar el cambio
+                renderizarPostits();
+            });
+            card.appendChild(btnEliminar);
+
+            // Texto de la nota
+            const texto = document.createElement('p');
+            texto.className   = 'postit__texto';
+            texto.textContent = nota.texto;
+            card.appendChild(texto);
+
+            grid.appendChild(card);
+        });
+
+        seccion.appendChild(grid);
+
+        // Botón "+" para agregar nueva nota (siempre visible)
+        const btnAgregar = document.createElement('button');
+        btnAgregar.className = 'postit__btn-agregar';
+        btnAgregar.title     = 'Agregar nota';
+        const iconoPlus = document.createElement('i');
+        iconoPlus.setAttribute('data-lucide', 'plus');
+        iconoPlus.classList.add('icono-accion');
+        btnAgregar.appendChild(iconoPlus);
+        const textoBtn = document.createTextNode(' Nueva nota');
+        btnAgregar.appendChild(textoBtn);
+
+        btnAgregar.addEventListener('click', function() {
+            // Si ya alcanzamos el máximo, notificar y no abrir el formulario
+            if (notas.length >= MAXIMO_POSTITS) {
+                mostrarNotificacion('Máximo de notas alcanzado (12)', 'advertencia');
+                return;
+            }
+            mostrarFormularioPostit();
+        });
+        seccion.appendChild(btnAgregar);
+
+        // Inicializar íconos Lucide recién agregados
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    // Función que muestra el formulario inline para agregar una nueva nota
+    function mostrarFormularioPostit() {
+        // Si ya hay un formulario abierto, no abrir otro
+        const formularioExistente = seccion.querySelector('.postit__formulario');
+        if (formularioExistente) return;
+
+        const formulario = document.createElement('div');
+        formulario.className = 'postit__formulario';
+
+        // Textarea para el texto de la nota
+        const textarea = document.createElement('textarea');
+        textarea.placeholder = 'Escribe tu nota aquí...';
+        textarea.className   = 'postit__textarea';
+        textarea.rows        = 3;
+        formulario.appendChild(textarea);
+
+        // Selectores de color — 4 opciones de colores pastel
+        const coloresPastel = [
+            '#fef3c7',  /* amarillo pastel */
+            '#fce7f3',  /* rosa pastel */
+            '#d1fae5',  /* verde pastel */
+            '#dbeafe',  /* celeste pastel */
+        ];
+
+        let colorSeleccionado = coloresPastel[0];
+
+        const selectoresColor = document.createElement('div');
+        selectoresColor.className = 'postit__selectores-color';
+
+        coloresPastel.forEach(function(color) {
+            const selector = document.createElement('button');
+            selector.type  = 'button';
+            selector.className = 'postit__selector-color';
+            selector.style.backgroundColor = color;
+            // El primer color está seleccionado por defecto
+            if (color === colorSeleccionado) selector.classList.add('postit__selector-color--activo');
+
+            selector.addEventListener('click', function() {
+                // Quitar la clase activo del selector anterior
+                selectoresColor.querySelectorAll('.postit__selector-color').forEach(function(s) {
+                    s.classList.remove('postit__selector-color--activo');
+                });
+                // Marcar este selector como activo
+                selector.classList.add('postit__selector-color--activo');
+                colorSeleccionado = color;
+            });
+            selectoresColor.appendChild(selector);
+        });
+        formulario.appendChild(selectoresColor);
+
+        // Botón guardar
+        const btnGuardar = document.createElement('button');
+        btnGuardar.className   = 'btn btn--sm btn--primary';
+        btnGuardar.textContent = 'Guardar';
+        btnGuardar.addEventListener('click', function() {
+            const texto = textarea.value.trim();
+            if (!texto) return;
+
+            // Crear la nueva nota y agregarla al arreglo
+            notas.push({
+                id:     Date.now(),
+                texto:  texto,
+                color:  colorSeleccionado,
+            });
+
+            // Persistir en localStorage
+            localStorage.setItem(claveStorage, JSON.stringify(notas));
+
+            // Re-renderizar los post-its con la nueva nota
+            renderizarPostits();
+        });
+        formulario.appendChild(btnGuardar);
+
+        seccion.appendChild(formulario);
+    }
+
+    // Renderizar los post-its al cargar la vista
+    renderizarPostits();
+}
+
 export async function activarModoUsuario() {
     ocultarTodo();
     vistaUsuario.classList.remove('hidden');
@@ -183,6 +362,17 @@ export async function activarModoUsuario() {
     // Se llama con los IDs del vistaUsuario (prefijo userDash) para no
     // sobreescribir los valores del dashboard del panel admin.
     cargarDashboardUsuario();   // ← AGREGAR ESTA LÍNEA
+
+    // Montar el calendario de prioridades del usuario
+    crearCalendario({
+        contenedorId: 'usuarioCalendario',
+        paleta:       'usuario',
+        soloLectura:  true,
+        tareas:       tareas,   // 'tareas' es la variable con las tareas del usuario en esta función
+    });
+
+    // Cargar los post-its personales
+    cargarPostits(usuarioSesion.id);
 }
 
 // renderizarDiccionarioRoles — cards de roles en la columna derecha del admin
