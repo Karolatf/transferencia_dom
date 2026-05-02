@@ -531,14 +531,20 @@ async function cargarTablaUsuariosInstructor() {
     const usuarios = await obtenerTodosLosUsuarios();
     if (!usuarios) return;
 
+    // Filtrar: solo mostrar estudiantes (role === 'user') y excluir al instructor logueado
+    const usuarioLogueado = obtenerUsuarioSesion();
+    const estudiantes = usuarios.filter(function(u) {
+        return u.role === 'user' && (!usuarioLogueado || u.id !== usuarioLogueado.id);
+    });
+
     // Actualizar el contador de usuarios en el header de la card
     const contador = document.getElementById('instrUsersCount');
     if (contador) {
-        const cantidad = usuarios.length;
+        const cantidad = estudiantes.length;
         contador.textContent = `${cantidad} ${cantidad === 1 ? 'usuario' : 'usuarios'}`;
     }
 
-    usuarios.forEach(function(usuario, indice) {
+    estudiantes.forEach(function(usuario, indice) {
         const fila = document.createElement('tr');
 
         const celdaNum = document.createElement('td');
