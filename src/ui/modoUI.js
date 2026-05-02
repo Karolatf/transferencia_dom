@@ -48,6 +48,7 @@ import { loginUsuario, registrarUsuario, forgotPassword, verifyResetCode, resetP
 
 import { guardarSesion, cerrarSesion, obtenerUsuarioSesion } from '../utils/sesion.js';
 
+import { registrarEvento, renderizarAuditoria } from '../utils/auditoria.js';
 
 // crearIconoLucide — función privada reutilizable para crear íconos Lucide en el DOM
 // Parámetro: nombreIcono — string con el nombre del ícono según la librería Lucide
@@ -185,6 +186,10 @@ export async function activarModoAdmin() {
     // Se inicializa el dropdown de usuarios de la card "Crear Tarea"
     // await garantiza que los checkboxes están cargados antes de continuar
     await inicializarDropdownUsuarios();
+
+    // Inicializar la columna de auditoría vacía
+    const contenedorAuditoria = document.getElementById('auditoriaContenedor');
+    if (contenedorAuditoria) renderizarAuditoria(contenedorAuditoria);
 }
 
 // ── ACTIVAR MODO INSTRUCTOR ───────────────────────────────────────────────────
