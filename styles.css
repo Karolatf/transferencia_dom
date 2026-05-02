@@ -53,6 +53,9 @@
     --sombra-lg: 0 8px 20px rgba(0, 0, 0, 0.10);
 
     --transicion: 200ms ease;
+
+    /* Variable de acento para modales — cambia según el modo activo del body */
+    --color-modal-acento: var(--color-primario);
 }
 
 /* RESET */
@@ -88,7 +91,10 @@ body[data-modo="inicio"] {
     min-height: 100vh;
 }
 body[data-modo="usuario"] { background-color: #f3e8ff; }
-body[data-modo="admin"]   { background-color: #e0f2fe; }
+body[data-modo="admin"]   { 
+    background-color: #e0f2fe; 
+    --color-modal-acento: var(--color-admin);
+}
 
 
 /* HIDDEN */
@@ -756,12 +762,13 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
     position: relative;
 }
 
+/* Cabecera del modal — fondo blanco con borde inferior del color de acento del modo activo */
 .modal-usuario__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--espacio-lg);
-    gap: var(--espacio-md);
+    background: #ffffff;
+    border-bottom: 2px solid var(--color-modal-acento);
+    color: var(--color-modal-acento);
+    padding: var(--espacio-md) var(--espacio-lg);
+    border-radius: var(--radio-lg) var(--radio-lg) 0 0;
 }
 
 .modal-usuario__titulo {
@@ -1972,7 +1979,10 @@ body[data-modo="admin"]   { background-color: #e0f2fe; }
 
 /* ── PANEL INSTRUCTOR — paleta verde pastel ────────────────────────────────── */
 /* El fondo del panel instructor es verde pastel, diferenciándose del azul del admin */
-body[data-modo="instructor"] { background-color: var(--color-instructor-suave); }
+body[data-modo="instructor"] { 
+    background-color: var(--color-instructor-suave); 
+    --color-modal-acento: var(--color-instructor);
+}
 
 /* Header del panel instructor con color verde principal */
 .header--instructor {
@@ -2157,4 +2167,22 @@ body[data-modo="instructor"] { background-color: var(--color-instructor-suave); 
 .tarjeta-glass .titulo-bienvenida {
     font-weight: 700;
     letter-spacing: -0.02em;
+}
+
+.modal__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    flex-wrap: wrap;
+    padding: var(--espacio-md) var(--espacio-lg);
+}
+
+.modal__actions button,
+.modal__actions .btn {
+    height: 38px;
+    padding: 0 20px;
+    border-radius: var(--radio-full);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-xs);
 }
