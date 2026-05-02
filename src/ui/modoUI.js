@@ -1900,7 +1900,7 @@ export async function abrirModalUsuario(usuario) {
 
         const datosTarea = {
             title:         titulo,
-            description:   desc,
+            description:   desc !== '' ? desc : undefined,
             status:        estado,
             comment:       comentario || null,
             assignedUsers: [parseInt(usuario.id, 10) || usuario.id],
@@ -2835,9 +2835,9 @@ export function registrarEventosNavegacion() {
             // Se construye el objeto de la nueva tarea para enviar al backend
             const datosTarea = {
                 title:         titulo,
-                description:   descInput  ? descInput.value.trim()   : '',
+                description:   descInput && descInput.value.trim() !== '' ? descInput.value.trim() : undefined,
                 status:        estado,
-                comment:       commentInput ? commentInput.value.trim() : '',
+                comment:       commentInput && commentInput.value.trim() !== '' ? commentInput.value.trim() : null,
                 assignedUsers: assignedUsers,
             };
 

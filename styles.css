@@ -2894,3 +2894,61 @@ body[data-modo="instructor"] {
     background: #ffffff; border: 1px solid var(--borde-suave);
     border-radius: var(--radio-md);
 }
+
+/* ── LAYOUT INSTRUCTOR: calendario + panel calificación lado a lado ── */
+.seccion-calendario,
+#instrCalendario,
+#instrPanelCalificacion {
+    /* Quitar el bloque que ocupa todo el ancho */
+    display: block;
+}
+
+/* Contenedor que agrupa calendario y panel en dos columnas */
+.instructor-widgets {
+    display: flex;
+    gap: var(--espacio-lg);
+    align-items: flex-start;
+    margin-bottom: var(--espacio-lg);
+}
+
+/* Calendario: columna izquierda, ancho fijo y compacto */
+#instrCalendario {
+    width: 320px;
+    flex-shrink: 0;
+    background: #ffffff;
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio-lg);
+    padding: var(--espacio-md);
+}
+
+/* Celdas más pequeñas para que el calendario no sea gigante */
+#instrCalendario .calendario__celda {
+    aspect-ratio: unset;
+    height: 36px;
+    padding: 2px;
+}
+
+#instrCalendario .calendario__numero-dia {
+    font-size: 0.72rem;
+}
+
+/* Panel de calificación: columna derecha, ocupa el espacio restante */
+#instrPanelCalificacion {
+    flex: 1;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio-lg);
+    padding: var(--espacio-md);
+}
+
+/* Responsive: en pantallas pequeñas se apilan */
+@media (max-width: 900px) {
+    .instructor-widgets {
+        flex-direction: column;
+    }
+    #instrCalendario {
+        width: 100%;
+    }
+}
+
