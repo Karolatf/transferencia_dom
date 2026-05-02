@@ -2836,3 +2836,37 @@ body[data-modo="instructor"] {
 .buscador-tareas__grupo button[type="submit"]:hover {
     background: var(--color-primario-oscuro);
 }
+
+/* ── TABLA DE USUARIOS ADMIN — BADGES Y BOTONES CIRCULARES ─── */
+.badge-rol--admin      { background-color: rgba(2, 132, 199, 0.12); color: #0284c7; }
+.badge-rol--instructor { background-color: rgba(5, 150, 105, 0.12); color: #059669; }
+.badge-rol--user       { background-color: rgba(107, 114, 128, 0.12); color: #6b7280; }
+.badge-estado--activo  { background-color: rgba(5, 150, 105, 0.12); color: #059669; }
+.badge-estado--inactivo { background-color: rgba(239, 68, 68, 0.12); color: #ef4444; }
+
+.btn-accion-icono {
+    width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.btn-accion-icono:hover { opacity: 0.80; transform: scale(1.08); }
+
+.btn-accion--azul     { background-color: rgba(2, 132, 199, 0.15); color: #0284c7; }
+.btn-accion--amarillo { background-color: rgba(245, 158, 11, 0.15); color: #d97706; }
+.btn-accion--gris     { background-color: rgba(107, 114, 128, 0.15); color: #6b7280; }
+.btn-accion--verde    { background-color: rgba(5, 150, 105, 0.15); color: #059669; }
+.btn-accion--rojo     { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+.acciones-columna { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+
+.dropdown-rol {
+    background: #ffffff; border: 1px solid var(--borde-suave);
+    border-radius: var(--radio-md); box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    padding: var(--espacio-xs); display: flex; flex-direction: column;
+    gap: 2px; position: absolute; z-index: 50;
+}
+.dropdown-rol__opcion {
+    background: none; border: none; padding: 8px 16px; text-align: left;
+    cursor: pointer; border-radius: var(--radio-sm); font-size: var(--texto-sm);
+}
+.dropdown-rol__opcion:hover { background-color: var(--fondo-gris); }

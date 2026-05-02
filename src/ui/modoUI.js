@@ -22,6 +22,8 @@ import {
     actualizarUsuario,
     cambiarRolUsuario,
     cambiarPassword,
+    desactivarUsuario,
+    reactivarUsuario,
 } from '../api/usuariosApi.js';
 
 import {
@@ -871,152 +873,202 @@ export async function cargarTablaUsuarios() {
     });
 }
 
+// crearBadgeRol — badge visual con el nombre y color del rol del usuario
+function crearBadgeRol(rol) {
+    const badge = document.createElement('span');
+    badge.className = 'status-badge';
+    const config = {
+        admin:      { texto: 'Admin',      clase: 'badge-rol--admin'      },
+        instructor: { texto: 'Instructor', clase: 'badge-rol--instructor' },
+        user:       { texto: 'Estudiante', clase: 'badge-rol--user'       },
+    }[rol] || { texto: rol, clase: 'badge-rol--user' };
+    badge.textContent = config.texto;
+    badge.classList.add(config.clase);
+    return badge;
+}
+
+// crearBadgeEstado — badge verde (Activo) o rojo (Inactivo) según is_active
+function crearBadgeEstado(isActive) {
+    const badge = document.createElement('span');
+    badge.className = 'status-badge';
+    if (isActive === 1 || isActive === true) {
+        badge.textContent = 'Activo';
+        badge.classList.add('badge-estado--activo');
+    } else {
+        badge.textContent = 'Inactivo';
+        badge.classList.add('badge-estado--inactivo');
+    }
+    return badge;
+}
+
+// crearBotonIcono — botón circular 32x32 con ícono Lucide para la tabla de usuarios
+function crearBotonIcono(nombreIcono, tooltip, claseColor, handler) {
+    const btn = document.createElement('button');
+    btn.className = `btn-accion-icono ${claseColor}`;
+    btn.title     = tooltip;
+    btn.type      = 'button';
+    const icono   = document.createElement('i');
+    icono.setAttribute('data-lucide', nombreIcono);
+    icono.classList.add('icono-accion');
+    btn.appendChild(icono);
+    btn.addEventListener('click', handler);
+    return btn;
+}
+
 // Construye una fila de la tabla de usuarios del panel admin
 // Ahora incluye tres botones: Ver/Asignar, Editar y Eliminar
 // Parámetros:
 //   usuario — objeto del usuario a representar
 //   indice  — posición en la lista (para el # correlativo)
+// crearFilaUsuario — columnas: # | Nombre | Documento | Correo | Rol | Estado | Acciones
 function crearFilaUsuario(usuario, indice) {
     const fila = document.createElement('tr');
 
-    const celdaNum = document.createElement('td');
-    celdaNum.textContent = indice + 1;
+    // Columna #
+    const tdNum = document.createElement('td');
+    tdNum.textContent = indice + 1;
+    fila.appendChild(tdNum);
 
-    const celdaDoc = document.createElement('td');
-    celdaDoc.textContent = usuario.documento || usuario.id;
+    // Columna Nombre
+    const tdNombre = document.createElement('td');
+    tdNombre.textContent = usuario.name;
+    fila.appendChild(tdNombre);
 
-    const celdaNombre = document.createElement('td');
-    celdaNombre.textContent = usuario.name;
+    // Columna Documento
+    const tdDoc = document.createElement('td');
+    tdDoc.textContent = usuario.documento || usuario.id;
+    fila.appendChild(tdDoc);
 
-    const celdaEmail = document.createElement('td');
-    celdaEmail.textContent = usuario.email;
+    // Columna Correo
+    const tdEmail = document.createElement('td');
+    tdEmail.textContent = usuario.email;
+    fila.appendChild(tdEmail);
 
-    const celdaAcciones = document.createElement('td');
-    const contenedor    = document.createElement('div');
-    contenedor.classList.add('task-actions');
+    // Columna Rol (badge visual)
+    const tdRol = document.createElement('td');
+    tdRol.appendChild(crearBadgeRol(usuario.role));
+    fila.appendChild(tdRol);
 
-    // Botón Ver / Asignar — abre el modal de tareas del usuario
-    const btnVer = document.createElement('button');
-    while (btnVer.firstChild) btnVer.removeChild(btnVer.firstChild);
-    btnVer.appendChild(crearIconoLucide('eye'));
-    btnVer.appendChild(document.createTextNode(' Ver'));
-    if (window.lucide) window.lucide.createIcons();
-    btnVer.classList.add('btn-action', 'btn-action--edit');
-    btnVer.type = 'button';
-    btnVer.addEventListener('click', function() { abrirModalUsuario(usuario); });
+    // Columna Estado (badge activo/inactivo)
+    const tdEstado = document.createElement('td');
+    tdEstado.appendChild(crearBadgeEstado(usuario.is_active));
+    fila.appendChild(tdEstado);
 
-    // NUEVO: Botón Editar — abre el modal de edición de datos del usuario
-    // Sigue el mismo patrón de los demás botones de acción del proyecto
-    const btnEditar = document.createElement('button');
-    while (btnEditar.firstChild) btnEditar.removeChild(btnEditar.firstChild);
-    btnEditar.appendChild(crearIconoLucide('pencil'));
-    btnEditar.appendChild(document.createTextNode(' Editar'));
-    if (window.lucide) window.lucide.createIcons();
-    btnEditar.classList.add('btn-action', 'btn-action--edit');
-    btnEditar.type = 'button';
-    btnEditar.addEventListener('click', function() { abrirModalEditarUsuario(usuario); });
+    // Columna Acciones
+    const tdAcciones = document.createElement('td');
+    tdAcciones.className = 'acciones-columna';
 
-    // Botón/select para cambiar el rol — ahora soporta 3 opciones: admin, user, instructor
-    // Se usa un select para facilitar la elección entre 3 roles
-    const selectRol = document.createElement('select');
-    selectRol.classList.add('btn-action', 'btn-action--rol');
-    selectRol.title = 'Cambiar rol del usuario';
+    // Botón Ver / Asignar
+    tdAcciones.appendChild(crearBotonIcono('eye', 'Ver y asignar tareas', 'btn-accion--azul',
+        function() { abrirModalUsuario(usuario); }
+    ));
 
-    // Opción por defecto que muestra el rol actual (no se puede seleccionar)
-    const optDefault = document.createElement('option');
-    optDefault.value    = '';
-    optDefault.disabled = true;
-    optDefault.selected = true;
-    const etiquetasRol = { admin: '👑 Admin', user: '👤 User', instructor: '📚 Instructor' };
-    optDefault.textContent = etiquetasRol[usuario.role] || usuario.role;
-    selectRol.appendChild(optDefault);
+    // Botón Editar datos
+    tdAcciones.appendChild(crearBotonIcono('pencil', 'Editar usuario', 'btn-accion--amarillo',
+        function() { abrirModalEditarUsuario(usuario); }
+    ));
 
-    // Opciones de los otros roles (excluyendo el rol actual del usuario)
-    const todosLosRoles = [
-        { value: 'admin',      label: '👑 Hacer Admin' },
-        { value: 'user',       label: '👤 Hacer User' },
-        { value: 'instructor', label: '📚 Hacer Instructor' },
-    ];
+    // Botón Cambiar rol (mini-dropdown)
+    tdAcciones.appendChild(crearBotonIcono('user-check', 'Cambiar rol', 'btn-accion--azul',
+        function() { abrirDropdownRol(usuario, fila); }
+    ));
 
-    todosLosRoles.forEach(function(rolOpcion) {
-        // No mostrar el rol que el usuario ya tiene
-        if (rolOpcion.value === usuario.role) return;
-        const opt = document.createElement('option');
-        opt.value       = rolOpcion.value;
-        opt.textContent = rolOpcion.label;
-        selectRol.appendChild(opt);
-    });
+    // Botón Desactivar o Activar según estado actual
+    if (usuario.is_active === 1 || usuario.is_active === true) {
+        tdAcciones.appendChild(crearBotonIcono('user-x', 'Desactivar usuario', 'btn-accion--gris',
+            async function() {
+                const ok = await mostrarConfirmacion(
+                    `¿Desactivar a ${usuario.name}? No podrá iniciar sesión.`,
+                    'Desactivar', 'Cancelar'
+                );
+                if (!ok) return;
+                try {
+                    await desactivarUsuario(usuario.id);
+                    await mostrarNotificacion(`${usuario.name} fue desactivado`, 'exito');
+                    cargarTablaUsuarios();
+                } catch (error) {
+                    await mostrarNotificacion(error.message || 'No se pudo desactivar', 'error');
+                }
+            }
+        ));
+    } else {
+        tdAcciones.appendChild(crearBotonIcono('user-check', 'Activar usuario', 'btn-accion--verde',
+            async function() {
+                const ok = await mostrarConfirmacion(
+                    `¿Reactivar a ${usuario.name}?`, 'Activar', 'Cancelar'
+                );
+                if (!ok) return;
+                try {
+                    await reactivarUsuario(usuario.id);
+                    await mostrarNotificacion(`${usuario.name} fue reactivado`, 'exito');
+                    cargarTablaUsuarios();
+                } catch (error) {
+                    await mostrarNotificacion(error.message || 'No se pudo reactivar', 'error');
+                }
+            }
+        ));
+    }
 
-    // Al cambiar la selección, confirmar y ejecutar el cambio de rol
-    selectRol.addEventListener('change', async function() {
-        const nuevoRol    = selectRol.value;
-        if (!nuevoRol) return;
-        const etiquetaRol = etiquetasRol[nuevoRol] || nuevoRol;
-
-        const confirmado = await mostrarConfirmacion(
-            `¿Cambiar rol de ${usuario.name}?`,
-            `El usuario pasará a ser ${etiquetaRol}. Tendrá efecto en su próximo inicio de sesión.`,
-            `Sí, hacer ${etiquetaRol}`
-        );
-
-        if (!confirmado) {
-            // Revertir el select si el usuario cancela
-            selectRol.value = '';
-            return;
+    // Botón Eliminar de raíz
+    tdAcciones.appendChild(crearBotonIcono('trash-2', 'Eliminar permanentemente', 'btn-accion--rojo',
+        async function() {
+            const ok = await mostrarConfirmacion(
+                `⚠ Eliminar a ${usuario.name} es PERMANENTE. ¿Continuar?`,
+                'Sí, eliminar', 'Cancelar'
+            );
+            if (!ok) return;
+            try {
+                await eliminarUsuario(usuario.id);
+                await mostrarNotificacion(`${usuario.name} eliminado`, 'exito');
+                cargarTablaUsuarios();
+                cargarTodasLasTareas();
+                cargarDashboard();
+            } catch (error) {
+                await mostrarNotificacion(
+                    'No se puede eliminar: el usuario tiene datos relacionados. Desactívalo en su lugar.',
+                    'error'
+                );
+            }
         }
+    ));
 
-        const usuarioActualizado = await cambiarRolUsuario(usuario.id, nuevoRol);
-        if (usuarioActualizado) {
-            await mostrarNotificacion(`Rol de ${usuario.name} actualizado a ${etiquetaRol}`, 'exito');
-            cargarTablaUsuarios();
-        } else {
-            await mostrarNotificacion('Error al cambiar el rol del usuario', 'error');
-            selectRol.value = '';
-        }
-    });
-
-    contenedor.appendChild(selectRol);
-
-    // Botón Eliminar — pide confirmación antes de eliminar
-    const btnEliminar = document.createElement('button');
-    while (btnEliminar.firstChild) btnEliminar.removeChild(btnEliminar.firstChild);
-    btnEliminar.appendChild(crearIconoLucide('trash-2'));
-    btnEliminar.appendChild(document.createTextNode(' Eliminar'));
+    fila.appendChild(tdAcciones);
     if (window.lucide) window.lucide.createIcons();
-    btnEliminar.classList.add('btn-action', 'btn-action--delete');
-    btnEliminar.type = 'button';
-    btnEliminar.addEventListener('click', async function() {
-        const confirmado = await mostrarConfirmacion(
-            '¿Eliminar usuario?',
-            `"${usuario.name}" será eliminado permanentemente.`,
-            'Sí, eliminar'
-        );
-        if (!confirmado) return;
-
-        const eliminado = await eliminarUsuario(usuario.id);
-        if (eliminado) {
-            await mostrarNotificacion('Usuario eliminado correctamente', 'exito');
-            cargarTablaUsuarios();
-            cargarTodasLasTareas();
-            cargarDashboard();
-        } else {
-            await mostrarNotificacion('Error al eliminar el usuario', 'error');
-        }
-    });
-
-    // Se agregan los tres botones al contenedor de acciones
-    contenedor.appendChild(btnVer);
-    contenedor.appendChild(btnEditar);
-    contenedor.appendChild(btnEliminar);
-    celdaAcciones.appendChild(contenedor);
-
-    fila.appendChild(celdaNum);
-    fila.appendChild(celdaDoc);
-    fila.appendChild(celdaNombre);
-    fila.appendChild(celdaEmail);
-    fila.appendChild(celdaAcciones);
-
     return fila;
+}
+
+// abrirDropdownRol — mini-dropdown inline para cambiar el rol de un usuario
+function abrirDropdownRol(usuario, filaEl) {
+    const anterior = document.querySelector('.dropdown-rol');
+    if (anterior && anterior.parentNode) anterior.parentNode.removeChild(anterior);
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'dropdown-rol';
+
+    [
+        { valor: 'user',       texto: 'Estudiante'    },
+        { valor: 'instructor', texto: 'Instructor'    },
+        { valor: 'admin',      texto: 'Administrador' },
+    ].forEach(function(opcion) {
+        if (opcion.valor === usuario.role) return;
+        const item = document.createElement('button');
+        item.className   = 'dropdown-rol__opcion';
+        item.textContent = opcion.texto;
+        item.type        = 'button';
+        item.addEventListener('click', async function() {
+            if (dropdown.parentNode) dropdown.parentNode.removeChild(dropdown);
+            try {
+                await cambiarRolUsuario(usuario.id, opcion.valor);
+                await mostrarNotificacion(`Rol de ${usuario.name} → ${opcion.texto}`, 'exito');
+                cargarTablaUsuarios();
+            } catch (error) {
+                await mostrarNotificacion('No se pudo cambiar el rol', 'error');
+            }
+        });
+        dropdown.appendChild(item);
+    });
+
+    filaEl.parentNode.insertBefore(dropdown, filaEl.nextSibling);
 }
 
 // ── MODAL EDITAR USUARIO ──────────────────────────────────────────────────────
