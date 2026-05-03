@@ -79,16 +79,17 @@ body {
 }
 
 /* FONDOS POR MODO */
-/* En modo inicio no hay padding ni fondo de color, la imagen lo cubre todo   */
-/* Gradiente del body en la pantalla de inicio — 3 stops: morado, azul y verde pastel */
 body[data-modo="inicio"] {
-    background: linear-gradient(
-        135deg,
-        #c794f9 0%,
-        #93c5fd 50%,
-        #6ee7b7 100%
-    );
+    /* Overlay oscuro + Tu nueva imagen local (sin texto) */
+    background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), 
+                url('/public/bg-inicio.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 body[data-modo="usuario"] { background-color: #f3e8ff; }
 body[data-modo="admin"]   { 
@@ -1077,75 +1078,83 @@ body[data-modo="admin"]   {
    del modal base (.modal, .modal__header, etc.) que usan los otros modales.
    Todos los colores respetan la paleta del proyecto definida en :root. */
 
-/* Tarjeta del modal — más ancha que el modal base para acomodar el grid de 2 columnas */
+/* Paso 2 — Tarjeta glass: mismo look que .inicio__glass-card del login */
 .modal--registro-v2 {
-    max-width:  520px;        /* Más ancho que el modal--registro original (420px) */
-    width:      95%;          /* En móvil usa casi todo el ancho disponible */
-    padding:    0;            /* El padding lo da cada sección internamente */
-    overflow:   hidden;       /* Para que el header con fondo de color no se salga */
-    border-radius: var(--radio-2xl);
+    max-width:        520px;
+    width:            95%;
+    padding:          0;
+    overflow:         hidden;
+    border-radius:    24px;
+    /* Glass effect */
+    background:       rgba(255, 255, 255, 0.05);
+    backdrop-filter:  blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border:           1px solid rgba(255, 255, 255, 0.28);
+    box-shadow:       0 25px 50px -12px rgba(0, 0, 0, 0.6),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    animation:        slideIn 200ms ease;
 }
 
-/* Encabezado del modal — fondo con gradiente suave de la paleta del proyecto */
+/* Paso 3 — Header: fondo oscuro translúcido, borde inferior sutil */
 .modal--registro-v2__header {
     display:         flex;
     align-items:     center;
     gap:             var(--espacio-md);
     padding:         var(--espacio-lg) var(--espacio-xl);
-    background:      linear-gradient(135deg, var(--color-primario-suave) 0%, #e0f2fe 100%);
-    border-bottom:   1px solid var(--borde-suave);
-    position:        relative;     /* Para el botón de cierre posicionado absolutamente */
+    background:      rgba(255, 255, 255, 0.06);
+    border-bottom:   1px solid rgba(255, 255, 255, 0.12);
+    position:        relative;
 }
 
-/* Círculo con el ícono de usuario — da identidad visual al modal */
+/* Paso 4a — Ícono: fondo translúcido, borde blanco más visible */
 .modal--registro-v2__icono {
     width:           48px;
     height:          48px;
     border-radius:   50%;
-    background:      white;
-    border:          2px solid var(--color-primario);
+    background:      rgba(199, 98, 227, 0.18);
+    border:          2px solid rgba(255, 255, 255, 0.45);
     display:         flex;
     align-items:     center;
     justify-content: center;
-    font-size:       1.5rem;
-    flex-shrink:     0;            /* No se encoge en layouts flex */
-    box-shadow:      var(--sombra-sm);
+    flex-shrink:     0;
+    box-shadow:      0 4px 16px rgba(199, 98, 227, 0.25);
 }
 
-/* Título del modal en el header */
+/* Paso 4b — Título: blanco puro igual que en la glass-card del login */
 .modal--registro-v2__titulo {
-    font-size:   var(--texto-xl);
-    font-weight: 700;
-    color:       var(--texto-oscuro);
-    margin:      0;
+    font-size:    var(--texto-xl);
+    font-weight:  700;
+    color:        #ffffff;
+    margin:       0;
+    letter-spacing: -0.01em;
 }
 
-/* Subtítulo descriptivo debajo del título */
+/* Paso 4c — Subtítulo: blanco semi-transparente */
 .modal--registro-v2__subtitulo {
     font-size:  var(--texto-sm);
-    color:      var(--texto-medio);
+    color:      rgba(255, 255, 255, 0.6);
     margin:     var(--espacio-xs) 0 0;
 }
 
-/* Botón X de cierre — posicionado en la esquina superior derecha del header */
+/* Paso 5 — Botón X de cierre: texto blanco tenue, hover blanco total */
 .modal--registro-v2__cerrar {
-    position:    absolute;
-    top:         var(--espacio-md);
-    right:       var(--espacio-md);
-    background:  none;
-    border:      none;
-    font-size:   var(--texto-lg);
-    color:       var(--texto-claro);
-    cursor:      pointer;
-    padding:     var(--espacio-xs);
+    position:      absolute;
+    top:           var(--espacio-md);
+    right:         var(--espacio-md);
+    background:    none;
+    border:        none;
+    font-size:     var(--texto-lg);
+    color:         rgba(255, 255, 255, 0.5);
+    cursor:        pointer;
+    padding:       var(--espacio-xs);
     border-radius: var(--radio-md);
-    line-height: 1;
-    transition:  color var(--transicion), background-color var(--transicion);
+    line-height:   1;
+    transition:    color var(--transicion), background-color var(--transicion);
 }
 
 .modal--registro-v2__cerrar:hover {
-    color:            var(--texto-oscuro);
-    background-color: var(--borde-suave);
+    color:            #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Formulario — padding interno y columna flex */
@@ -1170,41 +1179,42 @@ body[data-modo="admin"]   {
     gap:            var(--espacio-xs);
 }
 
-/* Label del campo */
+/* Paso 6 — Label: blanco semi-transparente igual que .inicio__glass-card .form__label */
 .modal--registro-v2__label {
     font-size:   var(--texto-sm);
     font-weight: 600;
-    color:       var(--texto-oscuro);
+    color:       rgba(255, 255, 255, 0.85);
 }
 
-/* Input del campo — hereda el estilo de .form__input pero con borde de color primario al focus */
+/* Paso 7 — Inputs cristalinos: mismo tratamiento que .inicio__glass-card .form__input */
 .modal--registro-v2__input {
     width:         100%;
     padding:       var(--espacio-sm) var(--espacio-md);
     font-size:     var(--texto-md);
     font-family:   var(--fuente);
-    color:         var(--texto-oscuro);
-    background:    white;
-    border:        2px solid var(--borde-suave);
+    color:         #ffffff;
+    background:    rgba(255, 255, 255, 0.07);
+    border:        1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radio-md);
-    transition:    border-color var(--transicion), box-shadow var(--transicion);
+    transition:    border-color var(--transicion), box-shadow var(--transicion), background var(--transicion);
     outline:       none;
 }
 
 .modal--registro-v2__input:focus {
+    background:   rgba(255, 255, 255, 0.12);
     border-color: var(--color-primario);
-    box-shadow:   0 0 0 3px var(--color-primario-suave);
+    box-shadow:   0 0 0 4px rgba(199, 98, 227, 0.2);
 }
 
 .modal--registro-v2__input::placeholder {
-    color: var(--texto-claro);
+    color: rgba(255, 255, 255, 0.4);
 }
 
-/* Span de error con ícono de advertencia para feedback más claro */
+/* Paso 8 — Error: rosado claro legible sobre fondo oscuro */
 .modal--registro-v2__error {
     font-size:  var(--texto-sm);
-    color:      var(--color-error);
-    min-height: 1.2em;              /* Reserva espacio para que el layout no salte */
+    color:      #fca5a5;
+    min-height: 1.2em;
 }
 
 /* Antes del texto del error se agrega un ícono de advertencia automáticamente */
@@ -1239,10 +1249,10 @@ body[data-modo="admin"]   {
     transform: none;
 }
 
-/* Nota de privacidad al final del formulario */
+/* Paso 9 — Nota de privacidad: blanco tenue, igual que .inicio__nota */
 .modal--registro-v2__nota {
     font-size:  var(--texto-sm);
-    color:      var(--texto-claro);
+    color:      rgba(255, 255, 255, 0.45);
     text-align: center;
     margin:     0;
 }
@@ -1266,6 +1276,129 @@ body[data-modo="admin"]   {
 @keyframes fadeOverlay {
     from { opacity: 0; }
     to   { opacity: 1; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MODAL RECUPERAR CONTRASEÑA — glass effect igual al login y registro
+   Todos los estilos scoped bajo #olvidoPasswordModal para no afectar
+   otros modales que usan las mismas clases genéricas (.modal, etc.)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* 1 — Overlay: mismo fondo oscuro con blur */
+#olvidoPasswordModal {
+    background:           rgba(8, 12, 28, 0.72);
+    backdrop-filter:      blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* 2 — Tarjeta: glass effect idéntico a .modal--registro-v2 */
+#olvidoPasswordModal .modal {
+    background:           rgba(255, 255, 255, 0.05);
+    backdrop-filter:      blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border:               1px solid rgba(255, 255, 255, 0.28);
+    border-radius:        24px;
+    box-shadow:           0 25px 50px -12px rgba(0, 0, 0, 0.6),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    padding:              var(--espacio-xl);
+}
+
+/* 3 — Título: blanco puro */
+#olvidoPasswordModal .modal__title {
+    color: #ffffff;
+    font-size: var(--texto-xl);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* 4 — Botón cerrar: blanco tenue, hover blanco + fondo translúcido */
+#olvidoPasswordModal .modal__close {
+    color: rgba(255, 255, 255, 0.5);
+    transition: color var(--transicion), background-color var(--transicion);
+}
+#olvidoPasswordModal .modal__close:hover {
+    color:            #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 5 — Texto de ayuda descriptivo: blanco semi-transparente */
+#olvidoPasswordModal .form__ayuda {
+    color:       rgba(255, 255, 255, 0.65);
+    font-size:   var(--texto-sm);
+    margin-bottom: var(--espacio-md);
+    line-height: 1.5;
+}
+
+/* 6 — Labels: blanco semi-opaco */
+#olvidoPasswordModal .form__label {
+    color:       rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+}
+
+/* 7 — Inputs cristalinos */
+#olvidoPasswordModal .form__input {
+    background:    rgba(255, 255, 255, 0.07);
+    border:        1px solid rgba(255, 255, 255, 0.1);
+    color:         #ffffff;
+    border-radius: var(--radio-md);
+}
+#olvidoPasswordModal .form__input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+#olvidoPasswordModal .form__input:focus {
+    background:   rgba(255, 255, 255, 0.12);
+    border-color: var(--color-primario);
+    box-shadow:   0 0 0 4px rgba(199, 98, 227, 0.2);
+    outline:      none;
+}
+
+/* 8 — Errores: rosado claro legible */
+#olvidoPasswordModal .form__error {
+    color: #fca5a5;
+}
+
+/* 9 — Botón Cancelar / Volver: contorno blanco translúcido */
+#olvidoPasswordModal .btn--cancelar {
+    background:    rgba(255, 255, 255, 0.08);
+    border:        1px solid rgba(255, 255, 255, 0.25);
+    color:         rgba(255, 255, 255, 0.85);
+    border-radius: var(--radio-full);
+    padding:       var(--espacio-sm) var(--espacio-lg);
+    font-weight:   600;
+    font-size:     var(--texto-sm);
+    cursor:        pointer;
+    transition:    background var(--transicion), border-color var(--transicion);
+}
+#olvidoPasswordModal .btn--cancelar:hover {
+    background:    rgba(255, 255, 255, 0.15);
+    border-color:  rgba(255, 255, 255, 0.45);
+}
+
+/* 10 — Botón primario (Enviar código / Verificar / Cambiar): morado del proyecto */
+#olvidoPasswordModal .btn--admin-primary {
+    background:    var(--color-primario);
+    border:        none;
+    border-radius: var(--radio-full);
+    color:         #ffffff;
+    padding:       var(--espacio-sm) var(--espacio-lg);
+    font-weight:   600;
+    font-size:     var(--texto-sm);
+    cursor:        pointer;
+    width:         auto;
+    margin-top:    0;
+    transition:    background-color var(--transicion), transform var(--transicion);
+}
+#olvidoPasswordModal .btn--admin-primary:hover {
+    background-color: var(--color-primario-oscuro);
+    transform:        translateY(-1px);
+}
+
+/* Espacio reducido entre el último campo y los botones */
+#olvidoPasswordModal .form__group {
+    margin-bottom: var(--espacio-sm);
+}
+#olvidoPasswordModal .modal__actions {
+    margin-top: var(--espacio-sm);
 }
 
 /* ── BOTÓN CIRCULAR DE LOGOUT ────────────────────────────────────────────────
@@ -1419,78 +1552,80 @@ body[data-modo="admin"]   {
         flex-wrap: wrap;
         gap: var(--espacio-xs);
     }
-    .inicio__columna-imagen {
-        display: none;
-    }
     .inicio__columna-panel {
         width: 100%;
     }
 }
 
-
-/* REDISEÑO PANTALLA DE INICIO — Layout de dos columnas con efecto glass      */
-/* Estos estilos extienden el comportamiento de .pantalla-inicio              */
-
-/* Se sobreescribe el layout de .pantalla-inicio para usar dos columnas       */
-/* flex-direction: row divide la pantalla en columna izquierda y derecha      */
+/* REDISEÑO PANTALLA DE INICIO — Layout centrado */
 .pantalla-inicio {
-    flex-direction: row;
-    padding: 0;
-    gap: 0;
-    min-height: 100vh;
-    align-items: stretch;
-}
-
-/* Columna izquierda: ocupa la mitad de la pantalla con la imagen de fondo    */
-/* background-size: cover escala la imagen para cubrir todo el área           */
-/* background-position: center centra la imagen en el contenedor              */
-.inicio__columna-imagen {
-    flex: 1;
-    min-height: 100vh;
-    background-image: url('/bg-inicio.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Columna derecha: degradado suave con colores del proyecto                  */
-/* Necesita tener color de fondo para que el glass card se vea transparente   */
-/* Columna derecha: sin fondo propio, hereda el degradado del body             */
-.inicio__columna-panel {
-    flex: 1;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--espacio-xl);
-}
-
-
-/* Card glass: muy transparente sobre el degradado del body                   */
-/* Con el fondo colorido detrás el blur y la transparencia se ven reales   background: rgba(255, 255, 255, 0.25);   */
-.inicio__glass-card {
     width: 100%;
-    max-width: 480px;
-    background: rgba(255, 255, 255, 0.25);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.inicio__columna-panel {
+    width: 100%;
+    max-width: 450px;
+    display: flex;
+    justify-content: center;
+}
+
+
+.inicio__glass-card {
+    background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 2rem;
-    border: 1.5px solid rgba(255, 255, 255, 0.6);
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.15);
-    padding: var(--espacio-xl);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 24px;
+    padding: 40px;
+    width: 100%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
     gap: var(--espacio-lg);
 }
 
-/* Se redefine el header dentro de la card glass para que sea centrado        */
-.inicio__glass-card .inicio__header {
+/* Ajustes de texto para el nuevo fondo oscuro */
+.inicio__glass-card .inicio__titulo {
+    color: #ffffff;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    margin-bottom: 8px;
     text-align: center;
+}
+
+.inicio__glass-card .inicio__subtitulo {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.95rem;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.inicio__glass-card .form__label,
+.inicio__glass-card .login-registro-texto {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* Inputs cristalinos para no romper la estética */
+.inicio__glass-card .form__input {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.inicio__glass-card .form__input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.inicio__glass-card .form__input:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--color-primario);
+    box-shadow: 0 0 0 4px rgba(199, 98, 227, 0.2);
 }
 
 /* Nota al pie dentro de la card glass                                        */
@@ -1508,11 +1643,6 @@ body[data-modo="admin"]   {
     /* En móvil volvemos a la columna única                                   */
     .pantalla-inicio {
         flex-direction: column;
-    }
-
-    /* La columna de imagen se oculta en móvil para dar espacio al contenido  */
-    .inicio__columna-imagen {
-        display: none;
     }
 
     /* El panel ocupa toda la pantalla en móvil                               */
@@ -1838,26 +1968,27 @@ body[data-modo="admin"]   {
     gap: 0.1rem;
 }
 
-/* Botón principal — gradiente morado-azul de la paleta del proyecto */
 .btn-acceso--login {
-    background: linear-gradient(
-        90deg,
-        var(--color-primario) 0%,
-        var(--color-admin) 100%
-    );
-    color: #fff;
+    width: 100%;
+    background: var(--color-primario);
+    color: white;
     border: none;
     border-radius: 12px;
-    padding: 0.85rem 1.5rem;
+    padding: 14px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
-    width: 100%;
-    margin-top: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 10px;
+    box-shadow: 0 10px 15px -3px rgba(199, 98, 227, 0.3);
 }
 
-.btn-acceso--login:hover  { opacity: 0.92; transform: translateY(-1px); }
+.btn-acceso--login:hover {
+    background: var(--color-primario-oscuro);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(199, 98, 227, 0.4);
+}
+
 .btn-acceso--login:active { transform: translateY(0); }
 .btn-acceso--login:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -1958,7 +2089,13 @@ body[data-modo="admin"]   {
 }
 
 .login-registro-btn:hover {
-    color: #4b5563;
+    color: #e2e8f0;
+    text-decoration-color: #e2e8f0;
+}
+
+.login-registro-btn:active {
+    color: #ffffff;
+    text-decoration-color: #ffffff;
 }
 
 /* Barra de búsqueda del panel de usuario — misma apariencia que la del admin
@@ -2017,13 +2154,22 @@ body[data-modo="admin"]   {
    Solo se agregan los estilos propios del registro aquí.
    ══════════════════════════════════════════════════════════════════════ */
 
-/* Hace que la tarjeta del modal de registro sea un poco más ancha
-   que el modal de edición de tarea, ya que tiene más campos */
+/* Paso 1 — Overlay oscuro para que el glass effect resalte igual que en el login */
+#registroModal {
+    background: rgba(8, 12, 28, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* Paso 10 — Anular el background:white y padding de .modal para que el glass funcione */
 .modal--registro {
-    max-width: 460px;
-    width: 100%;
-    max-height: 90vh;   /* No supera el 90% del alto del viewport */
-    overflow-y: auto;   /* Scroll si el contenido desborda en pantallas pequeñas */
+    max-width:   460px;
+    width:       100%;
+    max-height:  90vh;
+    overflow-y:  auto;
+    background:  transparent;   /* El glass de .modal--registro-v2 lo reemplaza */
+    padding:     0;             /* El padding lo da __form y __header internamente */
+    box-shadow:  none;          /* La sombra la pone .modal--registro-v2 */
 }
 
 /* ── PANEL INSTRUCTOR — paleta verde pastel ────────────────────────────────── */
@@ -2158,7 +2304,8 @@ body[data-modo="instructor"] {
     text-decoration: underline;
     padding:    0;
 }
-.btn-link:hover { color: #4b5563 }
+.btn-link:hover { color: #e2e8f0; text-decoration-color: #e2e8f0; }
+.btn-link:active { color: #ffffff; text-decoration-color: #ffffff; }
 
 
 /* Clase base para todos los íconos de acción (Lucide Icons en botones) */
@@ -2177,39 +2324,6 @@ body[data-modo="instructor"] {
 .btn-logout-circular .icono-accion {
     width: 20px;
     height: 20px;
-}
-
-
-/* Overlay de marca en la columna izquierda de la pantalla de inicio */
-.inicio__overlay-marca {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.40);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--espacio-sm);
-    z-index: 1;
-    padding: var(--espacio-lg);
-    text-align: center;
-}
-
-.inicio__overlay-marca h1 {
-    color: #ffffff;
-    font-size: var(--texto-2xl);
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    line-height: 1.2;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.inicio__overlay-marca p {
-    color: rgba(255, 255, 255, 0.85);
-    font-size: var(--texto-sm);
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
 }
 
 .tarjeta-glass h1,
@@ -2951,4 +3065,3 @@ body[data-modo="instructor"] {
         width: 100%;
     }
 }
-
