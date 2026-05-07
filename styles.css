@@ -82,7 +82,7 @@ body {
 body[data-modo="inicio"] {
     /* Overlay oscuro + Tu nueva imagen local (sin texto) */
     background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), 
-                url('/public/bg-inicio.jpg');
+                url('/bg-inicio.jpg');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -383,7 +383,7 @@ body[data-modo="admin"]   {
     padding: var(--espacio-xl);
     display: flex;
     flex-direction: column;
-    gap: var(--espacio-lg);
+    gap: var(--espacio-md);
 }
 
 .contenido-vista--admin,
@@ -407,7 +407,51 @@ body[data-modo="admin"]   {
     margin-bottom: var(--espacio-lg);
 }
 
-.card--usuario-info { background: white; }
+.card--usuario-info {
+    background: white;
+    padding: var(--espacio-lg) var(--espacio-xl);
+}
+
+/* Rediseño: user-info en layout de dos columnas para aprovechar el ancho */
+.card--usuario-info .user-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--espacio-sm);
+}
+
+.card--usuario-info .user-info__item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--espacio-md) var(--espacio-lg);
+    background: var(--fondo-gris);
+    border-radius: var(--radio-md);
+}
+
+.card--usuario-info .user-info__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--texto-claro);
+    min-width: unset;
+    margin-bottom: 2px;
+}
+
+.card--usuario-info .user-info__value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    letter-spacing: -0.01em;
+}
+
+/* La fila de promedio ocupa las dos columnas */
+.card--usuario-info .user-info__promedio-wrap {
+    grid-column: 1 / -1;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+}
 
 
 /* FORMULARIOS */
@@ -662,9 +706,12 @@ body[data-modo="admin"]   {
 .status-pendiente   { background: #fef3c7; color: #92400e; }
 .status-en_progreso { background: #dbeafe; color: #1e40af; }
 .status-completada  { background: #d1fae5; color: #065f46; }
+.status-reprobada   { background: #fee2e2; color: #991b1b; font-weight: 700; }
 /* Badge para el cuarto estado: naranja suave, diferente del amarillo de "pendiente" */
 /* Fondo #ffedd5 (naranja claro) — texto #9a3412 (naranja oscuro con buen contraste) */
 .status-pendiente_aprobacion { background: #ffedd5; color: #9a3412; font-size: 0.78rem; white-space: nowrap; }
+/* Badge para usuario inactivo (borrado suave) */
+.status-inactivo { background: #f1f5f9; color: #64748b; font-size: 0.75rem; }
 
 
 /* ACCIONES EN LA TABLA */
@@ -691,6 +738,12 @@ body[data-modo="admin"]   {
 
 .btn-action--delete { background: #fee2e2; color: #991b1b; }
 .btn-action--delete:hover { background: #fecaca; }
+
+.btn-action--apply  { background: #dbeafe; color: #1e40af; }
+.btn-action--apply:hover { background: #bfdbfe; }
+
+.btn-action--export { background: #d1fae5; color: #065f46; }
+.btn-action--export:hover { background: #a7f3d0; }
 
 
 /* ESTADO VACÍO */
@@ -905,6 +958,326 @@ body[data-modo="admin"]   {
 }
 
 
+/* ══════════════════════════════════════════════════════════════════
+   MODAL USUARIO v2 — Rediseño admin + instructor
+   ══════════════════════════════════════════════════════════════════ */
+
+.modal-usuario--v2 {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 92%;
+    max-width: 780px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
+    animation: slideIn 220ms ease;
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.modal-v2__header {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+    padding: var(--espacio-lg) var(--espacio-xl);
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-bottom: 1px solid #bae6fd;
+    flex-shrink: 0;
+}
+
+/* Header del instructor en verde */
+[data-modo="instructor"] .modal-v2__header {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-bottom-color: #bbf7d0;
+}
+
+/* Avatar circular con inicial */
+.modal-v2__avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.modal-v2__avatar--admin      { background: linear-gradient(135deg, var(--color-admin), var(--color-admin-oscuro)); }
+.modal-v2__avatar--instructor { background: linear-gradient(135deg, var(--color-instructor), var(--color-instructor-oscuro)); }
+
+/* Info del usuario */
+.modal-v2__info { flex: 1; min-width: 0; }
+
+.modal-v2__titulo {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    margin: 0 0 6px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modal-v2__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.modal-v2__chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: rgba(2, 132, 199, 0.12);
+    color: var(--color-admin);
+}
+
+[data-modo="instructor"] .modal-v2__chip {
+    background: rgba(5, 150, 105, 0.12);
+    color: var(--color-instructor);
+}
+
+.modal-v2__chip--gris {
+    background: var(--fondo-gris);
+    color: var(--texto-medio);
+    font-weight: 500;
+}
+
+[data-modo="instructor"] .modal-v2__chip--gris {
+    background: var(--fondo-gris);
+    color: var(--texto-medio);
+}
+
+/* Botón cerrar */
+.modal-v2__cerrar {
+    background: rgba(0,0,0,0.06);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--texto-medio);
+    transition: background var(--transicion), color var(--transicion);
+    flex-shrink: 0;
+}
+
+.modal-v2__cerrar:hover {
+    background: rgba(0,0,0,0.12);
+    color: var(--texto-oscuro);
+}
+
+.modal-v2__cerrar .icono-accion { width: 18px; height: 18px; }
+
+/* ── Cuerpo: dos columnas ────────────────────────────────────────── */
+.modal-v2__cuerpo {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.modal-v2__col {
+    display: flex;
+    flex-direction: column;
+    padding: var(--espacio-lg) var(--espacio-xl);
+    overflow-y: auto;
+}
+
+.modal-v2__col--tareas {
+    flex: 0 0 42%;
+    background: #fafafa;
+    border-right: 1px solid var(--borde-suave);
+}
+
+.modal-v2__col--form { flex: 1; background: #ffffff; }
+
+/* Divisor vertical (por si se necesita como elemento) */
+.modal-v2__divisor { display: none; }
+
+/* Encabezado de columna */
+.modal-v2__col-header {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    margin-bottom: var(--espacio-md);
+    padding-bottom: var(--espacio-sm);
+    border-bottom: 2px solid var(--borde-suave);
+    flex-shrink: 0;
+}
+
+.modal-v2__col-header .icono-accion {
+    width: 17px;
+    height: 17px;
+    color: var(--color-admin);
+}
+
+[data-modo="instructor"] .modal-v2__col-header .icono-accion {
+    color: var(--color-instructor);
+}
+
+.modal-v2__col-titulo {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex: 1;
+}
+
+/* Contador de tareas */
+.modal-v2__contador {
+    background: var(--color-admin);
+    color: white;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+}
+
+[data-modo="instructor"] .modal-v2__contador {
+    background: var(--color-instructor);
+}
+
+/* ── Lista de tareas ─────────────────────────────────────────────── */
+.modal-v2__lista-tareas {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.modal-v2__tarea-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 12px;
+    background: #ffffff;
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio-md);
+    gap: 6px;
+    transition: box-shadow var(--transicion);
+}
+
+.modal-v2__tarea-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+/* Fila de badges dentro de la tarea (estado + nota/sin calificar) */
+.modal-v2__tarea-badges {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.modal-v2__tarea-badges .status-badge {
+    white-space: normal;
+    font-size: 0.73rem;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+.modal-v2__tarea-nombre {
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Estado vacío de lista */
+.modal-v2__vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espacio-sm);
+    padding: var(--espacio-xl) 0;
+    color: var(--texto-claro);
+    font-size: 0.85rem;
+}
+
+.modal-v2__vacio .icono-accion { width: 32px; height: 32px; opacity: 0.4; }
+
+/* ── Formulario ─────────────────────────────────────────────────── */
+.modal-v2__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-sm);
+    flex: 1;
+}
+
+.modal-v2__campo { display: flex; flex-direction: column; gap: 5px; }
+
+.modal-v2__label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    letter-spacing: 0.02em;
+}
+
+/* Ajuste del form__input dentro del modal v2 para hacerlo más compacto */
+.modal-v2__form .form__input {
+    padding: 8px 12px;
+    font-size: 0.83rem;
+}
+
+.modal-v2__form .form__textarea { resize: vertical; min-height: 52px; }
+
+/* Botón de submit */
+.modal-v2__btn-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espacio-sm);
+    width: 100%;
+    padding: 11px var(--espacio-lg);
+    border: none;
+    border-radius: var(--radio-full);
+    font-size: var(--texto-sm);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color var(--transicion), transform 80ms;
+    margin-top: var(--espacio-xs);
+    color: white;
+}
+
+.modal-v2__btn-submit:active { transform: scale(0.98); }
+
+.modal-v2__btn-submit--admin {
+    background: linear-gradient(135deg, var(--color-admin), var(--color-admin-oscuro));
+}
+.modal-v2__btn-submit--admin:hover { background: var(--color-admin-oscuro); }
+
+.modal-v2__btn-submit--instructor {
+    background: linear-gradient(135deg, var(--color-instructor), var(--color-instructor-oscuro));
+}
+.modal-v2__btn-submit--instructor:hover { background: var(--color-instructor-oscuro); }
+
+.modal-v2__btn-submit .icono-accion { width: 16px; height: 16px; }
+
+/* ── Responsive: apila columnas en pantallas pequeñas ────────────── */
+@media (max-width: 600px) {
+    .modal-usuario--v2 { max-width: 98vw; max-height: 95vh; }
+    .modal-v2__cuerpo  { flex-direction: column; overflow-y: auto; }
+    .modal-v2__col--tareas { flex: none; border-right: none; border-bottom: 1px solid var(--borde-suave); max-height: 240px; }
+    .modal-v2__col--form   { flex: none; }
+}
+
+
 /* CONTROLES DE FILTRO (admin) */
 .tasks-controls {
     display: flex;
@@ -952,6 +1325,95 @@ body[data-modo="admin"]   {
 .tasks-controls__input:focus {
     border-color: var(--color-admin);
     box-shadow: 0 0 0 3px rgba(186, 230, 253, 0.5);
+}
+
+/* Grupo de botones de acción en el panel de controles de tareas */
+.tasks-controls__grupo--acciones { flex-shrink: 0; }
+
+.tasks-controls__botones {
+    display: flex;
+    gap: var(--espacio-sm);
+    align-items: center;
+}
+
+/* Fila inline que agrupa el select con los botones circulares a su derecha */
+.tasks-controls__ordenar-row {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+}
+
+/* Wrapper que posiciona el select con el ícono de flecha interno */
+.tasks-controls__select-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.tasks-controls__select-wrapper .tasks-controls__select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2rem;
+    min-width: 150px;
+}
+
+.tasks-controls__select-icon {
+    position: absolute;
+    right: 0.5rem;
+    width: 14px;
+    height: 14px;
+    color: var(--color-admin);
+    pointer-events: none;
+    flex-shrink: 0;
+}
+
+/* Grupo de botones de acción separados con su propio label */
+.tasks-controls__grupo--acciones-bar {
+    flex-shrink: 0;
+}
+
+.tasks-controls__acciones-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    height: 2.1rem;
+}
+
+/* Botón compacto de la barra de controles — mismo color que Aplicar */
+.btn--control {
+    background-color: var(--color-admin);
+    color: white;
+    border: none;
+    border-radius: var(--radio-full);
+    padding: var(--espacio-xs) var(--espacio-md);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    cursor: pointer;
+    height: 2.1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    transition: background-color var(--transicion);
+}
+.btn--control:hover { background-color: var(--color-admin-oscuro); }
+
+/* Celda de fecha/hora de creación en la tabla de tareas */
+.col-fecha {
+    white-space: nowrap;
+}
+
+.fecha-celda__fecha {
+    display: block;
+    font-size: var(--texto-sm);
+    font-weight: 500;
+    color: var(--texto-oscuro);
+}
+
+.fecha-celda__hora {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--texto-claro);
 }
 
 
@@ -1054,6 +1516,14 @@ body[data-modo="admin"]   {
     align-items: center !important;
     gap: 12px !important;
     justify-content: center !important;
+}
+
+/* SweetAlert2 — toast siempre visible encima de cualquier modal DOM */
+/* El modal-overlay usa z-index:1000; Swal por defecto usa 1060.
+   Sin este override, el toast puede quedar tapado por el overlay cuando
+   ambos tienen position:fixed y crean stacking contexts distintos. */
+.swal2-container {
+    z-index: 99999 !important;
 }
 
 .swal-btn-confirmar,
@@ -1655,24 +2125,24 @@ body[data-modo="admin"]   {
    GET /api/tasks/dashboard → { total, pendientes, enProgreso, completadas } */
 .dashboard-stats {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: var(--espacio-md);
-    margin-bottom: var(--espacio-lg);
-    align-items: stretch;   /* todas las cards a la misma altura */
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--espacio-sm);
+    margin-bottom: var(--espacio-md);
+    align-items: stretch;
 }
 
 .stat-card {
     background: white;
-    border-radius: var(--radio-xl);
-    padding: var(--espacio-md) var(--espacio-lg);
+    border-radius: var(--radio-lg);
+    padding: var(--espacio-sm) var(--espacio-md);
     box-shadow: var(--sombra-sm);
     display: flex;
     flex-direction: column;
-    justify-content: center;   /* contenido centrado verticalmente */
-    gap: var(--espacio-xs);
+    justify-content: center;
+    gap: 4px;
     border-left: 4px solid var(--borde-suave);
     transition: box-shadow var(--transicion);
-    min-height: 110px;         /* altura mínima uniforme */
+    min-height: 90px;
 }
 
 .stat-card:hover { box-shadow: var(--sombra-md); }
@@ -1681,18 +2151,19 @@ body[data-modo="admin"]   {
 .stat-card--progreso   { border-left-color: var(--color-progreso); }
 .stat-card--completada { border-left-color: var(--color-completada); }
 .stat-card--aprobacion { border-left-color: var(--color-aprobacion); }
+.stat-card--reprobada  { border-left-color: #dc2626; }
 
 .stat-card__label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     color: var(--texto-claro);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    line-height: 1.3;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
 }
 
 .stat-card__valor {
-    font-size: 2.2rem;
+    font-size: 1.9rem;
     font-weight: 700;
     color: var(--texto-oscuro);
     line-height: 1;
@@ -1702,9 +2173,14 @@ body[data-modo="admin"]   {
 .stat-card--progreso   .stat-card__valor { color: #1e40af; }
 .stat-card--completada .stat-card__valor { color: #065f46; }
 .stat-card--aprobacion .stat-card__valor { color: #9a3412; }
+.stat-card--reprobada  .stat-card__valor { color: #dc2626; }
 
-@media (max-width: 768px) {
-    .dashboard-stats { grid-template-columns: 1fr 1fr; }
+@media (max-width: 1024px) {
+    .dashboard-stats { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+    .dashboard-stats { grid-template-columns: repeat(2, 1fr); }
+    .stat-card__valor { font-size: 1.5rem; }
 }
 
 /* Botón de toggle (flecha) que aparece en el encabezado de cada card contraíble */
@@ -2021,23 +2497,24 @@ body[data-modo="admin"]   {
 
 /* Mensaje de bienvenida post-login */
 .login-bienvenida {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    background: rgba(124, 58, 237, 0.12);
-    border: 1px solid rgba(124, 58, 237, 0.3);
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
-    animation: fadeInDown 0.4s ease;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    gap:             0.6rem;
+    background:      rgba(199, 98, 227, 0.15);
+    border:          1px solid rgba(199, 98, 227, 0.45);
+    border-radius:   10px;
+    padding:         0.75rem 1rem;
+    animation:       fadeInDown 0.4s ease;
 }
 
 .login-bienvenida__icono { font-size: 1.4rem; }
 
 .login-bienvenida__texto {
-    font-size: 0.95rem;
+    font-size:   0.95rem;
     font-weight: 600;
-    color: #4c1d95;
-    margin: 0;
+    color:       #e9d5ff;
+    margin:      0;
 }
 
 @keyframes fadeInDown {
@@ -2277,12 +2754,14 @@ body[data-modo="instructor"] {
     background-color: var(--color-instructor);
     color:            white;
     border:           none;
-    padding:          var(--espacio-xs) var(--espacio-md);
-    border-radius: var(--radio-full);
+    width:            100%;
+    margin-top:       var(--espacio-sm);
+    padding:          var(--espacio-sm) var(--espacio-lg);
+    border-radius:    var(--radio-full);
     cursor:           pointer;
     font-size:        var(--texto-sm);
     font-weight:      600;
-
+    transition:       background-color var(--transicion);
 }
 
 .btn--instr-primary:hover { background-color: var(--color-instructor-oscuro); }
@@ -2376,19 +2855,9 @@ body[data-modo="instructor"] {
     }
 }
 
-/* Breakpoint 480px — móviles pequeños */
-@media (max-width: 480px) {
-    .dashboard-stats {
-        grid-template-columns: 1fr 1fr;
-    }
-    .stat-card__valor {
-        font-size: 1.5rem;
-    }
-}
-
 /* Pantallas muy grandes */
 @media (min-width: 1400px) {
-    .stat-card { max-width: 200px; }
+    .stat-card { max-width: none; }
 }
 
 /* Proporciones desktop */
@@ -2582,245 +3051,535 @@ body[data-modo="instructor"] {
 .icono--exito { color: #059669; }
 
 /* Calendario genérico */
-.calendario__cabecera {
+/* =============================================================
+   CALENDARIO v2.0 -- clases con prefijo cal2__
+   ============================================================= */
+
+/* Estado de carga */
+.calendario__cargando {
+    text-align: center;
+    color: var(--texto-claro);
+    font-size: 0.85rem;
+    padding: var(--espacio-lg);
+}
+
+/* Cabecera */
+.cal2__cabecera {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--espacio-sm);
+    margin-bottom: 2px;
 }
-
-.calendario__titulo {
-    font-weight: 600;
-    font-size: var(--texto-base);
+.cal2__titulo {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--texto-oscuro);
 }
-
-.calendario__nav-btn {
+.cal2__nav-btn {
     background: none;
     border: 1px solid var(--borde-claro);
     border-radius: var(--radio-md);
-    padding: 4px 8px;
-    cursor: pointer;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    color: var(--texto-secundario);
+    transition: background-color 0.15s, border-color 0.15s;
 }
+.cal2__nav-btn:hover {
+    background-color: rgba(0,0,0,0.05);
+    border-color: var(--texto-claro);
+}
+.cal2__nav-btn i { width: 14px; height: 14px; }
 
-.calendario__grid {
+/* Grid */
+.cal2__grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
+    gap: 3px;
 }
-
-.calendario__dia-nombre {
+.cal2__dia-nombre {
     text-align: center;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--texto-secundario);
-    padding: 4px 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--texto-claro);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 0 6px;
 }
 
-.calendario__celda {
+/* Celda */
+.cal2__celda {
     aspect-ratio: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: 4px 2px;
+    padding: 4px 2px 2px;
     border-radius: var(--radio-sm);
     cursor: pointer;
-    transition: background-color 0.15s ease;
+    transition: background-color 0.12s ease, transform 0.1s ease;
     position: relative;
+    min-height: 36px;
 }
-
-.calendario__celda:hover {
-    background-color: var(--fondo-hover, rgba(0,0,0,0.06));
+.cal2__celda:hover {
+    background-color: rgba(0,0,0,0.05);
+    transform: scale(1.08);
 }
+.cal2__celda--vacia { cursor: default; pointer-events: none; }
+.cal2__celda--vacia:hover { background: transparent; transform: none; }
 
-.calendario__celda--vacia {
-    cursor: default;
-}
-
-.calendario__celda--vacia:hover {
-    background-color: transparent;
-}
-
-.calendario__numero-dia {
-    font-size: 0.78rem;
-    font-weight: 500;
-}
-
-.calendario__puntos {
-    display: flex;
-    gap: 2px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-top: 2px;
-}
-
-.calendario__punto {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.calendario__leyenda {
-    display: flex;
-    gap: var(--espacio-sm);
-    flex-wrap: wrap;
-    margin-top: var(--espacio-sm);
-}
-
-.calendario__leyenda-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.72rem;
-    color: var(--texto-secundario);
-}
-
-/* Popover del calendario */
-.calendario__popover {
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #ffffff;
-    border: 1px solid var(--borde-claro);
-    border-radius: var(--radio-md);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-    padding: var(--espacio-sm);
-    min-width: 180px;
-    z-index: 100;
-}
-
-.calendario__popover-titulo {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--texto-secundario);
-    margin-bottom: var(--espacio-xs);
-}
-
-.calendario__popover-lista {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 var(--espacio-xs) 0;
-    font-size: 0.78rem;
-}
-
-.calendario__popover-vacio {
-    font-size: 0.75rem;
-    color: var(--texto-claro);
-    margin-bottom: var(--espacio-xs);
-}
-
-.calendario__popover-input {
-    width: 100%;
-    border: 1px solid var(--borde-claro);
-    border-radius: var(--radio-sm);
-    padding: 4px 8px;
-    font-size: 0.78rem;
-    margin-bottom: var(--espacio-xs);
-}
-
-/* Sección de post-its */
-.postits-seccion {
-    margin-top: var(--espacio-lg);
-}
-
-.postits__titulo {
-    font-size: var(--texto-base);
-    font-weight: 600;
-    margin-bottom: var(--espacio-sm);
-}
-
-.postits__grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--espacio-sm);
-    margin-bottom: var(--espacio-sm);
-}
-
-/* Card de cada post-it — el color de fondo viene de JS (dato del usuario) */
-.postit__card {
-    position: relative;
-    width: 180px;
-    min-height: 120px;
-    border-radius: var(--radio-md);
-    padding: var(--espacio-sm);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-}
-
-.postit__texto {
-    font-size: 0.85rem;
-    line-height: 1.5;
-    color: var(--texto-primario);
-    margin-top: var(--espacio-xs);
-}
-
-.postit__btn-eliminar {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    background: rgba(0,0,0,0.12);
-    border: none;
+/* Hoy */
+.cal2__celda--hoy .cal2__numero-dia {
+    background-color: var(--color-hoy, #059669);
+    color: #ffffff;
     border-radius: 50%;
     width: 22px;
     height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.78rem;
+}
+.cal2__celda--con-eventos {
+    box-shadow: inset 0 -2px 0 rgba(99,102,241,0.3);
 }
 
+/* Numero dia */
+.cal2__numero-dia {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--texto-oscuro);
+    line-height: 1;
+    padding: 3px;
+}
+
+/* Puntos */
+.cal2__puntos {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 2px;
+    max-width: 100%;
+}
+.cal2__punto {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* Leyenda */
+.cal2__leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px var(--espacio-sm);
+    margin-top: var(--espacio-xs);
+    padding-top: var(--espacio-xs);
+    border-top: 1px solid var(--borde-suave);
+}
+.cal2__leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    color: var(--texto-secundario);
+    white-space: nowrap;
+}
+
+/* Popover */
+.cal2__popover {
+    position: fixed;
+    background: #ffffff;
+    border: 1px solid var(--borde-claro);
+    border-radius: var(--radio-lg);
+    box-shadow: var(--sombra-lg);
+    padding: 12px;
+    min-width: 240px;
+    max-width: 300px;
+    z-index: 9999;
+    animation: cal2-popover-in 0.15s ease;
+    overflow-y: auto;
+    /* Altura máxima con scroll para muchas tareas - mejor que cortar el contenido */
+    max-height: min(420px, 65vh);
+    scrollbar-width: thin;
+    scrollbar-color: var(--borde-claro) transparent;
+}
+@keyframes cal2-popover-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.cal2__popover-titulo {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--texto-claro);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+}
+.cal2__popover-vacio {
+    font-size: 0.78rem;
+    color: var(--texto-claro);
+    font-style: italic;
+    margin-bottom: 8px;
+}
+.cal2__popover-seccion-titulo {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--texto-claro);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 6px 0 4px;
+    padding-top: 6px;
+    border-top: 1px solid var(--borde-suave);
+}
+.cal2__popover-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.cal2__popover-evento {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    background: #f8fafc;
+    border-radius: var(--radio-sm);
+    padding: 6px 8px;
+    position: relative;
+}
+.cal2__popover-barra {
+    width: 3px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    align-self: stretch;
+}
+.cal2__popover-cuerpo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+.cal2__popover-evento-titulo {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--texto-oscuro);
+    word-break: break-word;
+}
+.cal2__popover-evento-meta {
+    font-size: 0.7rem;
+    color: var(--texto-secundario);
+}
+.cal2__popover-tarea-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+.cal2__popover-estado-badge {
+    font-size: 0.67rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: var(--radio-full);
+}
+.cal2__popover-btn-ver {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--color-instructor);
+    background: none;
+    border: 1px solid var(--color-instructor);
+    border-radius: var(--radio-full);
+    padding: 2px 8px;
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+}
+.cal2__popover-btn-ver:hover {
+    background-color: var(--color-instructor);
+    color: #ffffff;
+}
+.cal2__popover-btn-del {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: none;
+    border: none;
+    color: var(--texto-claro);
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 0 3px;
+    border-radius: 3px;
+    transition: color 0.1s, background-color 0.1s;
+}
+.cal2__popover-btn-del:hover { color: #dc2626; background-color: #fee2e2; }
+
+/* Formulario del popover */
+.cal2__form {
+    border-top: 1px solid var(--borde-suave);
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.cal2__form-titulo {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--texto-secundario);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.cal2__form-input,
+.cal2__form-select {
+    width: 100%;
+    border: 1px solid var(--borde-claro);
+    border-radius: var(--radio-sm);
+    padding: 5px 8px;
+    font-size: 0.78rem;
+    color: var(--texto-oscuro);
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.15s;
+    box-sizing: border-box;
+}
+.cal2__form-input:focus,
+.cal2__form-select:focus { border-color: var(--color-instructor); }
+.cal2__form-grupo { display: flex; flex-direction: column; gap: 4px; }
+.cal2__form-grupo--oculto { display: none; }
+.cal2__form-error { font-size: 0.7rem; color: #dc2626; min-height: 14px; }
+.cal2__form-btn {
+    background-color: var(--color-instructor);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radio-md);
+    padding: 7px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, opacity 0.15s;
+    width: 100%;
+}
+.cal2__form-btn:hover    { background-color: var(--color-instructor-oscuro); }
+.cal2__form-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+
+/* Sección de post-its */
+.postits-seccion {
+    background: #ffffff;
+    border-radius: var(--radio-xl);
+    border: 1px solid var(--borde-claro);
+    padding: var(--espacio-lg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Cabecera de la sección */
+.postits__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--espacio-md);
+    padding-bottom: var(--espacio-sm);
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+.postits__titulo {
+    font-size: var(--texto-base);
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-xs);
+    margin: 0;
+}
+
+.postits__titulo::before {
+    content: '📝';
+}
+
+.postits__contador {
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: var(--fondo-suave, #f1f5f9);
+    color: var(--texto-claro);
+    border-radius: 9999px;
+    padding: 2px 10px;
+}
+
+/* Grid de post-its: auto-fill para ocupar todo el ancho */
+.postits__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--espacio-md);
+    margin-bottom: var(--espacio-md);
+}
+
+/* Card de cada post-it — color de fondo viene de JS */
+.postit__card {
+    position: relative;
+    min-height: 110px;
+    border-radius: var(--radio-lg);
+    padding: var(--espacio-md) var(--espacio-sm) var(--espacio-sm);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    transition: transform 0.15s, box-shadow 0.15s;
+    overflow: hidden;
+}
+
+.postit__card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+/* Franja superior decorativa (pseudo-elemento) */
+.postit__card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: rgba(0,0,0,0.12);
+    border-radius: var(--radio-lg) var(--radio-lg) 0 0;
+}
+
+.postit__texto {
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: rgba(0,0,0,0.72);
+    word-break: break-word;
+    padding-right: 20px; /* espacio para el botón X */
+}
+
+/* Botón eliminar — esquina superior derecha */
+.postit__btn-eliminar {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.10);
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.12s, opacity 0.12s;
+    opacity: 0;
+}
+
+.postit__card:hover .postit__btn-eliminar {
+    opacity: 1;
+}
+
+.postit__btn-eliminar:hover {
+    background: rgba(220,38,38,0.2);
+}
+
+.postit__btn-eliminar .icono-accion { width: 11px; height: 11px; color: rgba(0,0,0,0.5); }
+
+/* Botón + Nueva nota */
 .postit__btn-agregar {
     display: inline-flex;
     align-items: center;
-    gap: var(--espacio-xs);
+    gap: 6px;
     background: none;
     border: 2px dashed var(--borde-claro);
     border-radius: var(--radio-md);
-    padding: var(--espacio-xs) var(--espacio-sm);
+    padding: 8px 16px;
     cursor: pointer;
-    font-size: var(--texto-sm);
-    color: var(--texto-secundario);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--texto-claro);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
+.postit__btn-agregar:hover {
+    border-color: var(--color-primario);
+    color: var(--color-primario);
+    background: rgba(var(--color-primario-rgb, 124,58,237), 0.04);
+}
+
+/* Formulario de nueva nota */
 .postit__formulario {
-    margin-top: var(--espacio-sm);
-    padding: var(--espacio-sm);
+    background: #f8fafc;
     border: 1px solid var(--borde-claro);
-    border-radius: var(--radio-md);
+    border-radius: var(--radio-lg);
+    padding: var(--espacio-md);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--espacio-sm);
+    align-items: end;
+    margin-top: var(--espacio-sm);
+}
+
+.postit__formulario-left {
     display: flex;
     flex-direction: column;
     gap: var(--espacio-xs);
-    max-width: 320px;
 }
 
 .postit__textarea {
     border: 1px solid var(--borde-claro);
     border-radius: var(--radio-sm);
-    padding: var(--espacio-xs);
-    font-size: var(--texto-sm);
+    padding: 8px 10px;
+    font-size: 0.82rem;
+    font-family: inherit;
     resize: vertical;
+    min-height: 64px;
+    outline: none;
+    transition: border-color 0.15s;
 }
+
+.postit__textarea:focus { border-color: var(--color-primario); }
 
 .postit__selectores-color {
     display: flex;
-    gap: var(--espacio-xs);
+    gap: 8px;
+    align-items: center;
+}
+
+.postit__selectores-color::before {
+    content: 'Color:';
+    font-size: 0.72rem;
+    color: var(--texto-claro);
+    font-weight: 500;
 }
 
 .postit__selector-color {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     border: 2px solid transparent;
     cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
 }
 
+.postit__selector-color:hover { transform: scale(1.15); }
+
 .postit__selector-color--activo {
-    border-color: var(--texto-primario);
+    border-color: rgba(0,0,0,0.4);
+    transform: scale(1.15);
 }
+
+.postit__btn-guardar {
+    background-color: var(--color-primario, #7c3aed);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radio-md);
+    padding: 8px 18px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    white-space: nowrap;
+    align-self: end;
+}
+
+.postit__btn-guardar:hover { background-color: var(--color-primario-oscuro, #6d28d9); }
 
 /* Clases utilitarias */
 .text-center    { text-align: center; }
@@ -2829,47 +3588,52 @@ body[data-modo="instructor"] {
 .col-span-full  { text-align: center; color: var(--texto-claro); font-style: italic; padding: var(--espacio-md) !important; }
 
 /* ============================================================
-   WIDGETS USUARIO — calendario + post-its lado a lado
+   PANEL USUARIO — layout de fila superior (datos + calendario)
    ============================================================ */
 
-.usuario-widgets {
+/* Fila superior: datos del usuario (izq, 50%) + calendario (der, 50%) */
+.usuario-fila-top {
     display: flex;
     gap: var(--espacio-lg, 1.5rem);
-    align-items: flex-start;
-    margin-top: var(--espacio-lg, 1.5rem);
+    align-items: stretch;
 }
 
-/* Columna izquierda: calendario — ancho fijo */
-.usuario-widget__calendario {
-    flex: 0 0 380px;
-    background: #ffffff;
-    border-radius: var(--radio-lg);
-    border: 1px solid var(--borde-claro);
-    padding: var(--espacio-md);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-/* Columna derecha: post-its — ocupa el resto */
-.usuario-widget__postits {
+/* Izquierda: la card de datos ocupa todo el espacio sobrante */
+.usuario-datos-col {
     flex: 1;
     min-width: 0;
-    background: #ffffff;
-    border-radius: var(--radio-lg);
-    border: 1px solid var(--borde-claro);
-    padding: var(--espacio-md);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
 }
 
-/* En tablets y móvil: apilar verticalmente */
-@media (max-width: 900px) {
-    .usuario-widgets {
-        flex-direction: column;
-    }
-    .usuario-widget__calendario {
-        flex: none;
-        width: 100%;
-    }
+.usuario-datos-col .card--usuario-info {
+    flex: 1;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
+
+/* Derecha: calendario con ancho fijo compacto (280px) */
+.usuario-calendario-col {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    width: 280px;
+}
+
+.usuario-calendario-col .seccion-calendario {
+    flex: 1;
+    box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+    .usuario-fila-top { flex-direction: column; }
+}
+
+/* ============================================================
+   POST-ITS — rediseño completo, ancho total
+   ============================================================ */
 
 /* Formulario: centrado con margen simétrico arriba y abajo */
 .buscador-tareas__form {
@@ -2959,7 +3723,7 @@ body[data-modo="instructor"] {
 .badge-estado--inactivo { background-color: rgba(239, 68, 68, 0.12); color: #ef4444; }
 
 .btn-accion-icono {
-    width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+    width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
     transition: opacity 0.15s ease, transform 0.1s ease;
 }
@@ -2971,7 +3735,66 @@ body[data-modo="instructor"] {
 .btn-accion--verde    { background-color: rgba(5, 150, 105, 0.15); color: #059669; }
 .btn-accion--rojo     { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; }
 
-.acciones-columna { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+/* Botón Ver de la tabla de estudiantes del instructor — pill con ícono + texto */
+.btn-ver-estudiante {
+    display:      inline-flex;
+    align-items:  center;
+    gap:          5px;
+    padding:      0.3rem 0.85rem;
+    border-radius: var(--radio-full);
+    border:        1px solid rgba(2, 132, 199, 0.3);
+    background:    rgba(2, 132, 199, 0.10);
+    color:         #0284c7;
+    font-size:     0.78rem;
+    font-weight:   600;
+    cursor:        pointer;
+    transition:    background-color 0.15s, transform 0.1s;
+    white-space:   nowrap;
+}
+.btn-ver-estudiante:hover {
+    background: rgba(2, 132, 199, 0.2);
+    transform:  scale(1.04);
+}
+.btn-ver-estudiante .icono-accion { width: 13px; height: 13px; }
+
+.acciones-columna { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+
+/* ── TABLA DE USUARIOS: anchos fijos para que todo entre sin scroll ── */
+#cuerpoUsuarios .tasks-table-container { overflow-x: visible; }
+#cuerpoUsuarios .tasks-table           { table-layout: fixed; width: 100%; }
+
+#cuerpoUsuarios .tasks-table .col-num      { width: 3%;  text-align: center; }
+#cuerpoUsuarios .tasks-table .col-nombre   { width: 18%; }
+#cuerpoUsuarios .tasks-table .col-doc      { width: 14%; }
+#cuerpoUsuarios .tasks-table .col-correo   { width: 22%; }
+#cuerpoUsuarios .tasks-table .col-rol      { width: 11%; text-align: center; }
+#cuerpoUsuarios .tasks-table .col-estado   { width: 11%; text-align: center; }
+#cuerpoUsuarios .tasks-table .col-acciones { width: 21%; }
+
+/* Padding reducido para que todo quepa cómodamente */
+#cuerpoUsuarios .tasks-table__head th,
+#cuerpoUsuarios .tasks-table tbody td {
+    padding: var(--espacio-sm) var(--espacio-md);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Badges de rol y estado más compactos en la tabla */
+#cuerpoUsuarios .status-badge {
+    font-size: 0.72rem;
+    padding: 3px 10px;
+}
+
+/* Las celdas de Rol y Estado no deben truncar con ellipsis porque contienen badges inline-block */
+#cuerpoUsuarios .tasks-table td.col-rol,
+#cuerpoUsuarios .tasks-table td.col-estado {
+    overflow: visible;
+    text-overflow: clip;
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+}
 
 .dropdown-rol {
     background: #ffffff; border: 1px solid var(--borde-suave);
@@ -2985,10 +3808,207 @@ body[data-modo="instructor"] {
 }
 .dropdown-rol__opcion:hover { background-color: var(--fondo-gris); }
 
-/* Panel de calificación del instructor */
+/* ══════════════════════════════════════════════════════════════════
+   MODAL EDITAR USUARIO v2
+   ══════════════════════════════════════════════════════════════════ */
+
+.modal-editar--v2 {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 92%;
+    max-width: 460px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
+    animation: slideIn 220ms ease;
+}
+
+.modal-editar__header {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+    padding: var(--espacio-lg) var(--espacio-xl);
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-bottom: 1px solid #bae6fd;
+    flex-shrink: 0;
+}
+
+/* Badge de ícono circular */
+.modal-editar__icono-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-admin), var(--color-admin-oscuro));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+}
+
+.modal-editar__icono-badge--rol {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+}
+
+.modal-editar__icono-badge .icono-accion { width: 22px; height: 22px; }
+
+.modal-editar__info { flex: 1; min-width: 0; }
+
+.modal-editar__titulo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    margin: 0 0 3px 0;
+}
+
+.modal-editar__subtitulo {
+    font-size: 0.82rem;
+    color: var(--texto-medio);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modal-editar__cuerpo {
+    padding: var(--espacio-xl);
+}
+
+.modal-editar__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-md);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MODAL CAMBIAR ROL v2
+   ══════════════════════════════════════════════════════════════════ */
+
+.modal-rol--v2 {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 92%;
+    max-width: 480px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
+    animation: slideIn 220ms ease;
+}
+
+.modal-rol__cuerpo {
+    padding: var(--espacio-lg) var(--espacio-xl) var(--espacio-xl);
+}
+
+.modal-rol__descripcion {
+    font-size: 0.83rem;
+    color: var(--texto-medio);
+    margin: 0 0 var(--espacio-md) 0;
+}
+
+.modal-rol__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Tarjeta de opción de rol */
+.modal-rol__opcion {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-md);
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid var(--borde-suave);
+    border-radius: var(--radio-lg);
+    background: #ffffff;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 180ms, background 180ms, box-shadow 180ms;
+}
+
+.modal-rol__opcion:not(:disabled):hover {
+    box-shadow: 0 3px 12px rgba(0,0,0,0.09);
+}
+
+.modal-rol__opcion--activo,
+.modal-rol__opcion:disabled {
+    cursor: default;
+    opacity: 0.75;
+    background: var(--fondo-gris);
+}
+
+/* Colores por rol al hacer hover */
+.modal-rol__opcion--estudiante:not(:disabled):hover {
+    border-color: #0284c7;
+    background: #f0f9ff;
+}
+
+.modal-rol__opcion--instructor:not(:disabled):hover {
+    border-color: var(--color-instructor);
+    background: #f0fdf4;
+}
+
+.modal-rol__opcion--admin:not(:disabled):hover {
+    border-color: #7c3aed;
+    background: #faf5ff;
+}
+
+/* Ícono del rol */
+.modal-rol__opcion-icono {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radio-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--fondo-gris);
+}
+
+.modal-rol__opcion--estudiante .modal-rol__opcion-icono { background: #e0f2fe; color: #0284c7; }
+.modal-rol__opcion--instructor .modal-rol__opcion-icono { background: #dcfce7; color: var(--color-instructor); }
+.modal-rol__opcion--admin      .modal-rol__opcion-icono { background: #ede9fe; color: #7c3aed; }
+
+.modal-rol__opcion-icono .icono-accion { width: 20px; height: 20px; }
+
+/* Texto del rol */
+.modal-rol__opcion-texto {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.modal-rol__opcion-nombre {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--texto-oscuro);
+}
+
+.modal-rol__opcion-desc {
+    font-size: 0.76rem;
+    color: var(--texto-medio);
+    line-height: 1.3;
+}
+
+/* Chip "Actual" */
+.modal-rol__chip-actual {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: var(--fondo-gris);
+    color: var(--texto-claro);
+    flex-shrink: 0;
+    border: 1px solid var(--borde-suave);
+}
+
+/* Panel de calificación del instructor — REDISEÑADO */
 .panel-calificacion { margin-bottom: var(--espacio-lg); }
 .panel-calificacion__titulo { font-size: var(--texto-lg); font-weight: 600; margin-bottom: var(--espacio-sm); }
-.panel-calificacion__lista { display: flex; flex-direction: column; gap: var(--espacio-sm); }
+.panel-calificacion__lista { display: flex; flex-direction: column; gap: 0; }
 .panel-calificacion__fila {
     display: flex; align-items: center; gap: var(--espacio-sm);
     padding: var(--espacio-sm) var(--espacio-md);
@@ -3003,6 +4023,86 @@ body[data-modo="instructor"] {
     border-radius: var(--radio-sm); padding: 6px 8px;
     font-size: var(--texto-sm); text-align: center;
 }
+
+/* ── Nuevo panel de calificación rediseñado (clases panel-cal__*) ── */
+.panel-cal__lista {
+    display: flex; flex-direction: column;
+    gap: 1rem;
+}
+.panel-cal__vacio {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 2.5rem 1rem; text-align: center;
+}
+.panel-cal__card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    padding: 1.25rem 1.25rem 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+.panel-cal__card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    border-color: #d1d5db;
+}
+.panel-cal__cabecera {
+    display: flex; align-items: center; gap: 0.5rem;
+    flex-wrap: wrap; margin-bottom: 0.6rem;
+}
+.panel-cal__alumno {
+    font-size: 0.78rem; color: #6b7280;
+    background: #f3f4f6; padding: 2px 8px;
+    border-radius: 9999px;
+}
+.panel-cal__titulo {
+    font-size: 1rem; font-weight: 700; color: #111827;
+    margin: 0 0 0.35rem;
+}
+.panel-cal__desc {
+    font-size: 0.82rem; color: #6b7280;
+    margin: 0 0 0.75rem; line-height: 1.45;
+}
+.panel-cal__sec-calif {
+    background: #f9fafb; border: 1px solid #f0f0f0;
+    border-radius: 0.6rem; padding: 0.85rem 1rem;
+    margin-bottom: 0.85rem;
+}
+.panel-cal__label-nota {
+    display: block; font-size: 0.78rem; font-weight: 600;
+    color: #374151; margin-bottom: 0.5rem; text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.panel-cal__wrap-nota {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-bottom: 0.6rem;
+}
+.panel-cal__input-nota {
+    width: 90px; height: 42px;
+    border: 2px solid #d1d5db; border-radius: 0.5rem;
+    padding: 0 0.75rem; font-size: 1.15rem;
+    font-weight: 700; text-align: center; color: #111827;
+    transition: border-color 0.2s;
+    outline: none;
+}
+.panel-cal__input-nota:focus { border-color: #059669; }
+.panel-cal__preview {
+    font-size: 0.8rem; font-weight: 700;
+    padding: 0.35rem 0.75rem; border-radius: 9999px;
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    transition: all 0.2s;
+}
+.panel-cal__btn-aprobar {
+    width: 100%; padding: 0.7rem 1rem;
+    background: linear-gradient(135deg, #059669, #047857);
+    color: #ffffff; border: none; border-radius: 0.6rem;
+    font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    letter-spacing: 0.02em; transition: opacity 0.2s, transform 0.1s;
+}
+.panel-cal__btn-aprobar:hover {
+    opacity: 0.9; transform: translateY(-1px);
+}
+.panel-cal__btn-aprobar:active { transform: translateY(0); }
+
 .seccion-calendario {
     margin-bottom: var(--espacio-lg); padding: var(--espacio-md);
     background: #ffffff; border: 1px solid var(--borde-suave);
@@ -3064,4 +4164,495 @@ body[data-modo="instructor"] {
     #instrCalendario {
         width: 100%;
     }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MODAL REDISEÑO ADMIN — paleta azul, nueva estructura con header de color
+   Prefijo: .modal-admin — no toca los estilos base .modal existentes
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.modal-admin {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(2, 132, 199, 0.18), 0 4px 20px rgba(0,0,0,0.12);
+    animation: slideIn 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+/* El form dentro del modal también debe ser flex column para que el footer
+   quede siempre abajo y el body sea el único que hace scroll */
+.modal-admin form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.modal-admin__header {
+    background: linear-gradient(135deg, var(--color-admin) 0%, var(--color-admin-oscuro) 100%);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.modal-admin__icono-wrap {
+    width: 38px; height: 38px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+
+.modal-admin__icono-wrap svg { width: 20px; height: 20px; color: white; stroke: white; }
+
+.modal-admin__titulo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    flex: 1;
+    margin: 0;
+}
+
+.modal-admin__close {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    transition: background 200ms;
+    flex-shrink: 0;
+}
+.modal-admin__close:hover { background: rgba(255,255,255,0.28); }
+
+.modal-admin__body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-admin__group {
+    margin-bottom: 1.1rem;
+}
+
+.modal-admin__label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.4rem;
+}
+
+.modal-admin__label span {
+    text-transform: none;
+    font-weight: 400;
+    color: var(--texto-claro);
+}
+
+.modal-admin__input,
+.modal-admin__select,
+.modal-admin__textarea {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.95rem;
+    font-family: var(--fuente);
+    color: var(--texto-oscuro);
+    background: #f8fafc;
+    border: 1.5px solid #dbeafe;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 200ms, box-shadow 200ms;
+    box-sizing: border-box;
+}
+
+.modal-admin__select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+    cursor: pointer;
+}
+
+.modal-admin__input:focus,
+.modal-admin__select:focus,
+.modal-admin__textarea:focus {
+    border-color: var(--color-admin);
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+    background: white;
+}
+
+.modal-admin__textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.modal-admin__error {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--color-error);
+    margin-top: 0.3rem;
+}
+
+.modal-admin__footer {
+    padding: 1rem 1.5rem 1.5rem;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    border-top: 1px solid #f1f5f9;
+    background: white;
+}
+
+.modal-admin__btn-cancelar {
+    padding: 0.6rem 1.4rem;
+    border-radius: var(--radio-full);
+    border: 2px solid #e5e7eb;
+    background: white;
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 200ms, background 200ms;
+}
+.modal-admin__btn-cancelar:hover { border-color: #9ca3af; background: #f9fafb; }
+
+.modal-admin__btn-guardar {
+    padding: 0.6rem 1.4rem;
+    border-radius: var(--radio-full);
+    border: none;
+    background: linear-gradient(135deg, var(--color-admin) 0%, var(--color-admin-oscuro) 100%);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 200ms, transform 200ms, box-shadow 200ms;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+}
+.modal-admin__btn-guardar:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+}
+
+/* Modal de solo lectura — Ver Tarea */
+.modal-admin__campo-lectura {
+    background: #f0f9ff;
+    border: 1.5px solid #bae6fd;
+    border-radius: 10px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.95rem;
+    color: var(--texto-oscuro);
+    line-height: 1.5;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 42px;
+    word-break: break-word;
+}
+
+.modal-admin__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.9rem;
+    border-radius: var(--radio-full);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ──────────────────────────────────────────────
+   DESCRIPCIÓN EN TABLA — truncar con ellipsis
+   ────────────────────────────────────────────── */
+
+.celda-desc__texto {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+    line-height: 1.4;
+}
+
+.celda-desc__btn-ver {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 3px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-admin);
+    background: rgba(2, 132, 199, 0.08);
+    border: 1px solid rgba(2, 132, 199, 0.2);
+    border-radius: var(--radio-full);
+    cursor: pointer;
+    transition: background 200ms;
+    white-space: nowrap;
+}
+.celda-desc__btn-ver:hover { background: rgba(2, 132, 199, 0.16); }
+
+/* ──────────────────────────────────────────────
+   SWEETALERT2 — Rediseño de modales de confirmación
+   ────────────────────────────────────────────── */
+
+.swal-popup-v2 {
+    border-radius: 20px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;
+    max-width: 400px !important;
+}
+
+.swal-popup-v2 .swal2-icon {
+    margin: 2rem auto 0.5rem !important;
+    width: 60px !important; height: 60px !important;
+}
+
+.swal-popup-v2 .swal2-title {
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    color: var(--texto-oscuro) !important;
+    padding: 0.25rem 2rem 0 !important;
+}
+
+.swal-popup-v2 .swal2-html-container {
+    font-size: 0.9rem !important;
+    color: #6b7280 !important;
+    margin: 0.5rem 1.5rem 0 !important;
+    line-height: 1.5 !important;
+}
+
+.swal-popup-v2 .swal2-actions {
+    margin: 1.5rem !important;
+    gap: 10px !important;
+}
+
+.swal-popup-v2 .swal2-confirm,
+.swal-popup-v2 .swal2-cancel {
+    border-radius: var(--radio-full) !important;
+    padding: 0.6rem 1.5rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.swal-popup-v2 .swal2-cancel {
+    background: #f3f4f6 !important;
+    color: #6b7280 !important;
+}
+.swal-popup-v2 .swal2-cancel:hover { background: #e5e7eb !important; }
+
+/* ── Checkbox de calificación en modal instructor ────────────────────────── */
+.modal-admin__group--checkbox {
+    padding: var(--espacio-xs) 0;
+    border-top: 1px solid var(--fondo-gris);
+    margin-bottom: var(--espacio-xs) !important;
+}
+
+.modal-admin__checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    color: var(--color-instructor, #059669);
+    cursor: pointer;
+    user-select: none;
+}
+
+.modal-admin__checkbox {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--color-instructor, #059669);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+/* ═══════════════════════════════════════════════════════════════════════════
+   OVERRIDES MODO INSTRUCTOR — paleta verde en modales, cards y controles
+   Todos los selectores usan [data-modo="instructor"] como raíz para no
+   afectar el panel admin ni el panel usuario.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Modal header → verde ────────────────────────────────────────────────── */
+[data-modo="instructor"] .modal-admin__header,
+[data-modo="instructor"] .modal-overlay .modal-admin__header {
+    background: linear-gradient(135deg, var(--color-instructor) 0%, var(--color-instructor-oscuro) 100%);
+}
+
+/* ── Botón guardar modal → verde ─────────────────────────────────────────── */
+[data-modo="instructor"] .modal-admin__btn-guardar {
+    background: linear-gradient(135deg, var(--color-instructor) 0%, var(--color-instructor-oscuro) 100%);
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
+}
+[data-modo="instructor"] .modal-admin__btn-guardar:hover {
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.45);
+}
+
+/* ── Inputs, selects y textareas focus → verde ───────────────────────────── */
+[data-modo="instructor"] .modal-admin__input:focus,
+[data-modo="instructor"] .modal-admin__select:focus,
+[data-modo="instructor"] .modal-admin__textarea:focus {
+    border-color: var(--color-instructor);
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+}
+
+/* Contadores de card headers mantienen el morado en instructor igual que en admin */
+
+/* ── Flechitas toggle de cards → verde ───────────────────────────────────── */
+[data-modo="instructor"] .btn-toggle-card {
+    color: var(--color-instructor-oscuro);
+}
+[data-modo="instructor"] .btn-toggle-card:hover {
+    color: var(--color-instructor);
+    background: rgba(5, 150, 105, 0.08);
+}
+
+/* ── Títulos de cards del panel instructor → verde ───────────────────────── */
+[data-modo="instructor"] .admin-card__titulo {
+    color: var(--color-instructor);
+}
+
+/* ── Checkbox de calificación → verde (ya usa accent-color pero reforzamos) */
+[data-modo="instructor"] .modal-admin__checkbox-label {
+    color: var(--color-instructor);
+}
+
+/* ── Campo de solo lectura en Ver Tarea → fondo verde suave ──────────────── */
+[data-modo="instructor"] .modal-admin__campo-lectura {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+/* ── Exportar JSON en cards del instructor → verde ───────────────────────── */
+[data-modo="instructor"] .btn--control {
+    background-color: var(--color-instructor);
+    border-color: var(--color-instructor);
+}
+[data-modo="instructor"] .btn--control:hover {
+    background-color: var(--color-instructor-oscuro);
+    border-color: var(--color-instructor-oscuro);
+}
+/* Admin modal: label de nota de solo lectura */
+.modal-admin__grade-label {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.35rem 0.9rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-top: 0.25rem;
+}
+/* Calificación del instructor: badge + sub-label centrados */
+#instrUsersTableBody td .status-badge + span {
+    display:    block;
+    text-align: center;
+    margin-top: 3px;
+}
+#instrUsersTableBody td {
+    text-align: center;
+    vertical-align: middle;
+}
+#instrUsersTableBody td:first-child,
+#instrUsersTableBody td:nth-child(2),
+#instrUsersTableBody td:nth-child(3),
+#instrUsersTableBody td:nth-child(4) { text-align: left; }
+
+/* Fila de promedio dentro de la card de datos del usuario */
+.user-info__promedio {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-sm);
+    flex-wrap: wrap;
+    margin-top: var(--espacio-xs);
+}
+
+/* ============================================================
+   CALENDARIO DEL USUARIO — tamaño reducido
+   ============================================================ */
+
+/* Contenedor: ancho fijo compacto */
+#usuarioCalendario.seccion-calendario {
+    width: 280px;
+    padding: var(--espacio-sm);
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+/* Celdas más pequeñas */
+#usuarioCalendario .cal2__celda {
+    min-height: 24px;
+}
+
+/* Círculos de hoy más pequeños */
+#usuarioCalendario .cal2__celda--hoy .cal2__numero-dia {
+    width: 18px;
+    height: 18px;
+    font-size: 0.68rem;
+}
+
+/* Título del mes */
+#usuarioCalendario .cal2__titulo {
+    font-size: 0.82rem;
+}
+
+/* Números de día */
+#usuarioCalendario .cal2__numero-dia {
+    font-size: 0.68rem;
+    padding: 1px;
+}
+
+/* Nombres de días */
+#usuarioCalendario .cal2__dia-nombre {
+    font-size: 0.58rem;
+    padding: 2px 0 4px;
+}
+
+/* Leyenda más compacta */
+#usuarioCalendario .cal2__leyenda {
+    gap: 4px;
+    font-size: 0.6rem;
+}
+
+/* Botón de navegación */
+#usuarioCalendario .cal2__nav-btn {
+    width: 22px;
+    height: 22px;
+}
+
+/* Puntos de eventos */
+#usuarioCalendario .cal2__punto {
+    width: 4px;
+    height: 4px;
+}
+
+/* Vista USUARIO — botón confirmar sesión en rosado */
+.vistaUsuario .swal2-confirm,
+body:has(#vistaUsuario:not(.hidden)) .swal2-confirm {
+    background-color: #f472b6 !important;
+}
+body:has(#vistaUsuario:not(.hidden)) .swal2-confirm:hover {
+    background-color: #db2777 !important;
+}
+
+/* Contador de notas — color morado del rol usuario */
+.postits__contador {
+    color: var(--color-primario, #7c3aed) !important;
+    background: transparent !important;
+    font-weight: 700;
 }

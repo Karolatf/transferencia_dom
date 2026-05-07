@@ -147,28 +147,37 @@
                 <span class="stat-card__label">Completadas</span>
                 <span class="stat-card__valor" id="userDashCompletada">—</span>
             </div>
-        </section>
-
-        <!-- Datos del usuario encontrado -->
-        <section class="hidden" id="userDataSection">
-            <div class="card card--usuario-info">
-                <h2 class="card__title">Datos del usuario</h2>
-                <div class="user-info">
-                    <div class="user-info__item">
-                        <span class="user-info__label">ID</span>
-                        <span class="user-info__value" id="userId"></span>
-                    </div>
-                    <div class="user-info__item">
-                        <span class="user-info__label">Nombre</span>
-                        <span class="user-info__value" id="userName"></span>
-                    </div>
-                    <div class="user-info__item">
-                        <span class="user-info__label">Correo</span>
-                        <span class="user-info__value" id="userEmail"></span>
-                    </div>
-                </div>
+            <div class="stat-card stat-card--reprobada">
+                <span class="stat-card__label">Reprobadas</span>
+                <span class="stat-card__valor" id="userDashReprobada">—</span>
             </div>
         </section>
+
+        <!-- Fila: Datos del usuario (izq) + Calendario (der) -->
+        <div class="usuario-fila-top">
+            <section class="hidden usuario-datos-col" id="userDataSection">
+                <div class="card card--usuario-info">
+                    <h2 class="card__title">Datos del usuario</h2>
+                    <div class="user-info">
+                        <div class="user-info__item">
+                            <span class="user-info__label">ID</span>
+                            <span class="user-info__value" id="userId"></span>
+                        </div>
+                        <div class="user-info__item">
+                            <span class="user-info__label">Nombre</span>
+                            <span class="user-info__value" id="userName"></span>
+                        </div>
+                        <div class="user-info__item">
+                            <span class="user-info__label">Correo</span>
+                            <span class="user-info__value" id="userEmail"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div class="usuario-calendario-col">
+                <div id="usuarioCalendario" class="seccion-calendario"></div>
+            </div>
+        </div>
 
         <!-- Tabla de tareas del usuario -->
         <section class="tasks-section hidden" id="tasksSection">
@@ -216,15 +225,8 @@
             </div>
         </section>
 
-        <!-- Calendario + Post-its: layout lado a lado debajo de la tabla -->
-        <div class="usuario-widgets">
-            <div class="usuario-widget__calendario">
-                <div id="usuarioCalendario" class="seccion-calendario"></div>
-            </div>
-            <div class="usuario-widget__postits">
-                <div id="postitsSeccion" class="postits-seccion"></div>
-            </div>
-        </div>
+        <!-- Post-its ancho completo -->
+        <div id="postitsSeccion" class="postits-seccion"></div>
 
     </main>
 
@@ -306,9 +308,12 @@
                 <span class="stat-card__label">Completadas</span>
                 <span class="stat-card__valor" id="dashboardCompletada">—</span>
             </div>
+            <div class="stat-card stat-card--reprobada">
+                <span class="stat-card__label">Reprobadas</span>
+                <span class="stat-card__valor" id="dashboardReprobada">—</span>
+            </div>
         </section>
 
-        <!-- Card de crear tareas — contraíble (la lógica la registra registrarCardsContraibles en modoUI.js) -->
         <section class="admin-card admin-card--full" id="cardCrearTareas">
             <!-- Encabezado contraíble: título + flecha de toggle -->
             <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleCrearTareas">
@@ -412,6 +417,7 @@
             <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleUsuarios">
                 <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
                 <div class="admin-card__cabecera-derecha">
+                    <button id="adminBtnExportarUsuarios" class="btn-accion-icono btn-accion--azul" type="button" title="Exportar usuarios como JSON"><i data-lucide="download" class="icono-accion"></i></button>
                     <span id="adminUsersCount" class="tasks-header__count">0 usuarios</span>
                     <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Usuarios del Sistema">▼</button>
                 </div>
@@ -423,11 +429,13 @@
                     <table class="tasks-table tasks-table--admin">
                         <thead class="tasks-table__head">
                             <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">Documento</th>
-                                <th scope="col">Nombre</th>
-                                <th scope="col">Correo</th>
-                                <th scope="col">Acciones</th>
+                                <th scope="col" class="col-num">#</th>
+                                <th scope="col" class="col-nombre">Nombre</th>
+                                <th scope="col" class="col-doc">Documento</th>
+                                <th scope="col" class="col-correo">Correo</th>
+                                <th scope="col" class="col-rol">Rol</th>
+                                <th scope="col" class="col-estado">Estado</th>
+                                <th scope="col" class="col-acciones">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="usersTableBody"></tbody>
@@ -451,16 +459,16 @@
                 <div class="tasks-controls">
                     <div class="tasks-controls__grupo">
                         <label for="adminFiltroEstado" class="tasks-controls__label">Estado</label>
-                        <!-- Select de filtro por estado en la tabla del admin -->
-                        <!-- Incluye el cuarto estado para que el admin pueda filtrar tareas por aprobar -->
-                        <select id="adminFiltroEstado" class="tasks-controls__select">
-                            <option value="">Todos</option>
-                            <option value="pendiente">Pendiente</option>
-                            <option value="en_progreso">En Progreso</option>
-                            <!-- Cuarto estado: tareas que el usuario marcó como listas para revisión -->
-                            <option value="pendiente_aprobacion">Pendiente por aprobar</option>
-                            <option value="completada">Completada</option>
-                        </select>
+                        <div class="tasks-controls__select-wrapper">
+                            <select id="adminFiltroEstado" class="tasks-controls__select">
+                                <option value="">Todos</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="en_progreso">En Progreso</option>
+                                <option value="pendiente_aprobacion">Por aprobar</option>
+                                <option value="completada">Completada</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="tasks-controls__select-icon"></i>
+                        </div>
                     </div>
                     <div class="tasks-controls__grupo">
                         <label for="adminFiltroUsuario" class="tasks-controls__label">Usuario</label>
@@ -468,22 +476,24 @@
                     </div>
                     <div class="tasks-controls__grupo">
                         <label for="adminOrdenSelect" class="tasks-controls__label">Ordenar</label>
-                        <select id="adminOrdenSelect" class="tasks-controls__select">
-                            <option value="">Sin orden</option>
-                            <option value="titulo_asc">Titulo A-Z</option>
-                            <option value="titulo_desc">Titulo Z-A</option>
-                            <option value="estado">Por estado</option>
-                            <option value="usuario">Por usuario</option>
-                        </select>
+                        <div class="tasks-controls__select-wrapper">
+                            <select id="adminOrdenSelect" class="tasks-controls__select">
+                                <option value="">Sin orden</option>
+                                <option value="titulo_asc">Título A-Z</option>
+                                <option value="titulo_desc">Título Z-A</option>
+                                <option value="estado">Por estado</option>
+                                <option value="usuario">Por usuario</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="tasks-controls__select-icon"></i>
+                        </div>
                     </div>
-                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                        <button class="btn btn--admin-primary" id="adminBtnAplicarFiltros">Aplicar</button>
-                    </div>
-                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                        <button class="btn btn--admin-secondary" id="adminBtnLimpiarFiltros">Limpiar</button>
-                    </div>
-                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                        <button class="btn btn--admin-primary" id="adminBtnExportar">Exportar JSON</button>
+                    <div class="tasks-controls__grupo tasks-controls__grupo--acciones-bar">
+                        <span class="tasks-controls__label">Acciones</span>
+                        <div class="tasks-controls__acciones-bar">
+                            <button class="btn-accion-icono btn-accion--azul" id="adminBtnAplicarFiltros" title="Aplicar filtros"><i data-lucide="check" class="icono-accion"></i></button>
+                            <button class="btn-accion-icono btn-accion--gris" id="adminBtnLimpiarFiltros" title="Limpiar filtros"><i data-lucide="x" class="icono-accion"></i></button>
+                            <button class="btn-accion-icono btn-accion--azul" id="adminBtnExportar" title="Exportar JSON"><i data-lucide="download" class="icono-accion"></i></button>
+                        </div>
                     </div>
                 </div>
                 <div class="tasks-table-container">
@@ -491,14 +501,14 @@
                         <thead class="tasks-table__head">
                             <tr>
                                 <th scope="col">#</th>
-                                <th scope="col">Titulo</th>
-                                <th scope="col">Descripcion</th>
+                                <th scope="col">Título</th>
+                                <th scope="col">Descripción</th>
                                 <th scope="col">Estado</th>
                                 <th scope="col">Usuario asignado</th>
+                                <th scope="col">Creación</th>
                                 <th scope="col">Acciones</th>
                             </tr>
-                        </thead>
-                        <tbody id="adminTasksTableBody"></tbody>
+                        </thead>                        <tbody id="adminTasksTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -560,13 +570,6 @@
 
     <main class="contenido-vista contenido-vista--instructor">
 
-        <div class="instructor-widgets">
-            <!-- Calendario de eventos del instructor — puede agregar eventos -->
-            <div id="instrCalendario" class="seccion-calendario"></div>
-            <!-- Panel de calificación de tareas pendientes de revisión -->
-            <div id="instrPanelCalificacion" class="panel-calificacion"></div>
-        </div>
-
         <!-- Dashboard de estadísticas del instructor — mismas 5 tarjetas que admin -->
         <!-- IDs con prefijo "instr" para no colisionar con los del panel admin -->
         <section class="dashboard-stats">
@@ -590,9 +593,11 @@
                 <span class="stat-card__label">Completadas</span>
                 <span class="stat-card__valor" id="instrDashCompletada">—</span>
             </div>
+            <div class="stat-card stat-card--reprobada">
+                <span class="stat-card__label">Reprobadas</span>
+                <span class="stat-card__valor" id="instrDashReprobada">—</span>
+            </div>
         </section>
-
-        <!-- Card de crear tareas — idéntica a la del admin, con IDs prefijados instr -->
         <section class="admin-card admin-card--full" id="instrCardCrearTareas">
             <div class="admin-card__cabecera admin-card__cabecera--toggle" id="instrToggleCrearTareas">
                 <h2 class="admin-card__titulo">Crear Tarea</h2>
@@ -649,6 +654,7 @@
             <div class="admin-card__cabecera admin-card__cabecera--toggle" id="instrToggleUsuarios">
                 <h2 class="admin-card__titulo">Estudiantes del Sistema</h2>
                 <div class="admin-card__cabecera-derecha">
+                    <button id="instrBtnExportarUsuarios" class="btn-accion-icono btn-accion--verde" type="button" title="Exportar estudiantes como JSON"><i data-lucide="download" class="icono-accion"></i></button>
                     <span id="instrUsersCount" class="tasks-header__count">0 usuarios</span>
                     <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Usuarios">▼</button>
                 </div>
@@ -662,6 +668,8 @@
                                 <th scope="col">Documento</th>
                                 <th scope="col">Nombre</th>
                                 <th scope="col">Correo</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col">Calificación</th>
                                 <th scope="col">Acciones</th>
                             </tr>
                         </thead>
@@ -685,19 +693,41 @@
                 <div class="tasks-controls">
                     <div class="tasks-controls__grupo">
                         <label for="instrFiltroEstado" class="tasks-controls__label">Estado</label>
-                        <select id="instrFiltroEstado" class="tasks-controls__select">
-                            <option value="">Todos</option>
-                            <option value="pendiente">Pendiente</option>
-                            <option value="en_progreso">En Progreso</option>
-                            <option value="pendiente_aprobacion">Pendiente por aprobar</option>
-                            <option value="completada">Completada</option>
-                        </select>
+                        <div class="tasks-controls__select-wrapper">
+                            <select id="instrFiltroEstado" class="tasks-controls__select">
+                                <option value="">Todos</option>
+                                <option value="pendiente">Pendiente</option>
+                                <option value="en_progreso">En Progreso</option>
+                                <option value="pendiente_aprobacion">Por aprobar</option>
+                                <option value="completada">Completada</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="tasks-controls__select-icon"></i>
+                        </div>
                     </div>
-                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                        <button class="btn btn--instr-primary" id="instrBtnAplicarFiltros">Aplicar</button>
+                    <div class="tasks-controls__grupo">
+                        <label for="instrFiltroUsuario" class="tasks-controls__label">Usuario</label>
+                        <input type="text" id="instrFiltroUsuario" class="tasks-controls__input" placeholder="Nombre del usuario">
                     </div>
-                    <div class="tasks-controls__grupo tasks-controls__grupo--btn">
-                       <button class="btn btn--instructor-secondary" id="instrBtnLimpiarFiltros">Limpiar</button>
+                    <div class="tasks-controls__grupo">
+                        <label for="instrOrdenSelect" class="tasks-controls__label">Ordenar</label>
+                        <div class="tasks-controls__select-wrapper">
+                            <select id="instrOrdenSelect" class="tasks-controls__select">
+                                <option value="">Sin orden</option>
+                                <option value="titulo_asc">Título A-Z</option>
+                                <option value="titulo_desc">Título Z-A</option>
+                                <option value="estado">Por estado</option>
+                                <option value="usuario">Por usuario</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="tasks-controls__select-icon"></i>
+                        </div>
+                    </div>
+                    <div class="tasks-controls__grupo tasks-controls__grupo--acciones-bar">
+                        <span class="tasks-controls__label">Acciones</span>
+                        <div class="tasks-controls__acciones-bar">
+                            <button class="btn-accion-icono btn-accion--azul" id="instrBtnAplicarFiltros" title="Aplicar filtros"><i data-lucide="check" class="icono-accion"></i></button>
+                            <button class="btn-accion-icono btn-accion--gris" id="instrBtnLimpiarFiltros" title="Limpiar filtros"><i data-lucide="x" class="icono-accion"></i></button>
+                            <button class="btn-accion-icono btn-accion--verde" id="instrBtnExportarTareas" title="Exportar JSON"><i data-lucide="download" class="icono-accion"></i></button>
+                        </div>
                     </div>
                 </div>
                 <div class="tasks-table-container">
@@ -709,6 +739,7 @@
                                 <th scope="col">Descripcion</th>
                                 <th scope="col">Estado</th>
                                 <th scope="col">Usuario asignado</th>
+                                <th scope="col" class="col-fecha">Creación</th>
                                 <th scope="col">Acciones</th>
                             </tr>
                         </thead>
@@ -717,6 +748,12 @@
                 </div>
             </div>
         </section>
+
+        <!-- Widgets al final: calendario y panel de calificacion -->
+        <div class="instructor-widgets">
+            <div id="instrCalendario" class="seccion-calendario"></div>
+            <div id="instrPanelCalificacion" class="panel-calificacion"></div>
+        </div>
 
     </main>
 
@@ -731,63 +768,112 @@
 
 <!-- MODAL EDICIÓN DE TAREA -->
 <div class="modal-overlay hidden" id="editModal">
-    <div class="modal">
-        <div class="modal__header">
-            <h2 class="modal__title">Editar Tarea</h2>
-            <button class="modal__close" id="editCloseBtn" type="button">✕</button>
+    <div class="modal-admin">
+        <div class="modal-admin__header">
+            <div class="modal-admin__icono-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <h2 class="modal-admin__titulo">Editar Tarea</h2>
+            <button class="modal-admin__close" id="editCloseBtn" type="button">✕</button>
         </div>
-        <form id="editTaskForm" class="form" novalidate>
+        <form id="editTaskForm" novalidate>
             <input type="hidden" id="editTaskId">
-            <div class="form__group">
-                <label for="editTaskTitle" class="form__label">Titulo</label>
-                <input type="text" id="editTaskTitle" class="form__input" placeholder="Nuevo titulo">
+            <div class="modal-admin__body">
+                <div class="modal-admin__group">
+                    <label for="editTaskTitle" class="modal-admin__label">Título</label>
+                    <input type="text" id="editTaskTitle" class="modal-admin__input" placeholder="Ingresa el título de la tarea">
+                </div>
+                <div class="modal-admin__group">
+                    <label for="editTaskDescription" class="modal-admin__label">Descripción</label>
+                    <textarea id="editTaskDescription" class="modal-admin__textarea" rows="3" placeholder="Describe la tarea..."></textarea>
+                </div>
+                <div class="modal-admin__group">
+                    <label for="editTaskStatus" class="modal-admin__label">Estado</label>
+                    <!-- Las opciones se filtran dinámicamente en mostrarModalEdicion() de tareasUI.js -->
+                    <!-- MODO USUARIO: solo "En Progreso" y "Por aprobar" -->
+                    <!-- MODO ADMIN:   los cuatro estados completos -->
+                    <select id="editTaskStatus" class="modal-admin__select">
+                        <option value="" disabled>Selecciona un estado</option>
+                        <option value="pendiente" class="opcion-admin opcion-instructor">Pendiente</option>
+                        <option value="en_progreso" class="opcion-usuario opcion-admin opcion-instructor">En Progreso</option>
+                        <option value="pendiente_aprobacion" class="opcion-usuario opcion-admin opcion-instructor">Por aprobar</option>
+                        <option value="completada" class="opcion-instructor">Completada</option>
+                        <option value="reprobada" class="opcion-instructor">Reprobada</option>
+                    </select>
+                </div>
+                <div class="modal-admin__group" id="editCommentGrupo">
+                    <label for="editTaskComment" class="modal-admin__label">Comentario <span class="modal-admin__label-opcional">(opcional)</span></label>
+                    <textarea id="editTaskComment" class="modal-admin__textarea" rows="2" placeholder="Agrega o edita el comentario..."></textarea>
+                </div>
+                <!-- Label de nota solo lectura para admin -->
+                <div class="modal-admin__group" id="editGradeAdminGrupo" style="display:none;">
+                    <label class="modal-admin__label">Calificación actual</label>
+                    <div id="editGradeAdminLabel" class="modal-admin__grade-label"></div>
+                </div>
+                <!-- Campos de nota editables solo para instructor -->
+                <div class="modal-admin__group" id="editGradeGrupo" style="display:none;">
+                    <label for="editTaskGrade" class="modal-admin__label">Nota <span style="color:#ef4444">*</span> <span style="color:#6b7280;font-weight:400">(0 – 100)</span></label>
+                    <input type="number" id="editTaskGrade" class="modal-admin__input" min="0" max="100" step="0.01" placeholder="Ej: 85">
+                    <span class="modal-admin__error" id="editGradeError"></span>
+                </div>
+                <div class="modal-admin__group" id="editGradeReasonGrupo" style="display:none;">
+                    <label for="editTaskGradeReason" class="modal-admin__label">Motivo de edición de nota <span style="color:#ef4444">*</span></label>
+                    <textarea id="editTaskGradeReason" class="modal-admin__textarea" rows="2" placeholder="Explica brevemente por qué se edita la nota (mín. 10 caracteres)..."></textarea>
+                    <span class="modal-admin__error" id="editGradeReasonError"></span>
+                </div>
             </div>
-            <div class="form__group">
-                <label for="editTaskDescription" class="form__label">Descripcion</label>
-                <textarea id="editTaskDescription" class="form__input form__textarea" rows="3" placeholder="Nueva descripcion..."></textarea>
-            </div>
-            <div class="form__group">
-                <label for="editTaskStatus" class="form__label">Estado</label>
-                <!-- Select de estado del modal de edición de tarea -->
-                <!-- Las opciones se filtran dinámicamente según el modo (usuario o admin) -->
-                <!-- En modo usuario solo aparecen "Pendiente por aprobar" y "En Progreso" -->
-                <!-- En modo admin aparecen las tres opciones incluyendo "Completada" -->
-                <!-- Select de estado del modal de edición de tarea -->
-                <!-- Las opciones se filtran dinámicamente en mostrarModalEdicion() de tareasUI.js -->
-                <!-- MODO USUARIO: solo "En Progreso" y "Pendiente por aprobar" -->
-                <!-- MODO ADMIN:   los cuatro estados completos -->
-                <select id="editTaskStatus" class="form__input">
-                    <option value="" disabled>Selecciona un estado</option>
-
-                    <!-- SOLO ADMIN: la tarea fue creada y aún no se inicia -->
-                    <option value="pendiente" class="opcion-admin">Pendiente</option>
-
-                    <!-- AMBOS MODOS: el usuario está trabajando en ella -->
-                    <option value="en_progreso">En Progreso</option>
-
-                    <!-- SOLO USUARIO: terminó y espera revisión del admin -->
-                    <!-- value diferente a "pendiente" — son estados distintos en la BD -->
-                    <option value="pendiente_aprobacion" class="opcion-usuario">Pendiente por aprobar</option>
-
-                    <!-- SOLO ADMIN: revisó el trabajo y lo aprueba -->
-                    <option value="completada" class="opcion-admin">Completada</option>
-                </select>
-            </div>
-            <div class="form__group">
-                <label for="editTaskComment" class="form__label">
-                    Comentario <span class="form__label--opcional">(opcional)</span>
-                </label>
-                <textarea id="editTaskComment" class="form__input form__textarea" rows="2" placeholder="Agrega o edita el comentario..."></textarea>
-            </div>
-            <div class="modal__actions">
-                <button type="button" class="btn btn--secondary" id="editCancelBtn">
-                    <span class="btn__text">Cancelar</span>
-                </button>
-                <button type="submit" class="btn btn--primary">
-                    <span class="btn__text">Guardar Cambios</span>
-                </button>
+            <div class="modal-admin__footer">
+                <button type="button" class="modal-admin__btn-cancelar" id="editCancelBtn">Cancelar</button>
+                <button type="submit" class="modal-admin__btn-guardar">Guardar Cambios</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- MODAL VER TAREA — solo lectura, sin edición -->
+<div class="modal-overlay hidden" id="verTareaModal">
+    <div class="modal-admin">
+        <div class="modal-admin__header">
+            <div class="modal-admin__icono-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <h2 class="modal-admin__titulo">Ver Tarea</h2>
+            <button class="modal-admin__close" id="verTareaClose" type="button">✕</button>
+        </div>
+        <div class="modal-admin__body">
+            <div class="modal-admin__group">
+                <label class="modal-admin__label">Título</label>
+                <div class="modal-admin__campo-lectura" id="verTareaTitulo"></div>
+            </div>
+            <div class="modal-admin__group">
+                <label class="modal-admin__label">Descripción</label>
+                <div class="modal-admin__campo-lectura" id="verTareaDescripcion" style="white-space: pre-wrap;"></div>
+            </div>
+            <div class="modal-admin__group">
+                <label class="modal-admin__label">Estado</label>
+                <div id="verTareaEstado"></div>
+            </div>
+            <div class="modal-admin__group" id="verTareaComentarioGrupo">
+                <label class="modal-admin__label">Comentario</label>
+                <div class="modal-admin__campo-lectura" id="verTareaComentario"></div>
+            </div>
+            <div class="modal-admin__group" id="verTareaCalifGrupo">
+                <label class="modal-admin__label">Calificación</label>
+                <div id="verTareaCalif"></div>
+            </div>
+            <!-- Grupo Sin calificar — visible cuando la tarea está completada pero sin nota -->
+            <div class="modal-admin__group" id="verTareaSinCalifGrupo">
+                <label class="modal-admin__label">Calificación</label>
+                <span class="status-badge" style="background:#f3f4f6;color:#6b7280;font-style:italic;">Sin calificar</span>
+            </div>
+            <div class="modal-admin__group" id="verTareaUsuarioGrupo">
+                <label class="modal-admin__label">Usuario(s) asignado(s)</label>
+                <div class="modal-admin__campo-lectura" id="verTareaUsuario"></div>
+            </div>
+        </div>
+        <div class="modal-admin__footer">
+            <button type="button" class="modal-admin__btn-guardar" id="verTareaCerrar">Cerrar</button>
+        </div>
     </div>
 </div>
 
@@ -920,33 +1006,36 @@
 <!-- MODAL CAMBIO DE CONTRASEÑA -->
 <!-- Se abre desde el botón de perfil circular en los 3 paneles -->
 <div class="modal-overlay hidden" id="cambioPasswordModal">
-    <div class="modal">
-        <div class="modal__header">
-            <h2 class="modal__title">Cambiar Contraseña</h2>
-            <button class="modal__close" id="cambioPasswordClose" type="button">✕</button>
+    <div class="modal-admin">
+        <div class="modal-admin__header">
+            <div class="modal-admin__icono-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h2 class="modal-admin__titulo">Cambiar Contraseña</h2>
+            <button class="modal-admin__close" id="cambioPasswordClose" type="button">✕</button>
         </div>
-        <div class="modal__body">
-            <form id="cambioPasswordForm" class="form" novalidate>
-                <div class="form__group">
-                    <label for="passwordActual" class="form__label">Contraseña actual</label>
-                    <input type="password" id="passwordActual" class="form__input" placeholder="Ingresa tu contraseña actual" autocomplete="current-password">
-                    <span class="form__error" id="passwordActualError"></span>
+        <div class="modal-admin__body">
+            <form id="cambioPasswordForm" novalidate>
+                <div class="modal-admin__group">
+                    <label for="passwordActual" class="modal-admin__label">Contraseña actual</label>
+                    <input type="password" id="passwordActual" class="modal-admin__input" placeholder="Ingresa tu contraseña actual" autocomplete="current-password">
+                    <span class="modal-admin__error" id="passwordActualError"></span>
                 </div>
-                <div class="form__group">
-                    <label for="passwordNueva" class="form__label">Nueva contraseña</label>
-                    <input type="password" id="passwordNueva" class="form__input" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
-                    <span class="form__error" id="passwordNuevaError"></span>
+                <div class="modal-admin__group">
+                    <label for="passwordNueva" class="modal-admin__label">Nueva contraseña</label>
+                    <input type="password" id="passwordNueva" class="modal-admin__input" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                    <span class="modal-admin__error" id="passwordNuevaError"></span>
                 </div>
-                <div class="form__group">
-                    <label for="passwordConfirmar" class="form__label">Confirmar nueva contraseña</label>
-                    <input type="password" id="passwordConfirmar" class="form__input" placeholder="Repite la nueva contraseña" autocomplete="new-password">
-                    <span class="form__error" id="passwordConfirmarError"></span>
-                </div>
-                <div class="modal__actions">
-                    <button type="button" class="btn btn--cancelar" id="cambioPasswordCancelar">Cancelar</button>
-                    <button type="submit" class="btn btn--admin-primary">Cambiar Contraseña</button>
+                <div class="modal-admin__group">
+                    <label for="passwordConfirmar" class="modal-admin__label">Confirmar nueva contraseña</label>
+                    <input type="password" id="passwordConfirmar" class="modal-admin__input" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+                    <span class="modal-admin__error" id="passwordConfirmarError"></span>
                 </div>
             </form>
+        </div>
+        <div class="modal-admin__footer">
+            <button type="button" class="modal-admin__btn-cancelar" id="cambioPasswordCancelar">Cancelar</button>
+            <button type="button" class="modal-admin__btn-guardar" id="cambioPasswordSubmit">Cambiar Contraseña</button>
         </div>
     </div>
 </div>

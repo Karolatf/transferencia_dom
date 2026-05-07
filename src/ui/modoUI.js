@@ -10,6 +10,7 @@
 import {
     obtenerTodasLasTareas,
     obtenerTareasDeUsuario,
+    obtenerTareaPorId,
     eliminarTarea,
     registrarTarea,
     obtenerDashboard,
@@ -19,6 +20,7 @@ import {
 import {
     obtenerTodosLosUsuarios,
     eliminarUsuario,
+    forceEliminarUsuario,
     actualizarUsuario,
     cambiarRolUsuario,
     cambiarPassword,
@@ -29,6 +31,8 @@ import {
 import {
     mostrarNotificacion,
     mostrarConfirmacion,
+    mostrarModalToggleEstado,
+    mostrarModalEliminarUsuario,
 } from '../utils/notificaciones.js';
 
 import { filtrarTareas }  from '../utils/filtros.js';
@@ -55,6 +59,7 @@ import { registrarEvento, renderizarAuditoria } from '../utils/auditoria.js';
 import { PERMISOS_POR_ROL, METADATOS_ROL } from '../utils/rolesPermisos.js';
 
 import { crearCalendario } from '../utils/eventosCalendario.js';
+import { obtenerNotas, crearNota as crearNotaApi, eliminarNota as eliminarNotaApi } from '../api/notesApi.js';
 
 // crearIconoLucide — función privada reutilizable para crear íconos Lucide en el DOM
 // Parámetro: nombreIcono — string con el nombre del ícono según la librería Lucide
@@ -113,63 +118,57 @@ export function activarModoInicio() {
 // Los post-its se persisten en localStorage con la clave postits_${userId}
 // Parámetro: userId — id numérico del usuario logueado (para clave de localStorage única)
 // Este es el ÚNICO uso de localStorage permitido en el proyecto
-function cargarPostits(userId) {
-    // Clave única por usuario para que los post-its de un usuario no se mezclen con los de otro
-    const claveStorage = 'postits_' + userId;
-
-    // Obtener los post-its guardados — retorna arreglo vacío si no hay ninguno
-    let notas = JSON.parse(localStorage.getItem(claveStorage)) || [];
-
-    // Máximo de post-its permitidos por usuario
-    const MAXIMO_POSTITS = 12;
-
-    // Obtener el contenedor de post-its del DOM
+async function cargarPostits(userId) {
     const seccion = document.getElementById('postitsSeccion');
     if (!seccion) return;
 
-    // Función interna que re-renderiza todos los post-its desde el arreglo notas
+    const MAXIMO_POSTITS = 12;
+
+    // Cargar notas desde el servidor
+    let notas = await obtenerNotas();
+
     function renderizarPostits() {
-        // Limpiar el contenedor con removeChild para no usar innerHTML
         while (seccion.firstChild) seccion.removeChild(seccion.firstChild);
 
-        // Título de la sección
+        // Cabecera
+        const header = document.createElement('div');
+        header.className = 'postits__header';
         const titulo = document.createElement('h3');
         titulo.className   = 'postits__titulo';
         titulo.textContent = 'Mis notas personales';
-        seccion.appendChild(titulo);
+        header.appendChild(titulo);
+        const contador = document.createElement('span');
+        contador.className   = 'postits__contador';
+        contador.textContent = notas.length + ' / ' + MAXIMO_POSTITS;
+        header.appendChild(contador);
+        seccion.appendChild(header);
 
-        // Contenedor de las notas
+        // Grid de notas
         const grid = document.createElement('div');
         grid.className = 'postits__grid';
 
-        // Renderizar cada nota como una card
-        notas.forEach(function(nota, indice) {
+        notas.forEach(function(nota) {
             const card = document.createElement('div');
             card.className = 'postit__card';
-            // background-color es el ÚNICO uso permitido de e en este proyecto
-            // porque es un dato dinámico del usuario (color elegido por el usuario), no lógica de layout
             card.style.backgroundColor = nota.color;
 
-            // Botón X para eliminar esta nota
             const btnEliminar = document.createElement('button');
             btnEliminar.className = 'postit__btn-eliminar';
             btnEliminar.title     = 'Eliminar nota';
+            btnEliminar.type      = 'button';
             const iconoX = document.createElement('i');
             iconoX.setAttribute('data-lucide', 'x');
             iconoX.classList.add('icono-accion');
             btnEliminar.appendChild(iconoX);
-
-            btnEliminar.addEventListener('click', function() {
-                // Eliminar la nota del arreglo por índice
-                notas.splice(indice, 1);
-                // Guardar el arreglo actualizado en localStorage
-                localStorage.setItem(claveStorage, JSON.stringify(notas));
-                // Re-renderizar para reflejar el cambio
-                renderizarPostits();
+            btnEliminar.addEventListener('click', async function() {
+                const ok = await eliminarNotaApi(nota.id);
+                if (ok) {
+                    notas = notas.filter(function(n) { return n.id !== nota.id; });
+                    renderizarPostits();
+                }
             });
             card.appendChild(btnEliminar);
 
-            // Texto de la nota
             const texto = document.createElement('p');
             texto.className   = 'postit__texto';
             texto.textContent = nota.texto;
@@ -180,19 +179,17 @@ function cargarPostits(userId) {
 
         seccion.appendChild(grid);
 
-        // Botón "+" para agregar nueva nota (siempre visible)
+        // Botón Nueva nota
         const btnAgregar = document.createElement('button');
         btnAgregar.className = 'postit__btn-agregar';
         btnAgregar.title     = 'Agregar nota';
+        btnAgregar.type      = 'button';
         const iconoPlus = document.createElement('i');
         iconoPlus.setAttribute('data-lucide', 'plus');
         iconoPlus.classList.add('icono-accion');
         btnAgregar.appendChild(iconoPlus);
-        const textoBtn = document.createTextNode(' Nueva nota');
-        btnAgregar.appendChild(textoBtn);
-
+        btnAgregar.appendChild(document.createTextNode(' Nueva nota'));
         btnAgregar.addEventListener('click', function() {
-            // Si ya alcanzamos el máximo, notificar y no abrir el formulario
             if (notas.length >= MAXIMO_POSTITS) {
                 mostrarNotificacion('Máximo de notas alcanzado (12)', 'advertencia');
                 return;
@@ -201,87 +198,72 @@ function cargarPostits(userId) {
         });
         seccion.appendChild(btnAgregar);
 
-        // Inicializar íconos Lucide recién agregados
         if (window.lucide) window.lucide.createIcons();
     }
 
-    // Función que muestra el formulario inline para agregar una nueva nota
     function mostrarFormularioPostit() {
-        // Si ya hay un formulario abierto, no abrir otro
-        const formularioExistente = seccion.querySelector('.postit__formulario');
-        if (formularioExistente) return;
+        if (seccion.querySelector('.postit__formulario')) return;
 
         const formulario = document.createElement('div');
         formulario.className = 'postit__formulario';
 
-        // Textarea para el texto de la nota
         const textarea = document.createElement('textarea');
         textarea.placeholder = 'Escribe tu nota aquí...';
         textarea.className   = 'postit__textarea';
         textarea.rows        = 3;
-        formulario.appendChild(textarea);
 
-        // Selectores de color — 4 opciones de colores pastel
-        const coloresPastel = [
-            '#fef3c7',  /* amarillo pastel */
-            '#fce7f3',  /* rosa pastel */
-            '#d1fae5',  /* verde pastel */
-            '#dbeafe',  /* celeste pastel */
-        ];
-
+        const coloresPastel = ['#fef3c7', '#fce7f3', '#d1fae5', '#dbeafe'];
         let colorSeleccionado = coloresPastel[0];
 
         const selectoresColor = document.createElement('div');
         selectoresColor.className = 'postit__selectores-color';
-
         coloresPastel.forEach(function(color) {
             const selector = document.createElement('button');
             selector.type  = 'button';
             selector.className = 'postit__selector-color';
             selector.style.backgroundColor = color;
-            // El primer color está seleccionado por defecto
             if (color === colorSeleccionado) selector.classList.add('postit__selector-color--activo');
-
             selector.addEventListener('click', function() {
-                // Quitar la clase activo del selector anterior
                 selectoresColor.querySelectorAll('.postit__selector-color').forEach(function(s) {
                     s.classList.remove('postit__selector-color--activo');
                 });
-                // Marcar este selector como activo
                 selector.classList.add('postit__selector-color--activo');
                 colorSeleccionado = color;
             });
             selectoresColor.appendChild(selector);
         });
-        formulario.appendChild(selectoresColor);
 
-        // Botón guardar
         const btnGuardar = document.createElement('button');
-        btnGuardar.className   = 'btn btn--sm btn--primary';
-        btnGuardar.textContent = 'Guardar';
-        btnGuardar.addEventListener('click', function() {
-            const texto = textarea.value.trim();
-            if (!texto) return;
+        btnGuardar.type      = 'button';
+        btnGuardar.className = 'postit__btn-guardar';
+        btnGuardar.textContent = 'Guardar nota';
+        btnGuardar.addEventListener('click', async function() {
+            const textoVal = textarea.value.trim();
+            if (!textoVal) { textarea.style.borderColor = '#ef4444'; return; }
 
-            // Crear la nueva nota y agregarla al arreglo
-            notas.push({
-                id:     Date.now(),
-                texto:  texto,
-                color:  colorSeleccionado,
-            });
+            btnGuardar.disabled    = true;
+            btnGuardar.textContent = 'Guardando...';
 
-            // Persistir en localStorage
-            localStorage.setItem(claveStorage, JSON.stringify(notas));
-
-            // Re-renderizar los post-its con la nueva nota
-            renderizarPostits();
+            const nuevaNota = await crearNotaApi(textoVal, colorSeleccionado);
+            if (nuevaNota) {
+                notas.push(nuevaNota);
+                renderizarPostits();
+            } else {
+                btnGuardar.disabled    = false;
+                btnGuardar.textContent = 'Guardar nota';
+                textarea.style.borderColor = '#ef4444';
+            }
         });
-        formulario.appendChild(btnGuardar);
 
+        const formularioLeft = document.createElement('div');
+        formularioLeft.className = 'postit__formulario-left';
+        formularioLeft.appendChild(textarea);
+        formularioLeft.appendChild(selectoresColor);
+        formulario.appendChild(formularioLeft);
+        formulario.appendChild(btnGuardar);
         seccion.appendChild(formulario);
     }
 
-    // Renderizar los post-its al cargar la vista
     renderizarPostits();
 }
 
@@ -328,6 +310,55 @@ export async function activarModoUsuario() {
     // obtenerTareasDeUsuario hace GET /api/tasks/filter?userId={id}
     const tareas = await obtenerTareasDeUsuario(usuarioSesion.id);
 
+    // Calcular y mostrar promedio de calificación en la card de datos
+    if (tareas && tareas.length > 0) {
+        const notasValidas = tareas
+            .filter(function(t) { return t.grade !== null && t.grade !== undefined; })
+            .map(function(t) { return parseFloat(t.grade); })
+            .filter(function(n) { return !isNaN(n) && n >= 0 && n <= 100; });
+
+        const userInfoEl = document.getElementById('userDataSection');
+        // Remover promedio previo si existe
+        const prevPromedio = userInfoEl ? userInfoEl.querySelector('.user-info__promedio-wrap') : null;
+        if (prevPromedio) prevPromedio.remove();
+
+        if (notasValidas.length > 0 && userInfoEl) {
+            const promedio = (notasValidas.reduce(function(a, b) { return a + b; }, 0) / notasValidas.length).toFixed(1);
+            // Determinar color según rendimiento
+            const pNum  = parseFloat(promedio);
+            const bg    = pNum >= 86 ? '#dbeafe' : pNum >= 70 ? '#d1fae5' : '#fee2e2';
+            const color = pNum >= 86 ? '#1e3a8a' : pNum >= 70 ? '#065f46' : '#991b1b';
+            const label = pNum >= 86 ? 'Rendimiento Superior' : pNum >= 70 ? 'Rendimiento Alto' : 'Rendimiento Bajo';
+
+            const wrap = document.createElement('div');
+            wrap.className = 'user-info__item user-info__promedio-wrap';
+
+            const lbl = document.createElement('span');
+            lbl.className   = 'user-info__label';
+            lbl.textContent = 'Promedio';
+
+            const val = document.createElement('div');
+            val.className = 'user-info__promedio';
+
+            const badge = document.createElement('span');
+            badge.className = 'status-badge';
+            badge.style.cssText = `background:${bg};color:${color};font-weight:700;font-size:0.9rem;`;
+            badge.textContent = promedio + ' / 100';
+
+            const badgeLabel = document.createElement('span');
+            badgeLabel.style.cssText = `font-size:0.72rem;color:${color};font-weight:600;`;
+            badgeLabel.textContent = label;
+
+            val.appendChild(badge);
+            val.appendChild(badgeLabel);
+            wrap.appendChild(lbl);
+            wrap.appendChild(val);
+
+            const userInfoDiv = userInfoEl.querySelector('.user-info');
+            if (userInfoDiv) userInfoDiv.appendChild(wrap);
+        }
+    }
+
     // Mostrar la sección de tareas
     const seccionTareas = document.getElementById('tasksSection');
     if (seccionTareas) seccionTareas.classList.remove('hidden');
@@ -363,14 +394,16 @@ export async function activarModoUsuario() {
     // Cargar el dashboard de estadísticas del panel usuario.
     // Se llama con los IDs del vistaUsuario (prefijo userDash) para no
     // sobreescribir los valores del dashboard del panel admin.
-    cargarDashboardUsuario();   // ← AGREGAR ESTA LÍNEA
+    cargarDashboardUsuario(tareas);   // pasar tareas ya cargadas, no hacer fetch extra
 
-    // Montar el calendario de prioridades del usuario
-    crearCalendario({
+    // Montar el calendario del usuario:
+    // soloLectura: false — el usuario puede agregar eventos propios además de ver los del instructor
+    await crearCalendario({
         contenedorId: 'usuarioCalendario',
         paleta:       'usuario',
-        soloLectura:  true,
-        tareas:       tareas,   // 'tareas' es la variable con las tareas del usuario en esta función
+        soloLectura:  false,
+        tareas:       tareas,
+        userId:       usuarioSesion.id,   // para restringir borrado a eventos propios
     });
 
     // Cargar los post-its personales
@@ -410,53 +443,232 @@ function renderizarDiccionarioRoles(contenedorEl) {
     if (window.lucide) window.lucide.createIcons();
 }
 
-// abrirModalPermisos — modal con lista de permisos del rol
+// abrirModalPermisos — modal rediseñado con agrupación por categoría y badge del rol
 function abrirModalPermisos(rol, meta) {
+    const cerrar = () => { if (document.body.contains(overlay)) document.body.removeChild(overlay); };
+
+    // ── Overlay ───────────────────────────────────────────────────────────────
     const overlay = document.createElement('div');
     overlay.className = 'modal-usuario-overlay';
+    overlay.style.cssText = 'display:flex;align-items:center;justify-content:center;';
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) cerrar(); });
+
+    // ── Panel ─────────────────────────────────────────────────────────────────
     const panel = document.createElement('div');
-    panel.className = 'modal-usuario';
-    const headerModal = document.createElement('div');
-    headerModal.className = 'modal-usuario__header';
-    const tituloModal = document.createElement('h3');
-    tituloModal.className   = 'modal-usuario__titulo';
-    tituloModal.textContent = `Permisos — ${meta.nombre}`;
-    headerModal.appendChild(tituloModal);
+    panel.style.cssText = `
+        background:#fff;
+        border-radius:1.25rem;
+        box-shadow:0 20px 60px rgba(0,0,0,0.18);
+        width:min(520px,92vw);
+        max-height:85vh;
+        overflow:hidden;
+        display:flex;
+        flex-direction:column;
+        font-family:inherit;
+    `;
+
+    // ── Header con color del rol ───────────────────────────────────────────────
+    const header = document.createElement('div');
+    header.style.cssText = `
+        background:${meta.color};
+        padding:1.5rem 1.75rem 1.25rem;
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:1rem;
+    `;
+
+    const headerLeft = document.createElement('div');
+    headerLeft.style.cssText = 'display:flex;align-items:center;gap:0.875rem;';
+
+    // Icono circular blanco
+    const iconWrap = document.createElement('div');
+    iconWrap.style.cssText = `
+        width:48px;height:48px;
+        background:rgba(255,255,255,0.25);
+        border-radius:50%;
+        display:flex;align-items:center;justify-content:center;
+        flex-shrink:0;
+    `;
+    const icono = document.createElement('i');
+    icono.setAttribute('data-lucide', meta.icono);
+    icono.style.cssText = 'width:22px;height:22px;color:#fff;';
+    iconWrap.appendChild(icono);
+    headerLeft.appendChild(iconWrap);
+
+    const headerTexto = document.createElement('div');
+    const titulo = document.createElement('h2');
+    titulo.textContent = meta.nombre;
+    titulo.style.cssText = 'color:#fff;font-size:1.2rem;font-weight:700;margin:0 0 0.2rem;';
+    const subtitulo = document.createElement('p');
+    subtitulo.textContent = meta.descripcion;
+    subtitulo.style.cssText = 'color:rgba(255,255,255,0.82);font-size:0.82rem;margin:0;';
+    headerTexto.appendChild(titulo);
+    headerTexto.appendChild(subtitulo);
+    headerLeft.appendChild(headerTexto);
+    header.appendChild(headerLeft);
+
+    // Botón cerrar blanco
     const btnCerrar = document.createElement('button');
-    btnCerrar.className = 'modal-usuario__cerrar';
-    btnCerrar.type      = 'button';
-    const iconoCerrar = document.createElement('i');
-    iconoCerrar.setAttribute('data-lucide', 'x');
-    iconoCerrar.classList.add('icono-accion');
-    btnCerrar.appendChild(iconoCerrar);
-    btnCerrar.addEventListener('click', function() { document.body.removeChild(overlay); });
-    headerModal.appendChild(btnCerrar);
-    panel.appendChild(headerModal);
+    btnCerrar.type = 'button';
+    btnCerrar.style.cssText = `
+        width:32px;height:32px;
+        background:rgba(255,255,255,0.2);
+        border:none;border-radius:50%;
+        cursor:pointer;
+        display:flex;align-items:center;justify-content:center;
+        flex-shrink:0;
+        transition:background 150ms;
+    `;
+    btnCerrar.addEventListener('mouseenter', () => { btnCerrar.style.background='rgba(255,255,255,0.35)'; });
+    btnCerrar.addEventListener('mouseleave', () => { btnCerrar.style.background='rgba(255,255,255,0.2)'; });
+    const icoX = document.createElement('i');
+    icoX.setAttribute('data-lucide', 'x');
+    icoX.style.cssText = 'width:16px;height:16px;color:#fff;';
+    btnCerrar.appendChild(icoX);
+    btnCerrar.addEventListener('click', cerrar);
+    header.appendChild(btnCerrar);
+    panel.appendChild(header);
+
+    // ── Badge contador ────────────────────────────────────────────────────────
+    const permisos = PERMISOS_POR_ROL[rol] || [];
+    const badgeBar = document.createElement('div');
+    badgeBar.style.cssText = `
+        padding:0.75rem 1.75rem;
+        background:#f8fafc;
+        border-bottom:1px solid #e2e8f0;
+        display:flex;align-items:center;gap:0.5rem;
+    `;
+    const badgeCount = document.createElement('span');
+    badgeCount.textContent = `${permisos.length} permisos activos`;
+    badgeCount.style.cssText = `
+        background:${meta.color};
+        color:#fff;
+        font-size:0.72rem;
+        font-weight:700;
+        letter-spacing:0.03em;
+        padding:0.25rem 0.65rem;
+        border-radius:9999px;
+    `;
+    const badgeRol = document.createElement('span');
+    badgeRol.textContent = `Rol: ${meta.nombre}`;
+    badgeRol.style.cssText = 'font-size:0.78rem;color:#64748b;font-weight:500;';
+    badgeBar.appendChild(badgeCount);
+    badgeBar.appendChild(badgeRol);
+    panel.appendChild(badgeBar);
+
+    // ── Cuerpo con permisos agrupados ─────────────────────────────────────────
     const cuerpo = document.createElement('div');
-    cuerpo.className = 'modal-usuario__cuerpo';
-    const lista = document.createElement('ul');
-    lista.style.listStyle = 'none';
-    lista.style.padding   = '0';
-    (PERMISOS_POR_ROL[rol] || []).forEach(function(permiso) {
-        const item = document.createElement('li');
-        item.style.padding = '4px 0';
-        item.style.fontSize = '0.85rem';
-        const check = document.createElement('i');
-        check.setAttribute('data-lucide', 'check');
-        check.classList.add('icono-accion');
-        check.style.color = 'var(--color-completada)';
-        item.appendChild(check);
-        item.appendChild(document.createTextNode(' ' + permiso));
-        lista.appendChild(item);
+    cuerpo.style.cssText = 'padding:1.25rem 1.75rem 1.5rem;overflow-y:auto;flex:1;';
+
+    // Agrupar permisos por prefijo (tasks.* / users.*)
+    const grupos = {};
+    permisos.forEach(function(p) {
+        const prefijo = p.split('.')[0];
+        if (!grupos[prefijo]) grupos[prefijo] = [];
+        grupos[prefijo].push(p);
     });
-    cuerpo.appendChild(lista);
+
+    const etiquetasGrupo = {
+        tasks: { label: 'Tareas', icon: 'clipboard-list', color: '#0ea5e9' },
+        users: { label: 'Usuarios', icon: 'users',         color: '#8b5cf6' },
+    };
+
+    Object.keys(grupos).forEach(function(grupo) {
+        const meta_g = etiquetasGrupo[grupo] || { label: grupo, icon: 'lock', color: '#64748b' };
+
+        // Encabezado de grupo
+        const grupoHeader = document.createElement('div');
+        grupoHeader.style.cssText = `
+            display:flex;align-items:center;gap:0.5rem;
+            margin:0.75rem 0 0.5rem;
+            padding-bottom:0.4rem;
+            border-bottom:1.5px solid #f1f5f9;
+        `;
+        const icoGrupo = document.createElement('i');
+        icoGrupo.setAttribute('data-lucide', meta_g.icon);
+        icoGrupo.style.cssText = `width:15px;height:15px;color:${meta_g.color};`;
+        const labelGrupo = document.createElement('span');
+        labelGrupo.textContent = meta_g.label;
+        labelGrupo.style.cssText = `font-size:0.75rem;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.06em;`;
+        grupoHeader.appendChild(icoGrupo);
+        grupoHeader.appendChild(labelGrupo);
+        cuerpo.appendChild(grupoHeader);
+
+        // Items de permisos
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.5rem;';
+
+        grupos[grupo].forEach(function(permiso) {
+            const item = document.createElement('div');
+            item.style.cssText = `
+                display:flex;align-items:center;gap:0.6rem;
+                padding:0.45rem 0.75rem;
+                border-radius:0.5rem;
+                background:#f8fafc;
+                border:1px solid #e2e8f0;
+                transition:background 150ms;
+            `;
+            item.addEventListener('mouseenter', () => { item.style.background='#f0f9ff'; item.style.borderColor=meta_g.color; });
+            item.addEventListener('mouseleave', () => { item.style.background='#f8fafc'; item.style.borderColor='#e2e8f0'; });
+
+            const checkWrap = document.createElement('div');
+            checkWrap.style.cssText = `
+                width:20px;height:20px;
+                background:${meta_g.color}18;
+                border-radius:50%;
+                display:flex;align-items:center;justify-content:center;
+                flex-shrink:0;
+            `;
+            const icoCheck = document.createElement('i');
+            icoCheck.setAttribute('data-lucide', 'check');
+            icoCheck.style.cssText = `width:11px;height:11px;color:${meta_g.color};font-weight:700;`;
+            checkWrap.appendChild(icoCheck);
+            item.appendChild(checkWrap);
+
+            const texto = document.createElement('code');
+            texto.textContent = permiso;
+            texto.style.cssText = 'font-size:0.82rem;color:#1e293b;font-family:ui-monospace,monospace;flex:1;';
+            item.appendChild(texto);
+
+            grid.appendChild(item);
+        });
+        cuerpo.appendChild(grid);
+    });
+
     panel.appendChild(cuerpo);
+
+    // ── Pie ───────────────────────────────────────────────────────────────────
+    const pie = document.createElement('div');
+    pie.style.cssText = `
+        padding:0.875rem 1.75rem;
+        background:#f8fafc;
+        border-top:1px solid #e2e8f0;
+        display:flex;justify-content:flex-end;
+    `;
+    const btnOk = document.createElement('button');
+    btnOk.type = 'button';
+    btnOk.textContent = 'Cerrar';
+    btnOk.style.cssText = `
+        background:${meta.color};
+        color:#fff;
+        border:none;
+        border-radius:0.6rem;
+        padding:0.5rem 1.5rem;
+        font-size:0.875rem;
+        font-weight:600;
+        cursor:pointer;
+        transition:opacity 150ms;
+    `;
+    btnOk.addEventListener('mouseenter', () => { btnOk.style.opacity='0.85'; });
+    btnOk.addEventListener('mouseleave', () => { btnOk.style.opacity='1'; });
+    btnOk.addEventListener('click', cerrar);
+    pie.appendChild(btnOk);
+    panel.appendChild(pie);
+
     overlay.appendChild(panel);
     document.body.appendChild(overlay);
     if (window.lucide) window.lucide.createIcons();
-    overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) document.body.removeChild(overlay);
-    });
 }
 
 export async function activarModoAdmin() {
@@ -497,15 +709,80 @@ export async function activarModoInstructor() {
     await inicializarDropdownInstructor();
 
     // Montar el calendario del instructor (puede agregar eventos, soloLectura = false)
-    crearCalendario({
+    // Obtener todas las tareas para mostrarlas en el calendario
+    let todasLasTareasCalendario = [];
+    try { todasLasTareasCalendario = await obtenerTodasLasTareas(); } catch { todasLasTareasCalendario = []; }
+
+    await crearCalendario({
         contenedorId: 'instrCalendario',
         paleta:       'instructor',
         soloLectura:  false,
-        tareas:       [],
+        tareas:       todasLasTareasCalendario,
+        onVerTarea:   function(taskId) {
+            const fila = document.querySelector(`tr[data-task-id="${taskId}"]`);
+            if (fila) fila.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        },
     });
 
     // Cargar el panel de calificación de tareas pendientes
     await cargarPanelCalificacion();
+
+    // Auto-refresh del panel de calificación.
+    // Se cancela el intervalo anterior antes de crear uno nuevo para
+    // evitar que se acumulen y causen recargas visuales no deseadas.
+    if (window._panelCalificacionInterval) {
+        clearInterval(window._panelCalificacionInterval);
+        window._panelCalificacionInterval = null;
+    }
+    window._panelCalificacionInterval = setInterval(async function() {
+        // Verificar que la vistaInstructor esté VISIBLE (no hidden).
+        // La condición anterior usaba getElementById que siempre retorna
+        // el elemento (es HTML estático), por lo que el intervalo nunca se cancelaba.
+        const vistaInstr = document.getElementById('vistaInstructor');
+        const estaVisible = vistaInstr && !vistaInstr.classList.contains('hidden');
+        if (estaVisible) {
+            await cargarPanelCalificacion();
+            cargarDashboardInstructor();
+            cargarTablaUsuariosInstructor();
+        } else {
+            clearInterval(window._panelCalificacionInterval);
+            window._panelCalificacionInterval = null;
+        }
+    }, 10000);
+}
+
+// calcularRendimiento — determina el nivel de rendimiento y el estado resultante
+// según la nota asignada por el instructor.
+// Retorna: { estado, rendimiento, color, bg, icono }
+function calcularRendimiento(nota) {
+    if (nota < 70) {
+        return {
+            estado:      'reprobada',
+            rendimiento: 'Rendimiento Bajo',
+            label:       'Reprobada',
+            color:       '#991b1b',
+            bg:          '#fee2e2',
+            icono:       '',
+        };
+    } else if (nota <= 85) {
+        return {
+            estado:      'completada',
+            rendimiento: 'Rendimiento Alto',
+            label:       'Aprobada',
+            color:       '#065f46',
+            bg:          '#d1fae5',
+            icono:       '',
+        };
+    } else {
+        return {
+            estado:      'completada',
+            rendimiento: 'Rendimiento Superior',
+            label:       'Aprobada',
+            color:       '#1e3a8a',
+            bg:          '#dbeafe',
+            icono:       '',
+        };
+    }
 }
 
 // cargarPanelCalificacion — lista las tareas con status=pendiente_aprobacion
@@ -515,11 +792,6 @@ async function cargarPanelCalificacion() {
     if (!panel) return;
     while (panel.firstChild) panel.removeChild(panel.firstChild);
 
-    const titulo = document.createElement('h3');
-    titulo.className   = 'panel-calificacion__titulo';
-    titulo.textContent = 'Entregas pendientes de revisión';
-    panel.appendChild(titulo);
-
     try {
         const todasLasTareas   = await obtenerTodasLasTareas();
         const tareasPendientes = todasLasTareas
@@ -527,87 +799,172 @@ async function cargarPanelCalificacion() {
             : [];
 
         if (tareasPendientes.length === 0) {
-            const vacio = document.createElement('p');
-            vacio.className   = 'texto-vacio';
-            vacio.textContent = 'No hay entregas pendientes de revisión';
-            panel.appendChild(vacio);
+            const vacioWrap = document.createElement('div');
+            vacioWrap.className = 'panel-cal__vacio';
+            const icVacio = document.createElement('div');
+            icVacio.textContent = '📋';
+            icVacio.style.cssText = 'font-size:2.5rem;margin-bottom:0.5rem;';
+            const txVacio = document.createElement('p');
+            txVacio.textContent = 'No hay entregas pendientes de revisión';
+            txVacio.style.cssText = 'color:#6b7280;font-size:0.9rem;margin:0;';
+            vacioWrap.appendChild(icVacio);
+            vacioWrap.appendChild(txVacio);
+            panel.appendChild(vacioWrap);
             return;
         }
 
         const lista = document.createElement('div');
-        lista.className = 'panel-calificacion__lista';
+        lista.className = 'panel-cal__lista';
 
         tareasPendientes.forEach(function(tarea) {
-            const fila = document.createElement('div');
-            fila.className       = 'panel-calificacion__fila';
-            fila.dataset.tareaId = tarea.id;
+            const card = document.createElement('div');
+            card.className       = 'panel-cal__card';
+            card.dataset.tareaId = tarea.id;
 
-            const info = document.createElement('div');
-            info.className = 'panel-calificacion__info';
+            // ── Cabecera de la card ──────────────────────────────────────────
+            const cabecera = document.createElement('div');
+            cabecera.className = 'panel-cal__cabecera';
 
-            const tituloT = document.createElement('span');
-            tituloT.className   = 'panel-calificacion__tarea-titulo';
-            tituloT.textContent = tarea.title;
-            info.appendChild(tituloT);
+            const badgeEstado = document.createElement('span');
+            badgeEstado.className = 'status-badge status-pendiente_aprobacion';
+            badgeEstado.textContent = 'Por aprobar';
+            cabecera.appendChild(badgeEstado);
 
             if (tarea.assignedUsersDisplay) {
-                const asig = document.createElement('span');
-                asig.className   = 'panel-calificacion__asignados';
-                asig.textContent = tarea.assignedUsersDisplay;
-                info.appendChild(asig);
+                const alumno = document.createElement('span');
+                alumno.className = 'panel-cal__alumno';
+                alumno.textContent = '👤 ' + tarea.assignedUsersDisplay;
+                cabecera.appendChild(alumno);
             }
-            fila.appendChild(info);
 
-            // Input de nota 0-100
+            card.appendChild(cabecera);
+
+            // ── Título de la tarea ───────────────────────────────────────────
+            const tituloEl = document.createElement('h4');
+            tituloEl.className   = 'panel-cal__titulo';
+            tituloEl.textContent = tarea.title;
+            card.appendChild(tituloEl);
+
+            if (tarea.description) {
+                const descEl = document.createElement('p');
+                descEl.className   = 'panel-cal__desc';
+                descEl.textContent = tarea.description;
+                card.appendChild(descEl);
+            }
+
+            // ── Sección de calificación ──────────────────────────────────────
+            const secCalif = document.createElement('div');
+            secCalif.className = 'panel-cal__sec-calif';
+
+            const labelNota = document.createElement('label');
+            labelNota.className   = 'panel-cal__label-nota';
+            labelNota.textContent = 'Calificación (0 – 100)';
+
+            const wrapNota = document.createElement('div');
+            wrapNota.className = 'panel-cal__wrap-nota';
+
             const inputNota       = document.createElement('input');
             inputNota.type        = 'number';
             inputNota.min         = '0';
             inputNota.max         = '100';
             inputNota.value       = '100';
-            inputNota.className   = 'panel-calificacion__input-nota';
-            inputNota.placeholder = 'Nota 0-100';
-            fila.appendChild(inputNota);
+            inputNota.className   = 'panel-cal__input-nota';
+            inputNota.placeholder = '0-100';
 
-            // Botón Aprobar
+            // Preview de rendimiento en tiempo real
+            const preview = document.createElement('div');
+            preview.className = 'panel-cal__preview';
+
+            function actualizarPreview() {
+                const val = parseFloat(inputNota.value);
+                while (preview.firstChild) preview.removeChild(preview.firstChild);
+                if (isNaN(val) || val < 0 || val > 100) return;
+                const r = calcularRendimiento(val);
+                preview.style.cssText = `background:${r.bg};color:${r.color};padding:0.35rem 0.75rem;border-radius:9999px;font-size:0.8rem;font-weight:700;display:inline-flex;align-items:center;gap:0.35rem;transition:all 0.2s;`;
+                preview.textContent = `${r.icono} ${r.rendimiento} · ${r.label}`;
+            }
+
+            inputNota.addEventListener('input', actualizarPreview);
+            actualizarPreview(); // inicializar con valor 100
+
+            wrapNota.appendChild(inputNota);
+            secCalif.appendChild(labelNota);
+            secCalif.appendChild(wrapNota);
+            secCalif.appendChild(preview);
+            card.appendChild(secCalif);
+
+            // ── Botón Aprobar ────────────────────────────────────────────────
             const btnAprobar   = document.createElement('button');
-            btnAprobar.className = 'btn btn--sm btn--primary';
+            btnAprobar.className = 'panel-cal__btn-aprobar';
             btnAprobar.type      = 'button';
-            const iconoCheck     = document.createElement('i');
-            iconoCheck.setAttribute('data-lucide', 'check-circle');
-            iconoCheck.classList.add('icono-accion');
-            btnAprobar.appendChild(iconoCheck);
-            btnAprobar.appendChild(document.createTextNode(' Aprobar'));
+            btnAprobar.textContent = 'Calificar y finalizar';
 
             btnAprobar.addEventListener('click', async function() {
-                const nota = parseInt(inputNota.value, 10);
+                const nota = parseFloat(inputNota.value);
                 if (isNaN(nota) || nota < 0 || nota > 100) {
                     await mostrarNotificacion('La nota debe ser entre 0 y 100', 'error');
                     return;
                 }
+
+                const rendimiento = calcularRendimiento(nota);
+
+                // ── OPTIMISTIC UPDATE: ocultar la card de inmediato ──────────
+                card.style.cssText = 'opacity:0.4;pointer-events:none;transition:opacity 0.2s;';
+
                 try {
-                    await actualizarTarea(tarea.id, { status: 'completada' });
-                    const filaActual = panel.querySelector(`[data-tarea-id="${tarea.id}"]`);
-                    if (filaActual && filaActual.parentNode) filaActual.parentNode.removeChild(filaActual);
-                    cargarDashboardInstructor();
-                    cargarTareasInstructor();
-                    await mostrarNotificacion(`Tarea aprobada con nota ${nota}/100`, 'exito');
-                    if (lista.querySelectorAll('.panel-calificacion__fila').length === 0) {
-                        const v = document.createElement('p');
-                        v.className   = 'texto-vacio';
-                        v.textContent = 'No hay entregas pendientes de revisión';
-                        lista.appendChild(v);
+                    await actualizarTarea(tarea.id, {
+                        status: rendimiento.estado,
+                        grade:  nota,
+                    });
+
+                    // Eliminar la card del DOM sin recargar toda la lista
+                    if (card.parentNode) card.parentNode.removeChild(card);
+
+                    // Si no quedan cards, mostrar vacío
+                    if (lista.querySelectorAll('.panel-cal__card').length === 0) {
+                        while (lista.firstChild) lista.removeChild(lista.firstChild);
+                        const vacioWrap = document.createElement('div');
+                        vacioWrap.className = 'panel-cal__vacio';
+                        const icVacio = document.createElement('div');
+                        icVacio.textContent = '🎉';
+                        icVacio.style.cssText = 'font-size:2.5rem;margin-bottom:0.5rem;';
+                        const txVacio = document.createElement('p');
+                        txVacio.textContent = 'Todas las entregas han sido revisadas';
+                        txVacio.style.cssText = 'color:#6b7280;font-size:0.9rem;margin:0;';
+                        vacioWrap.appendChild(icVacio);
+                        vacioWrap.appendChild(txVacio);
+                        lista.appendChild(vacioWrap);
                     }
+
+                    // Actualizar fila en tabla de tareas (estado cambia a completada/reprobada)
+                    obtenerTareaPorId(tarea.id).then(function(tareaFresca) {
+                        if (tareaFresca) actualizarFilaTareaInstructor(tareaFresca);
+                    }).catch(function() {});
+                    cargarDashboardInstructor();
+                    cargarTablaUsuariosInstructor();
+                    obtenerTodasLasTareas().then(function(t) {
+                        if (t) crearCalendario({ contenedorId: 'instrCalendario', paleta: 'instructor', soloLectura: false, tareas: t });
+                    }).catch(function() {});
+
+                    registrarEvento('tarea_creada', `Tarea calificada ${nota}/100: "${tarea.title}" · ${rendimiento.rendimiento}`);
+                    const audEl = document.getElementById('auditoriaContenedor');
+                    if (audEl) renderizarAuditoria(audEl);
+
+                    const msgNota = `${rendimiento.rendimiento} — Nota: ${nota}/100 · ${rendimiento.label}`;
+                    mostrarNotificacion(msgNota, 'exito'); // sin await — no bloquear
+
                 } catch (error) {
-                    await mostrarNotificacion('Error al aprobar la tarea', 'error');
+                    // Revertir optimistic update si el servidor falló
+                    card.style.cssText = '';
+                    await mostrarNotificacion('Error al calificar la tarea', 'error');
                 }
             });
 
-            fila.appendChild(btnAprobar);
-            lista.appendChild(fila);
+            card.appendChild(btnAprobar);
+            lista.appendChild(card);
         });
 
         panel.appendChild(lista);
-        if (window.lucide) window.lucide.createIcons();
 
     } catch (error) {
         const err = document.createElement('p');
@@ -618,10 +975,23 @@ async function cargarPanelCalificacion() {
 }
 
 // cargarDashboardInstructor — actualiza las tarjetas de estadísticas del panel instructor.
-// Usa los IDs con prefijo "instrDash" definidos en el vistaInstructor del index.html.
+// FILTRO: solo cuenta tareas asignadas a estudiantes (role=user), no de admins ni otros instructores.
 async function cargarDashboardInstructor() {
-    const data = await obtenerDashboard();
-    if (!data) return;
+    const [todasTareas, todosUsuarios] = await Promise.all([
+        obtenerTodasLasTareas(),
+        obtenerTodosLosUsuarios(),
+    ]);
+    if (!todasTareas || !todosUsuarios) return;
+
+    // Solo IDs de estudiantes (role=user)
+    const idsEstudiantes = new Set(
+        todosUsuarios.filter(u => u.role === 'user').map(u => u.id)
+    );
+
+    // Solo tareas con al menos un estudiante asignado
+    const tareas = todasTareas.filter(t =>
+        Array.isArray(t.assignedUsers) && t.assignedUsers.some(id => idsEstudiantes.has(Number(id)))
+    );
 
     const el = {
         total:      document.getElementById('instrDashTotal'),
@@ -629,13 +999,15 @@ async function cargarDashboardInstructor() {
         progreso:   document.getElementById('instrDashProgreso'),
         aprobacion: document.getElementById('instrDashAprobacion'),
         completada: document.getElementById('instrDashCompletada'),
+        reprobada:  document.getElementById('instrDashReprobada'),
     };
 
-    if (el.total)      el.total.textContent      = data.total;
-    if (el.pendiente)  el.pendiente.textContent   = data.pendientes;
-    if (el.progreso)   el.progreso.textContent    = data.enProgreso;
-    if (el.aprobacion) el.aprobacion.textContent  = data.aprobacion ?? 0;
-    if (el.completada) el.completada.textContent  = data.completadas;
+    if (el.total)      el.total.textContent      = tareas.length;
+    if (el.pendiente)  el.pendiente.textContent   = tareas.filter(t => t.status === 'pendiente').length;
+    if (el.progreso)   el.progreso.textContent    = tareas.filter(t => t.status === 'en_progreso').length;
+    if (el.aprobacion) el.aprobacion.textContent  = tareas.filter(t => t.status === 'pendiente_aprobacion').length;
+    if (el.completada) el.completada.textContent  = tareas.filter(t => t.status === 'completada').length;
+    if (el.reprobada)  el.reprobada.textContent   = tareas.filter(t => t.status === 'reprobada').length;
 }
 
 // cargarTablaUsuariosInstructor — llena la tabla de usuarios del panel instructor.
@@ -648,7 +1020,10 @@ async function cargarTablaUsuariosInstructor() {
     // Limpiar el tbody antes de rellenarlo para evitar duplicados
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
-    const usuarios = await obtenerTodosLosUsuarios();
+    const [usuarios, todasTareas] = await Promise.all([
+        obtenerTodosLosUsuarios(),
+        obtenerTodasLasTareas(),
+    ]);
     if (!usuarios) return;
 
     // Filtrar: solo mostrar estudiantes (role === 'user') y excluir al instructor logueado
@@ -662,6 +1037,23 @@ async function cargarTablaUsuariosInstructor() {
     if (contador) {
         const cantidad = estudiantes.length;
         contador.textContent = `${cantidad} ${cantidad === 1 ? 'usuario' : 'usuarios'}`;
+    }
+
+    // Calcular calificación promedio por estudiante a partir de tareas completadas con comment numérico
+    function calcularCalificacion(userId) {
+        if (!todasTareas) return null;
+        // Usar t.grade (nota numérica del instructor) en lugar de t.comment
+        const calificadas = todasTareas.filter(t =>
+            Array.isArray(t.assignedUsers) &&
+            t.assignedUsers.includes(Number(userId)) &&
+            t.grade !== null && t.grade !== undefined
+        );
+        if (calificadas.length === 0) return null;
+        const notas = calificadas
+            .map(t => parseFloat(t.grade))
+            .filter(n => !isNaN(n) && n >= 0 && n <= 100);
+        if (notas.length === 0) return null;
+        return (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(1);
     }
 
     estudiantes.forEach(function(usuario, indice) {
@@ -679,20 +1071,47 @@ async function cargarTablaUsuariosInstructor() {
         const celdaEmail = document.createElement('td');
         celdaEmail.textContent = usuario.email;
 
+        // Columna Estado (activo / inactivo)
+        const celdaEstado = document.createElement('td');
+        celdaEstado.appendChild(crearBadgeEstado(usuario.is_active));
+
+        // Columna Calificación total (promedio de tareas completadas)
+        const celdaCalif = document.createElement('td');
+        const calif = calcularCalificacion(usuario.id);
+        if (calif !== null) {
+            // Usar calcularRendimiento para obtener el color correcto según el promedio
+            const r = calcularRendimiento(parseFloat(calif));
+            const badgeCalif = document.createElement('span');
+            badgeCalif.className = 'status-badge';
+            badgeCalif.style.cssText = `background:${r.bg};color:${r.color};font-weight:700;`;
+            badgeCalif.textContent = `${calif} / 100`;
+            celdaCalif.appendChild(badgeCalif);
+            // Sub-label de rendimiento
+            const labelRend = document.createElement('span');
+            labelRend.style.cssText = `display:block;font-size:0.65rem;color:${r.color};margin-top:2px;font-weight:600;`;
+            labelRend.textContent = r.rendimiento;
+            celdaCalif.appendChild(labelRend);
+        } else {
+            celdaCalif.style.color = '#9ca3af';
+            celdaCalif.style.fontSize = '0.8rem';
+            celdaCalif.textContent = 'Sin calificación';
+        }
+
         const celdaAcciones = document.createElement('td');
         const contenedor    = document.createElement('div');
         contenedor.classList.add('task-actions');
 
-        // ÚNICO botón del instructor: "Ver / Asignar" — abre el modal de tareas del usuario
-        // NO se crean botones de Editar, Cambiar Rol ni Eliminar
+        // ÚNICO botón del instructor: "Ver / Asignar"
+        // Botón Ver — pill con ícono y texto, igual que los botones del admin
         const btnVer = document.createElement('button');
-        while (btnVer.firstChild) btnVer.removeChild(btnVer.firstChild);
-        btnVer.appendChild(crearIconoLucide('eye'));
+        btnVer.type      = 'button';
+        btnVer.className = 'btn-ver-estudiante';
+        btnVer.title     = 'Ver estudiante';
+        const icoVer = document.createElement('i');
+        icoVer.setAttribute('data-lucide', 'eye');
+        icoVer.className = 'icono-accion';
+        btnVer.appendChild(icoVer);
         btnVer.appendChild(document.createTextNode(' Ver'));
-        if (window.lucide) window.lucide.createIcons();
-        btnVer.classList.add('btn-action', 'btn-action--edit');
-        btnVer.type = 'button';
-        // abrirModalUsuario viene de modoUI.js — permite ver y asignar tareas al usuario
         btnVer.addEventListener('click', function() { abrirModalUsuario(usuario); });
 
         contenedor.appendChild(btnVer);
@@ -702,52 +1121,53 @@ async function cargarTablaUsuariosInstructor() {
         fila.appendChild(celdaDoc);
         fila.appendChild(celdaNombre);
         fila.appendChild(celdaEmail);
+        fila.appendChild(celdaEstado);
+        fila.appendChild(celdaCalif);
         fila.appendChild(celdaAcciones);
 
         tbody.appendChild(fila);
     });
 }
 
-// aplicarFiltrosInstructor — filtra la tabla de tareas del instructor por estado
-// Es equivalente a aplicarFiltrosAdmin del panel admin pero para el instructor.
-// Lee el valor del select instrFiltroEstado y recarga las filas del tbody
-// mostrando solo las tareas que coincidan con el estado seleccionado.
-//
-// Si el filtro está vacío (valor '') muestra todas las tareas sin filtrar.
+// aplicarFiltrosInstructor — filtra la tabla de tareas del instructor por estado, usuario y orden.
+// Solo muestra tareas asignadas a estudiantes (role=user).
 async function aplicarFiltrosInstructor() {
     const tbody = document.getElementById('instrTasksTableBody');
-    if (!tbody) return; // Salir si el tbody no existe en el DOM
+    if (!tbody) return;
 
-    // Leer el valor actual del select de estado del instructor
-    const filtroEstado = document.getElementById('instrFiltroEstado');
-    const estado       = filtroEstado ? filtroEstado.value : '';
+    const estado  = (document.getElementById('instrFiltroEstado')?.value  || '').trim();
+    const termino = (document.getElementById('instrFiltroUsuario')?.value || '').toLowerCase().trim();
+    const orden   = (document.getElementById('instrOrdenSelect')?.value   || '').trim();
 
-    // Obtener todas las tareas del backend (sin caché para datos frescos)
-    const tareas = await obtenerTodasLasTareas();
-    if (!tareas) return;
+    const [todasTareas, todosUsuarios] = await Promise.all([
+        obtenerTodasLasTareas(),
+        obtenerTodosLosUsuarios(),
+    ]);
+    if (!todasTareas || !todosUsuarios) return;
 
-    // Filtrar por estado si hay un estado seleccionado, o usar todas las tareas si no
-    // Un estado vacío ('') significa "Todos" — no se aplica ningún filtro
-    const resultado = estado
-        ? tareas.filter(function(t) { return t.status === estado; })
-        : tareas;
+    // Solo IDs de estudiantes (role=user)
+    const idsEstudiantes = new Set(todosUsuarios.filter(u => u.role === 'user').map(u => u.id));
 
-    // Vaciar el tbody antes de repintar con los resultados filtrados
-    // Se usa removeChild en bucle en lugar de innerHTML = '' para respetar el estándar del proyecto
+    // Partir de las tareas que tienen al menos un estudiante asignado
+    const tareasDeEstudiantes = todasTareas.filter(t =>
+        Array.isArray(t.assignedUsers) && t.assignedUsers.some(id => idsEstudiantes.has(Number(id)))
+    );
+
+    let resultado = filtrarTareas(tareasDeEstudiantes, estado, termino);
+    resultado     = ordenarTareas(resultado, orden);
+
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
-    // Actualizar el contador de tareas en el encabezado de la card
     const contador = document.getElementById('instrTasksCount');
     if (contador) {
         const cantidad = resultado.length;
         contador.textContent = `${cantidad} ${cantidad === 1 ? 'tarea' : 'tareas'}`;
     }
 
-    // Si no hay resultados mostrar fila indicativa en lugar de tabla vacía
     if (resultado.length === 0) {
         const fila = document.createElement('tr');
         const td   = document.createElement('td');
-        td.colSpan        = 6; // 6 columnas: #, Titulo, Descripcion, Estado, Usuario, Acciones
+        td.colSpan        = 6;
         td.textContent    = 'No hay tareas que coincidan con el filtro seleccionado';
         td.style.textAlign = 'center';
         td.style.color    = '#9ca3af';
@@ -756,11 +1176,12 @@ async function aplicarFiltrosInstructor() {
         return;
     }
 
-    // Pintar cada tarea filtrada usando la función ya existente para construir las filas
     resultado.forEach(function(tarea, indice) {
         const fila = crearFilaTareaInstructor(tarea, indice);
         tbody.appendChild(fila);
     });
+    // Inicializar íconos Lucide de los botones recién insertados
+    if (window.lucide) window.lucide.createIcons();
 }
 
 // cargarTareasInstructor — llena la tabla de tareas del panel instructor.
@@ -771,8 +1192,19 @@ async function cargarTareasInstructor() {
 
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
-    const tareas = await obtenerTodasLasTareas();
-    if (!tareas) return;
+    const [todasTareas, todosUsuarios] = await Promise.all([
+        obtenerTodasLasTareas(),
+        obtenerTodosLosUsuarios(),
+    ]);
+    if (!todasTareas || !todosUsuarios) return;
+
+    // Solo IDs de estudiantes (role=user)
+    const idsEstudiantes = new Set(todosUsuarios.filter(u => u.role === 'user').map(u => u.id));
+
+    // Solo tareas que tienen al menos un estudiante asignado
+    const tareas = todasTareas.filter(t =>
+        Array.isArray(t.assignedUsers) && t.assignedUsers.some(id => idsEstudiantes.has(Number(id)))
+    );
 
     const contador = document.getElementById('instrTasksCount');
     if (contador) {
@@ -780,12 +1212,113 @@ async function cargarTareasInstructor() {
         contador.textContent = `${cantidad} ${cantidad === 1 ? 'tarea' : 'tareas'}`;
     }
 
-    // Reusar la función agregarFilaTareaAdmin si existe, o construir las filas manualmente
-    // siguiendo el mismo patrón que cargarTodasLasTareas del panel admin
     tareas.forEach(function(tarea, indice) {
         const fila = crearFilaTareaInstructor(tarea, indice);
         tbody.appendChild(fila);
     });
+    // Renderizar íconos Lucide después de insertar todas las filas al DOM
+    if (window.lucide) window.lucide.createIcons();
+}
+
+// formatearUsuariosDisplay — muestra el primer nombre y "+N" si hay más
+// assignedUsersDisplay es un string "Nombre1, Nombre2, Nombre3"
+function formatearUsuariosDisplay(displayStr) {
+    if (!displayStr) return '—';
+    const nombres = displayStr.split(', ');
+    if (nombres.length === 1) return nombres[0];
+    return `${nombres[0]} +${nombres.length - 1}`;
+}
+
+// ── CELDA DE DESCRIPCIÓN CON TRUNCADO ─────────────────────────────────────────
+// Siempre muestra el botón "Ver tarea". El texto se trunca con CSS a 2 líneas.
+function crearCeldaDescripcion(tarea) {
+    const celda = document.createElement('td');
+    celda.style.maxWidth = '0'; // necesario para que el ellipsis funcione en table-layout
+    const desc = tarea.description || '—';
+
+    // Texto truncado con CSS (siempre, independiente del largo)
+    const span = document.createElement('span');
+    span.className   = 'celda-desc__texto';
+    span.textContent = desc;
+    celda.appendChild(span);
+
+    // Botón "Ver tarea" — siempre visible
+    const btn = document.createElement('button');
+    btn.type      = 'button';
+    btn.className = 'celda-desc__btn-ver';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Ver tarea';
+    btn.addEventListener('click', function() { abrirModalVerTarea(tarea); });
+    celda.appendChild(btn);
+
+    return celda;
+}
+
+// abrirModalVerTarea — abre el modal de solo lectura con los datos de la tarea
+// Muestra: título, descripción, estado, comentario, nota (grade), usuarios asignados.
+// Si la tarea está completada y no tiene nota → muestra "Sin calificar".
+async function abrirModalVerTarea(tareaInicial) {
+    const modal = document.getElementById('verTareaModal');
+    if (!modal) return;
+
+    // Re-fetch para obtener datos frescos (evita mostrar estado stale del closure)
+    let tarea = tareaInicial;
+    try {
+        const fresca = await obtenerTareaPorId(tareaInicial.id);
+        if (fresca) tarea = fresca;
+    } catch { /* usar datos del closure si falla el fetch */ }
+
+    document.getElementById('verTareaTitulo').textContent      = tarea.title || '—';
+    document.getElementById('verTareaDescripcion').textContent = tarea.description || '—';
+    document.getElementById('verTareaUsuario').textContent     = tarea.assignedUsersDisplay || 'Sin asignar';
+
+    // Badge de estado
+    const contenedorEstado = document.getElementById('verTareaEstado');
+    contenedorEstado.innerHTML = '';
+    const badge = document.createElement('span');
+    badge.className = `status-badge status-${tarea.status}`;
+    badge.textContent = formatearEstado ? formatearEstado(tarea.status) : tarea.status;
+    contenedorEstado.appendChild(badge);
+
+    // Grupos del modal
+    const grupoCalif      = document.getElementById('verTareaCalifGrupo');
+    const califEl         = document.getElementById('verTareaCalif');
+    const grupoSinCalif   = document.getElementById('verTareaSinCalifGrupo');
+    const grupoComentario = document.getElementById('verTareaComentarioGrupo');
+    const comentarioEl    = document.getElementById('verTareaComentario');
+
+    // Limpiar estado anterior
+    if (grupoCalif)      grupoCalif.style.display      = 'none';
+    if (grupoSinCalif)   grupoSinCalif.style.display   = 'none';
+    if (grupoComentario) grupoComentario.style.display = '';
+    if (comentarioEl)    comentarioEl.textContent      = tarea.comment || '—';
+
+    // Calificación con sistema de rendimiento
+    if (tarea.grade !== null && tarea.grade !== undefined) {
+        const nota = Number(tarea.grade);
+        const r    = calcularRendimiento(nota);
+
+        califEl.innerHTML = '';
+
+        // Badge de nota
+        const badgeNota = document.createElement('span');
+        badgeNota.className = 'status-badge';
+        badgeNota.style.cssText = `background:${r.bg};color:${r.color};font-weight:700;font-size:1rem;padding:0.3rem 0.9rem;`;
+        badgeNota.textContent = `${nota} / 100`;
+        califEl.appendChild(badgeNota);
+
+        // Badge de rendimiento
+        const badgeRend = document.createElement('span');
+        badgeRend.className = 'status-badge';
+        badgeRend.style.cssText = `background:${r.bg};color:${r.color};font-weight:600;font-size:0.85rem;padding:0.25rem 0.75rem;margin-left:0.5rem;`;
+        badgeRend.textContent = `${r.icono} ${r.rendimiento} · ${r.label}`;
+        califEl.appendChild(badgeRend);
+
+        if (grupoCalif) grupoCalif.style.display = '';
+    } else {
+        if (grupoSinCalif) grupoSinCalif.style.display = '';
+    }
+
+    modal.classList.remove('hidden');
 }
 
 // crearFilaTareaInstructor — construye una fila de la tabla de tareas del instructor.
@@ -793,6 +1326,7 @@ async function cargarTareasInstructor() {
 // Sigue el mismo patrón de crearFilaTareaAdmin.
 function crearFilaTareaInstructor(tarea, indice) {
     const fila = document.createElement('tr');
+    fila.dataset.id = tarea.id;
 
     const celdaNum = document.createElement('td');
     celdaNum.textContent = indice + 1;
@@ -800,8 +1334,7 @@ function crearFilaTareaInstructor(tarea, indice) {
     const celdaTitulo = document.createElement('td');
     celdaTitulo.textContent = tarea.title;
 
-    const celdaDesc = document.createElement('td');
-    celdaDesc.textContent = tarea.description || '—';
+    const celdaDesc = crearCeldaDescripcion(tarea);
 
     const celdaEstado = document.createElement('td');
     // Construir el badge de estado con los mismos colores que el panel admin
@@ -816,49 +1349,55 @@ function crearFilaTareaInstructor(tarea, indice) {
     celdaEstado.appendChild(badgeEstado);
 
     const celdaUsuario = document.createElement('td');
-    celdaUsuario.textContent = tarea.assignedUsersDisplay || '—';
+    celdaUsuario.textContent = formatearUsuariosDisplay(tarea.assignedUsersDisplay);
 
     const celdaAcciones = document.createElement('td');
     const contenedor    = document.createElement('div');
     contenedor.classList.add('task-actions');
 
-    // Botón Editar — abre el modal de edición de tarea (el mismo del admin)
-    const btnEditar = document.createElement('button');
-    while (btnEditar.firstChild) btnEditar.removeChild(btnEditar.firstChild);
-    btnEditar.appendChild(crearIconoLucide('pencil'));
-    btnEditar.appendChild(document.createTextNode(' Editar'));
-    if (window.lucide) window.lucide.createIcons();
-    btnEditar.classList.add('btn-action', 'btn-action--edit');
-    btnEditar.type = 'button';
-       btnEditar.addEventListener('click', function() {
-        // manejarEdicionTareaInstructor abre el modal editModal con los datos de la tarea
-        // y registra el submit para que al guardar recargue la tabla del instructor.
-        // Se usa una función separada del admin para no afectar la lógica del admin.
+    // Botón Editar — circular con ícono, igual que en la tabla de usuarios
+    const btnEditar = crearBotonIcono('pencil', 'Editar tarea', 'btn-accion--amarillo', function() {
         manejarEdicionTareaInstructor(tarea);
     });
 
-    // Botón Eliminar — pide confirmación antes de eliminar
-    const btnEliminar = document.createElement('button');
-    while (btnEliminar.firstChild) btnEliminar.removeChild(btnEliminar.firstChild);
-    btnEliminar.appendChild(crearIconoLucide('trash-2'));
-    btnEliminar.appendChild(document.createTextNode(' Eliminar'));
-    if (window.lucide) window.lucide.createIcons();
-    btnEliminar.classList.add('btn-action', 'btn-action--delete');
-    btnEliminar.type = 'button';
-    btnEliminar.addEventListener('click', async function() {
+    // Botón Eliminar — circular con ícono rojo
+    const btnEliminar = crearBotonIcono('trash-2', 'Eliminar tarea', 'btn-accion--rojo', async function() {
         const confirmado = await mostrarConfirmacion(
             '¿Eliminar tarea?',
-            `"${tarea.title}" será eliminada permanentemente.`,
-            'Sí, eliminar'
+            'Sí, eliminar',
+            'Cancelar',
+            `"${tarea.title}" será eliminada permanentemente.`
         );
         if (!confirmado) return;
 
         const eliminado = await eliminarTarea(tarea.id);
         if (eliminado) {
-            await mostrarNotificacion('Tarea eliminada correctamente', 'exito');
-            // Recargar el instructor panel tras la eliminación
-            cargarTareasInstructor();
+            // Eliminar fila ANTES del toast para que sea inmediato
+            const tbody = document.getElementById('instrTasksTableBody');
+            const filaEl = tbody ? tbody.querySelector(`tr[data-id="${tarea.id}"]`) : null;
+            if (filaEl) {
+                filaEl.remove();
+                // Renumerar filas restantes
+                if (tbody) {
+                    Array.from(tbody.querySelectorAll('tr')).forEach(function(fila, i) {
+                        if (fila.cells[0]) fila.cells[0].textContent = i + 1;
+                    });
+                }
+            } else {
+                cargarTareasInstructor();
+            }
+            // Actualizar contador de la card
+            const contador = document.getElementById('instrTasksCount');
+            if (contador && tbody) {
+                const n = tbody.querySelectorAll('tr').length;
+                contador.textContent = `${n} ${n === 1 ? 'tarea' : 'tareas'}`;
+            }
+            // Toast + actualizaciones en background (sin bloquear)
+            mostrarNotificacion('Tarea eliminada correctamente', 'exito');
             cargarDashboardInstructor();
+            cargarTablaUsuariosInstructor();
+            registrarEvento('tarea_eliminada', `Tarea eliminada: "${tarea.title}"`);
+            renderizarAuditoria(document.getElementById('auditoriaContenedor'));
         } else {
             await mostrarNotificacion('Error al eliminar la tarea', 'error');
         }
@@ -868,14 +1407,62 @@ function crearFilaTareaInstructor(tarea, indice) {
     contenedor.appendChild(btnEliminar);
     celdaAcciones.appendChild(contenedor);
 
+    const celdaFecha = document.createElement('td');
+    celdaFecha.className = 'col-fecha';
+    if (tarea.createdAt) {
+        const fecha = new Date(tarea.createdAt);
+        const dia   = fecha.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const hora  = fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+        const spanFecha = document.createElement('span');
+        spanFecha.className   = 'fecha-celda__fecha';
+        spanFecha.textContent = dia;
+        const spanHora = document.createElement('span');
+        spanHora.className   = 'fecha-celda__hora';
+        spanHora.textContent = hora;
+        celdaFecha.appendChild(spanFecha);
+        celdaFecha.appendChild(spanHora);
+    } else {
+        celdaFecha.textContent = '—';
+    }
+
     fila.appendChild(celdaNum);
     fila.appendChild(celdaTitulo);
     fila.appendChild(celdaDesc);
     fila.appendChild(celdaEstado);
     fila.appendChild(celdaUsuario);
+    fila.appendChild(celdaFecha);
     fila.appendChild(celdaAcciones);
 
     return fila;
+}
+
+// actualizarFilaTareaInstructor — actualiza la fila del instructor en-place.
+// Sin reconstruir la tabla completa — evita el parpadeo visual.
+function actualizarFilaTareaInstructor(tarea) {
+    const tbody = document.getElementById('instrTasksTableBody');
+    if (!tbody) return false;
+    const fila = tbody.querySelector(`tr[data-id="${tarea.id}"]`);
+    if (!fila) return false;  // fila no encontrada, caller debe hacer full reload
+
+    // Celda 1 — título
+    if (fila.cells[1]) fila.cells[1].textContent = tarea.title || '—';
+
+    // Celda 2 — descripción (puede tener span interno + botón ver)
+    if (fila.cells[2]) {
+        const span = fila.cells[2].querySelector('span');
+        if (span) span.textContent = tarea.description || '—';
+        else fila.cells[2].firstChild && (fila.cells[2].firstChild.textContent = tarea.description || '—');
+    }
+
+    // Celda 3 — badge estado
+    if (fila.cells[3]) {
+        const badge = fila.cells[3].querySelector('.status-badge');
+        if (badge) {
+            badge.className = `status-badge status-${tarea.status}`;
+            badge.textContent = formatearEstado(tarea.status);
+        }
+    }
+    return true;
 }
 
 // inicializarDropdownInstructor — carga los usuarios en el dropdown de la card Crear Tarea del instructor.
@@ -891,14 +1478,17 @@ async function inicializarDropdownInstructor() {
     // Limpiar el panel
     while (panel.firstChild) panel.removeChild(panel.firstChild);
 
-    if (!usuarios || usuarios.length === 0) {
+    // Solo mostrar estudiantes (role=user) — no admins ni otros instructores
+    const soloEstudiantes = (usuarios || []).filter(u => u.role === 'user');
+
+    if (!soloEstudiantes || soloEstudiantes.length === 0) {
         const vacio = document.createElement('p');
         vacio.className   = 'usuarios-dropdown__vacio-texto';
-        vacio.textContent = 'No hay usuarios disponibles';
+        vacio.textContent = 'No hay estudiantes disponibles';
         panel.appendChild(vacio);
     } else {
         // Usar la misma estructura con avatares que el dropdown del admin
-        usuarios.forEach(function(usuario) {
+        soloEstudiantes.forEach(function(usuario) {
             const opcion   = document.createElement('label');
             opcion.className = 'usuarios-dropdown__opcion';
 
@@ -951,7 +1541,8 @@ async function inicializarDropdownInstructor() {
     }
 
     // Abrir/cerrar el panel al hacer clic en el botón
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
         const abierto = !panel.classList.contains('hidden');
         if (abierto) {
             panel.classList.add('hidden');
@@ -959,6 +1550,15 @@ async function inicializarDropdownInstructor() {
         } else {
             panel.classList.remove('hidden');
             btn.setAttribute('aria-expanded', 'true');
+        }
+    });
+
+    // Cerrar al hacer click fuera del dropdown
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('instrUsuariosDropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+            panel.classList.add('hidden');
+            btn.setAttribute('aria-expanded', 'false');
         }
     });
 }
@@ -972,22 +1572,21 @@ async function cargarDashboard() {
     const data = await obtenerDashboard();
     if (!data) return;
 
-    // Se mapean los ids del DOM con las propiedades de la respuesta del backend
     const el = {
         total:      document.getElementById('dashboardTotal'),
         pendiente:  document.getElementById('dashboardPendiente'),
         progreso:   document.getElementById('dashboardProgreso'),
-        // Nuevo elemento del dashboard para el cuarto estado del sistema
         aprobacion: document.getElementById('dashboardAprobacion'),
         completada: document.getElementById('dashboardCompletada'),
+        reprobada:  document.getElementById('dashboardReprobada'),
     };
 
     if (el.total)      el.total.textContent      = data.total;
     if (el.pendiente)  el.pendiente.textContent   = data.pendientes;
     if (el.progreso)   el.progreso.textContent    = data.enProgreso;
-    // data.aprobacion viene del controlador getDashboard() del backend
     if (el.aprobacion) el.aprobacion.textContent  = data.aprobacion ?? 0;
     if (el.completada) el.completada.textContent  = data.completadas;
+    if (el.reprobada)  el.reprobada.textContent   = data.reprobadas ?? 0;
 }
 
 // ── TABLA USUARIOS ────────────────────────────────────────────────────────────
@@ -1029,6 +1628,8 @@ export async function cargarTablaUsuarios() {
     usuarios.forEach(function(usuario, indice) {
         tbody.appendChild(crearFilaUsuario(usuario, indice));
     });
+    // Inicializar íconos Lucide DESPUÉS de insertar todas las filas al DOM
+    if (window.lucide) window.lucide.createIcons();
 }
 
 // crearBadgeRol — badge visual con el nombre y color del rol del usuario
@@ -1104,11 +1705,13 @@ function crearFilaUsuario(usuario, indice) {
 
     // Columna Rol (badge visual)
     const tdRol = document.createElement('td');
+    tdRol.className = 'col-rol';
     tdRol.appendChild(crearBadgeRol(usuario.role));
     fila.appendChild(tdRol);
 
     // Columna Estado (badge activo/inactivo)
     const tdEstado = document.createElement('td');
+    tdEstado.className = 'col-estado';
     tdEstado.appendChild(crearBadgeEstado(usuario.is_active));
     fila.appendChild(tdEstado);
 
@@ -1131,18 +1734,17 @@ function crearFilaUsuario(usuario, indice) {
         function() { abrirDropdownRol(usuario, fila); }
     ));
 
-    // Botón Desactivar o Activar según estado actual
+    // Botón Desactivar o Activar según estado actual — modal mejorado con motivo obligatorio
     if (usuario.is_active === 1 || usuario.is_active === true) {
         tdAcciones.appendChild(crearBotonIcono('user-x', 'Desactivar usuario', 'btn-accion--gris',
             async function() {
-                const ok = await mostrarConfirmacion(
-                    `¿Desactivar a ${usuario.name}? No podrá iniciar sesión.`,
-                    'Desactivar', 'Cancelar'
-                );
-                if (!ok) return;
+                const resultado = await mostrarModalToggleEstado(usuario.name, 'desactivar');
+                if (!resultado) return; // Canceló
                 try {
                     await desactivarUsuario(usuario.id);
-                    await mostrarNotificacion(`${usuario.name} fue desactivado`, 'exito');
+                    registrarEvento('rol_cambiado', `${usuario.name} fue desactivado`);
+                    renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+                    await mostrarNotificacion(`${usuario.name} fue desactivado. Motivo: ${resultado.motivo}`, 'exito');
                     cargarTablaUsuarios();
                 } catch (error) {
                     await mostrarNotificacion(error.message || 'No se pudo desactivar', 'error');
@@ -1152,13 +1754,13 @@ function crearFilaUsuario(usuario, indice) {
     } else {
         tdAcciones.appendChild(crearBotonIcono('user-check', 'Activar usuario', 'btn-accion--verde',
             async function() {
-                const ok = await mostrarConfirmacion(
-                    `¿Reactivar a ${usuario.name}?`, 'Activar', 'Cancelar'
-                );
-                if (!ok) return;
+                const resultado = await mostrarModalToggleEstado(usuario.name, 'activar');
+                if (!resultado) return; // Canceló
                 try {
                     await reactivarUsuario(usuario.id);
-                    await mostrarNotificacion(`${usuario.name} fue reactivado`, 'exito');
+                    registrarEvento('login', `${usuario.name} fue reactivado`);
+                    renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+                    await mostrarNotificacion(`${usuario.name} fue reactivado. Motivo: ${resultado.motivo}`, 'exito');
                     cargarTablaUsuarios();
                 } catch (error) {
                     await mostrarNotificacion(error.message || 'No se pudo reactivar', 'error');
@@ -1167,23 +1769,30 @@ function crearFilaUsuario(usuario, indice) {
         ));
     }
 
-    // Botón Eliminar de raíz
+    // Botón Eliminar — modal mejorado con modo normal/forzoso y motivo obligatorio
     tdAcciones.appendChild(crearBotonIcono('trash-2', 'Eliminar permanentemente', 'btn-accion--rojo',
         async function() {
-            const ok = await mostrarConfirmacion(
-                `⚠ Eliminar a ${usuario.name} es PERMANENTE. ¿Continuar?`,
-                'Sí, eliminar', 'Cancelar'
-            );
-            if (!ok) return;
+            const estaActivo = usuario.is_active === 1 || usuario.is_active === true;
+            const resultado  = await mostrarModalEliminarUsuario(usuario.name, estaActivo);
+            if (!resultado) return; // Canceló
+
             try {
-                await eliminarUsuario(usuario.id);
-                await mostrarNotificacion(`${usuario.name} eliminado`, 'exito');
+                if (resultado.forzoso) {
+                    // Cierre forzoso — no requiere estado inactivo ni tareas completadas
+                    await forceEliminarUsuario(usuario.id, resultado.motivo);
+                } else {
+                    // Eliminación estándar — el backend valida que esté inactivo
+                    await eliminarUsuario(usuario.id);
+                }
+                await mostrarNotificacion(`${usuario.name} fue eliminado correctamente`, 'exito');
+                registrarEvento('usuario_eliminado', `Usuario eliminado: ${usuario.name}`);
+                renderizarAuditoria(document.getElementById('auditoriaContenedor'));
                 cargarTablaUsuarios();
                 cargarTodasLasTareas();
                 cargarDashboard();
             } catch (error) {
                 await mostrarNotificacion(
-                    'No se puede eliminar: el usuario tiene datos relacionados. Desactívalo en su lugar.',
+                    error.message || 'No se pudo eliminar el usuario',
                     'error'
                 );
             }
@@ -1191,172 +1800,263 @@ function crearFilaUsuario(usuario, indice) {
     ));
 
     fila.appendChild(tdAcciones);
-    if (window.lucide) window.lucide.createIcons();
     return fila;
 }
 
-// abrirDropdownRol — mini-dropdown inline para cambiar el rol de un usuario
+// abrirDropdownRol — modal de selección de rol (reemplaza el dropdown inline anterior)
 function abrirDropdownRol(usuario, filaEl) {
-    const anterior = document.querySelector('.dropdown-rol');
-    if (anterior && anterior.parentNode) anterior.parentNode.removeChild(anterior);
+    // Cerrar modal de rol si ya existe
+    const anteriorOverlay = document.getElementById('modalCambiarRolOverlay');
+    if (anteriorOverlay) anteriorOverlay.remove();
 
-    const dropdown = document.createElement('div');
-    dropdown.className = 'dropdown-rol';
+    const rolActualTexto = { admin: 'Administrador', instructor: 'Instructor', user: 'Estudiante' };
 
-    [
-        { valor: 'user',       texto: 'Estudiante'    },
-        { valor: 'instructor', texto: 'Instructor'    },
-        { valor: 'admin',      texto: 'Administrador' },
-    ].forEach(function(opcion) {
-        if (opcion.valor === usuario.role) return;
-        const item = document.createElement('button');
-        item.className   = 'dropdown-rol__opcion';
-        item.textContent = opcion.texto;
-        item.type        = 'button';
-        item.addEventListener('click', async function() {
-            if (dropdown.parentNode) dropdown.parentNode.removeChild(dropdown);
-            try {
-                await cambiarRolUsuario(usuario.id, opcion.valor);
-                await mostrarNotificacion(`Rol de ${usuario.name} → ${opcion.texto}`, 'exito');
-                cargarTablaUsuarios();
-            } catch (error) {
-                await mostrarNotificacion('No se pudo cambiar el rol', 'error');
-            }
-        });
-        dropdown.appendChild(item);
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-usuario-overlay';
+    overlay.id        = 'modalCambiarRolOverlay';
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-usuario modal-rol--v2';
+
+    // ── HEADER ────────────────────────────────────────────────────────────────
+    const header = document.createElement('div');
+    header.className = 'modal-editar__header';
+
+    const iconoBadge = document.createElement('div');
+    iconoBadge.className = 'modal-editar__icono-badge modal-editar__icono-badge--rol';
+    iconoBadge.appendChild(crearIconoLucide('shield-check'));
+
+    const infoBloque = document.createElement('div');
+    infoBloque.className = 'modal-editar__info';
+
+    const titulo = document.createElement('h2');
+    titulo.className   = 'modal-editar__titulo';
+    titulo.textContent = 'Cambiar rol';
+
+    const subtitulo = document.createElement('p');
+    subtitulo.className   = 'modal-editar__subtitulo';
+    subtitulo.textContent = `${usuario.name} · Rol actual: ${rolActualTexto[usuario.role] || usuario.role}`;
+
+    infoBloque.appendChild(titulo);
+    infoBloque.appendChild(subtitulo);
+
+    const btnCerrar = document.createElement('button');
+    btnCerrar.className = 'modal-v2__cerrar';
+    btnCerrar.type      = 'button';
+    btnCerrar.title     = 'Cerrar';
+    btnCerrar.appendChild(crearIconoLucide('x'));
+    btnCerrar.addEventListener('click', function() { overlay.remove(); });
+
+    header.appendChild(iconoBadge);
+    header.appendChild(infoBloque);
+    header.appendChild(btnCerrar);
+    modal.appendChild(header);
+
+    // ── CUERPO: opciones de rol ───────────────────────────────────────────────
+    const cuerpo = document.createElement('div');
+    cuerpo.className = 'modal-rol__cuerpo';
+
+    const descripcion = document.createElement('p');
+    descripcion.className   = 'modal-rol__descripcion';
+    descripcion.textContent = 'Selecciona el nuevo rol que tendrá este usuario en el sistema:';
+    cuerpo.appendChild(descripcion);
+
+    const rolesInfo = [
+        {
+            valor: 'user',
+            texto: 'Estudiante',
+            desc:  'Puede ver y completar las tareas que le asignen.',
+            icono: 'graduation-cap',
+            clase: 'modal-rol__opcion--estudiante',
+        },
+        {
+            valor: 'instructor',
+            texto: 'Instructor',
+            desc:  'Puede gestionar tareas y supervisar a los estudiantes.',
+            icono: 'book-open',
+            clase: 'modal-rol__opcion--instructor',
+        },
+        {
+            valor: 'admin',
+            texto: 'Administrador',
+            desc:  'Acceso completo: usuarios, tareas y configuración.',
+            icono: 'shield',
+            clase: 'modal-rol__opcion--admin',
+        },
+    ];
+
+    const listaRoles = document.createElement('div');
+    listaRoles.className = 'modal-rol__lista';
+
+    rolesInfo.forEach(function(rol) {
+        const esActual = rol.valor === usuario.role;
+
+        const card = document.createElement('button');
+        card.type      = 'button';
+        card.className = `modal-rol__opcion ${rol.clase}${esActual ? ' modal-rol__opcion--activo' : ''}`;
+        card.disabled  = esActual;
+
+        const iconoWrap = document.createElement('div');
+        iconoWrap.className = 'modal-rol__opcion-icono';
+        iconoWrap.appendChild(crearIconoLucide(rol.icono));
+
+        const textoWrap = document.createElement('div');
+        textoWrap.className = 'modal-rol__opcion-texto';
+
+        const nombreRol = document.createElement('span');
+        nombreRol.className   = 'modal-rol__opcion-nombre';
+        nombreRol.textContent = rol.texto;
+
+        const descRol = document.createElement('span');
+        descRol.className   = 'modal-rol__opcion-desc';
+        descRol.textContent = esActual ? `${rol.desc} (rol actual)` : rol.desc;
+
+        textoWrap.appendChild(nombreRol);
+        textoWrap.appendChild(descRol);
+
+        if (esActual) {
+            const chipActual = document.createElement('span');
+            chipActual.className   = 'modal-rol__chip-actual';
+            chipActual.textContent = 'Actual';
+            card.appendChild(iconoWrap);
+            card.appendChild(textoWrap);
+            card.appendChild(chipActual);
+        } else {
+            card.appendChild(iconoWrap);
+            card.appendChild(textoWrap);
+            card.addEventListener('click', async function() {
+                overlay.remove();
+                try {
+                    await cambiarRolUsuario(usuario.id, rol.valor);
+                    await mostrarNotificacion(`Rol de ${usuario.name} → ${rol.texto}`, 'exito');
+                    registrarEvento('rol_cambiado', `Rol de ${usuario.name} cambiado a ${rol.texto}`);
+                    renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+                    cargarTablaUsuarios();
+                } catch (error) {
+                    await mostrarNotificacion('No se pudo cambiar el rol', 'error');
+                }
+            });
+        }
+
+        listaRoles.appendChild(card);
     });
 
-    filaEl.parentNode.insertBefore(dropdown, filaEl.nextSibling);
+    cuerpo.appendChild(listaRoles);
+    modal.appendChild(cuerpo);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    if (window.lucide) window.lucide.createIcons();
+
+    overlay.addEventListener('click', function(event) {
+        if (event.target === overlay) overlay.remove();
+    });
 }
 
 // ── MODAL EDITAR USUARIO ──────────────────────────────────────────────────────
 
-// Abre un modal dinámico para editar los datos de un usuario (nombre, correo, documento)
-// Sigue la misma lógica de construcción que abrirModalUsuario: createElement + appendChild
-// Parámetro: usuario — objeto con los datos actuales del usuario a editar
+// Abre un modal rediseñado (v2) para editar los datos de un usuario
+// (nombre, correo, documento). Incluye avatar, botón X y diseño consistente con modal-v2.
 async function abrirModalEditarUsuario(usuario) {
-
-    // Se cierra cualquier modal de edición de usuario que ya esté abierto
     cerrarModalEditarUsuarioExistente();
 
-    // Overlay oscuro que cubre toda la pantalla
     const overlay = document.createElement('div');
     overlay.className = 'modal-usuario-overlay';
     overlay.id        = 'modalEditarUsuarioOverlay';
 
-    // Contenedor del modal
     const modal = document.createElement('div');
-    modal.className = 'modal-usuario';
+    modal.className = 'modal-usuario modal-editar--v2';
 
-    // ── Header del modal ──────────────────────────────────────────────────────
+    // ── HEADER ────────────────────────────────────────────────────────────────
     const header = document.createElement('div');
-    header.className = 'modal-usuario__header';
+    header.className = 'modal-editar__header';
 
-    const infoTexto = document.createElement('div');
+    // Ícono de edición en lugar de avatar
+    const iconoBadge = document.createElement('div');
+    iconoBadge.className = 'modal-editar__icono-badge';
+    iconoBadge.appendChild(crearIconoLucide('user-pen'));
 
-    // Título con el nombre actual del usuario
+    // Info
+    const infoBloque = document.createElement('div');
+    infoBloque.className = 'modal-editar__info';
+
     const titulo = document.createElement('h2');
-    titulo.className   = 'modal-usuario__titulo';
-    titulo.textContent = `Editar: ${usuario.name}`;
+    titulo.className   = 'modal-editar__titulo';
+    titulo.textContent = `Editando usuario`;
 
     const subtitulo = document.createElement('p');
-    subtitulo.className   = 'modal-usuario__subtitulo';
-    subtitulo.textContent = `Documento actual: ${usuario.documento || usuario.id}`;
+    subtitulo.className   = 'modal-editar__subtitulo';
+    subtitulo.textContent = usuario.name;
 
-    infoTexto.appendChild(titulo);
-    infoTexto.appendChild(subtitulo);
+    infoBloque.appendChild(titulo);
+    infoBloque.appendChild(subtitulo);
 
-    // Botón de cierre en la esquina del header
+    // Botón cerrar X
     const btnCerrar = document.createElement('button');
-    btnCerrar.className   = 'modal-usuario__cerrar';
-    btnCerrar.type        = 'button';
+    btnCerrar.className = 'modal-v2__cerrar';
+    btnCerrar.type      = 'button';
+    btnCerrar.title     = 'Cerrar';
     btnCerrar.appendChild(crearIconoLucide('x'));
-    if (window.lucide) window.lucide.createIcons();
     btnCerrar.addEventListener('click', cerrarModalEditarUsuarioExistente);
 
-    header.appendChild(infoTexto);
+    header.appendChild(iconoBadge);
+    header.appendChild(infoBloque);
     header.appendChild(btnCerrar);
     modal.appendChild(header);
 
-    // ── Cuerpo: formulario de edición ─────────────────────────────────────────
+    // ── CUERPO: formulario ────────────────────────────────────────────────────
     const cuerpo = document.createElement('div');
-    cuerpo.className = 'modal-usuario__asignar';
+    cuerpo.className = 'modal-editar__cuerpo';
 
     const formEditar = document.createElement('form');
-    formEditar.className = 'form';
+    formEditar.className = 'modal-editar__form';
 
-    // GRUPO DOCUMENTO
-    const grupoDoc = document.createElement('div');
-    grupoDoc.className = 'form__group';
-    const labelDoc = document.createElement('label');
-    labelDoc.setAttribute('for', 'editar-usuario-documento');
-    labelDoc.className   = 'form__label';
-    labelDoc.textContent = 'Número de documento';
-    const inputDoc = document.createElement('input');
-    inputDoc.type        = 'text';
-    inputDoc.id          = 'editar-usuario-documento';
-    inputDoc.className   = 'form__input';
-    inputDoc.placeholder = 'Ej: 1097497124';
-    // Se pre-rellena con el valor actual del usuario
-    inputDoc.value       = usuario.documento || '';
-    grupoDoc.appendChild(labelDoc);
-    grupoDoc.appendChild(inputDoc);
+    // Helper para crear campos del form
+    function crearCampo(id, labelText, value, placeholder) {
+        const grupo = document.createElement('div');
+        grupo.className = 'modal-v2__campo';
 
-    // GRUPO NOMBRE
-    const grupoNombre = document.createElement('div');
-    grupoNombre.className = 'form__group';
-    const labelNombre = document.createElement('label');
-    labelNombre.setAttribute('for', 'editar-usuario-nombre');
-    labelNombre.className   = 'form__label';
-    labelNombre.textContent = 'Nombre completo';
-    const inputNombre = document.createElement('input');
-    inputNombre.type        = 'text';
-    inputNombre.id          = 'editar-usuario-nombre';
-    inputNombre.className   = 'form__input';
-    inputNombre.placeholder = 'Ej: Karol Torres';
-    // Se pre-rellena con el valor actual del usuario
-    inputNombre.value       = usuario.name || '';
-    grupoNombre.appendChild(labelNombre);
-    grupoNombre.appendChild(inputNombre);
+        const label = document.createElement('label');
+        label.setAttribute('for', id);
+        label.className   = 'modal-v2__label';
+        label.textContent = labelText;
 
-    // GRUPO EMAIL
-    const grupoEmail = document.createElement('div');
-    grupoEmail.className = 'form__group';
-    const labelEmail = document.createElement('label');
-    labelEmail.setAttribute('for', 'editar-usuario-email');
-    labelEmail.className   = 'form__label';
-    labelEmail.textContent = 'Correo electrónico';
-    const inputEmail = document.createElement('input');
-    // FEAT #57: type="text" en lugar de "email" para evitar el tooltip nativo del browser.
-    // La validación de formato se hace manualmente en validarFormularioUsuario().
-    inputEmail.type        = 'text';
-    inputEmail.id          = 'editar-usuario-email';
-    inputEmail.className   = 'form__input';
-    inputEmail.placeholder = 'Ej: usuario@correo.com';
-    // Se pre-rellena con el valor actual del usuario
-    inputEmail.value       = usuario.email || '';
-    grupoEmail.appendChild(labelEmail);
-    grupoEmail.appendChild(inputEmail);
+        const input = document.createElement('input');
+        input.type        = 'text';
+        input.id          = id;
+        input.className   = 'form__input';
+        input.placeholder = placeholder;
+        input.value       = value || '';
 
-    // Botón de submit del formulario de edición
+        grupo.appendChild(label);
+        grupo.appendChild(input);
+        return { grupo, input };
+    }
+
+    const { grupo: grupoDoc,    input: inputDoc    } = crearCampo('editar-usuario-documento', 'Número de documento', usuario.documento, 'Ej: 1097497124');
+    const { grupo: grupoNombre, input: inputNombre } = crearCampo('editar-usuario-nombre',    'Nombre completo',     usuario.name,      'Ej: Karol Torres');
+    const { grupo: grupoEmail,  input: inputEmail  } = crearCampo('editar-usuario-email',     'Correo electrónico',  usuario.email,     'Ej: usuario@correo.com');
+
+    // Botón guardar
     const btnGuardar = document.createElement('button');
     btnGuardar.type      = 'submit';
-    btnGuardar.className = 'btn btn--admin-primary';
-    const spanBtn = document.createElement('span');
-    spanBtn.className   = 'btn__text';
-    spanBtn.textContent = 'Guardar Cambios';
-    btnGuardar.appendChild(spanBtn);
+    btnGuardar.className = 'modal-v2__btn-submit modal-v2__btn-submit--admin';
+
+    const iconoGuardar = crearIconoLucide('save');
+    const spanGuardar  = document.createElement('span');
+    spanGuardar.textContent = 'Guardar Cambios';
+
+    btnGuardar.appendChild(iconoGuardar);
+    btnGuardar.appendChild(spanGuardar);
 
     formEditar.appendChild(grupoDoc);
     formEditar.appendChild(grupoNombre);
     formEditar.appendChild(grupoEmail);
     formEditar.appendChild(btnGuardar);
 
-    // Listener del submit: llama a la API para actualizar y recarga la tabla
     formEditar.addEventListener('submit', async function(event) {
         event.preventDefault();
 
-        // FEAT #57: validación completa con mensajes del backend (Zod-matching)
         const valido = await validarFormularioUsuario({
             docInput:   inputDoc,
             nameInput:  inputNombre,
@@ -1371,17 +2071,13 @@ async function abrirModalEditarUsuario(usuario) {
         const nombre    = inputNombre.value.trim();
         const email     = inputEmail.value.trim();
 
-        // Se llama a la capa API con el id del usuario y los datos nuevos
-        const usuarioActualizado = await actualizarUsuario(usuario.id, {
-            documento,
-            name:  nombre,
-            email,
-        });
+        const usuarioActualizado = await actualizarUsuario(usuario.id, { documento, name: nombre, email });
 
         if (usuarioActualizado) {
             cerrarModalEditarUsuarioExistente();
             await mostrarNotificacion(`${nombre} fue actualizado correctamente`, 'exito');
-            // Se recarga la tabla para reflejar los datos actualizados
+            registrarEvento('rol_cambiado', `Datos actualizados: ${nombre}`);
+            renderizarAuditoria(document.getElementById('auditoriaContenedor'));
             cargarTablaUsuarios();
         } else {
             await mostrarNotificacion('Error al actualizar el usuario', 'error');
@@ -1393,13 +2089,13 @@ async function abrirModalEditarUsuario(usuario) {
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    // Clic en el overlay oscuro cierra el modal (igual que el modal de asignar)
+    if (window.lucide) window.lucide.createIcons();
+
     overlay.addEventListener('click', function(event) {
         if (event.target === overlay) cerrarModalEditarUsuarioExistente();
     });
 }
 
-// Cierra y elimina el modal de edición de usuario si existe en el DOM
 function cerrarModalEditarUsuarioExistente() {
     const existing = document.getElementById('modalEditarUsuarioOverlay');
     if (existing) existing.remove();
@@ -1415,24 +2111,24 @@ function actualizarDashboardLocal() {
         total:      document.getElementById('dashboardTotal'),
         pendiente:  document.getElementById('dashboardPendiente'),
         progreso:   document.getElementById('dashboardProgreso'),
-        // Nuevo contador para el cuarto estado del sistema
         aprobacion: document.getElementById('dashboardAprobacion'),
         completada: document.getElementById('dashboardCompletada'),
+        reprobada:  document.getElementById('dashboardReprobada'),
     };
     if (!el.total) return;
 
-    // Se filtran las tareas de memoria por cada uno de los cuatro estados
     const pendientes  = todasLasTareas.filter(t => t.status === 'pendiente').length;
     const enProgreso  = todasLasTareas.filter(t => t.status === 'en_progreso').length;
-    // Cuarto estado: el usuario marcó la tarea como lista para revisión del admin
     const aprobacion  = todasLasTareas.filter(t => t.status === 'pendiente_aprobacion').length;
     const completadas = todasLasTareas.filter(t => t.status === 'completada').length;
+    const reprobadas  = todasLasTareas.filter(t => t.status === 'reprobada').length;
 
     el.total.textContent      = todasLasTareas.length;
     el.pendiente.textContent  = pendientes;
     el.progreso.textContent   = enProgreso;
     if (el.aprobacion) el.aprobacion.textContent = aprobacion;
     el.completada.textContent = completadas;
+    if (el.reprobada)  el.reprobada.textContent  = reprobadas;
 }
 
 // ── TABLA TAREAS ADMIN ────────────────────────────────────────────────────────
@@ -1472,7 +2168,7 @@ export function aplicarFiltrosAdmin() {
     if (resultado.length === 0) {
         const fila = document.createElement('tr');
         const td   = document.createElement('td');
-        td.colSpan        = 6;
+        td.colSpan        = 7;
         td.textContent    = 'No hay tareas que coincidan con los filtros';
         td.style.textAlign = 'center';
         td.style.color    = '#9ca3af';
@@ -1484,6 +2180,8 @@ export function aplicarFiltrosAdmin() {
     resultado.forEach(function(tarea, indice) {
         tbody.appendChild(crearFilaTareaAdmin(tarea, indice));
     });
+    // Inicializar íconos Lucide después de insertar TODAS las filas al DOM
+    if (window.lucide) window.lucide.createIcons();
 }
 
 // Convierte el valor técnico del estado a texto legible en español.
@@ -1496,6 +2194,8 @@ function formatearEstado(estado) {
         // Estado que pone el usuario cuando considera que terminó su trabajo
         pendiente_aprobacion: 'Por aprobar',
         completada:           'Completada',
+        // Estado asignado automáticamente cuando la nota es < 70
+        reprobada:            'Reprobada',
     };
     return mapa[estado] || estado;
 }
@@ -1503,7 +2203,15 @@ function formatearEstado(estado) {
 // Abre el modal de edición compartido para una tarea del panel admin.
 // Al guardar, recarga la tabla de tareas y el dashboard.
 function manejarEdicionTareaAdmin(tarea) {
-    mostrarModalEdicion(tarea);
+    mostrarModalEdicion(tarea, false, 'admin');
+
+    // Admin no puede calificar — ocultar campos exclusivos del instructor
+    const _gradeGrupoA       = document.getElementById('editGradeGrupo');
+    const _gradeReasonGrupoA = document.getElementById('editGradeReasonGrupo');
+    const _chkCalifGrupoA    = document.getElementById('editChkCalifGrupo');
+    if (_gradeGrupoA)       _gradeGrupoA.style.display       = 'none';
+    if (_gradeReasonGrupoA) _gradeReasonGrupoA.style.display = 'none';
+    if (_chkCalifGrupoA)    _chkCalifGrupoA.style.display    = 'none';
 
     const formulario = document.getElementById('editTaskForm');
 
@@ -1511,11 +2219,36 @@ function manejarEdicionTareaAdmin(tarea) {
         event.preventDefault();
 
         const tareaId     = document.getElementById('editTaskId').value;
-        const titulo      = document.getElementById('editTaskTitle').value.trim();
         const descripcion = document.getElementById('editTaskDescription').value.trim();
-        const estado      = document.getElementById('editTaskStatus').value;
         const comentEl    = document.getElementById('editTaskComment');
         const comentario  = comentEl ? comentEl.value.trim() : '';
+
+        // ── Validación frontend centralizada — usa validarFormularioTarea
+        // para que los errores aparezcan tanto en el campo como en el toast
+        const inputTitulo = document.getElementById('editTaskTitle');
+        const inputEstado = document.getElementById('editTaskStatus');
+
+        const errorTitulo = inputTitulo.parentElement.querySelector('.modal-admin__error')
+            || (() => {
+                const el = document.createElement('span');
+                el.className = 'modal-admin__error';
+                inputTitulo.insertAdjacentElement('afterend', el);
+                return el;
+            })();
+        const errorEstado = inputEstado
+            ? inputEstado.parentElement.querySelector('.modal-admin__error')
+            : null;
+
+        const valido = await validarFormularioTarea({
+            titleInput:  inputTitulo,
+            statusInput: inputEstado,
+            titleError:  errorTitulo,
+            statusError: errorEstado,
+        });
+        if (!valido) return;
+
+        const titulo = inputTitulo.value.trim();
+        const estado = inputEstado ? inputEstado.value : '';
 
         const datosActualizados = {
             title:       titulo,
@@ -1524,9 +2257,9 @@ function manejarEdicionTareaAdmin(tarea) {
             comment:     comentario !== '' ? comentario : undefined,
         };
 
-        const tareaActualizada = await actualizarTarea(tareaId, datosActualizados);
+        try {
+            const tareaActualizada = await actualizarTarea(tareaId, datosActualizados);
 
-        if (tareaActualizada) {
             // Actualización local: modifica la tarea en memoria y repinta sin fetch
             const idx = todasLasTareas.findIndex(t => t.id.toString() === tareaId.toString());
             if (idx !== -1) {
@@ -1539,52 +2272,173 @@ function manejarEdicionTareaAdmin(tarea) {
                         : comentario || null,
                 };
             }
+            // Cerrar el modal ANTES del toast para que Swal no tenga conflicto
             ocultarModalEdicion();
             actualizarDashboardLocal();
             aplicarFiltrosAdmin();
+            registrarEvento('tarea_creada', `Tarea actualizada correctamente`);
+            renderizarAuditoria(document.getElementById('auditoriaContenedor'));
             await mostrarNotificacion('Tarea actualizada exitosamente', 'exito');
-        } else {
-            await mostrarNotificacion('Error al actualizar la tarea', 'error');
-        }
 
-        formulario.removeEventListener('submit', guardarCambiosAdmin);
+        } catch (err) {
+            // Si el backend devolvió errores de validación, mostrarlos campo por campo
+            if (err.validationErrors && err.validationErrors.length > 0) {
+                err.validationErrors.forEach(({ field, message }) => {
+                    const inputEl = document.getElementById(
+                        field === 'title'       ? 'editTaskTitle'       :
+                        field === 'description' ? 'editTaskDescription' :
+                        field === 'status'      ? 'editTaskStatus'      :
+                        field === 'comment'     ? 'editTaskComment'     : null
+                    );
+                    if (inputEl) {
+                        const errEl = inputEl.parentElement.querySelector('.modal-admin__error')
+                            || (() => {
+                                const e = document.createElement('span');
+                                e.className = 'modal-admin__error';
+                                inputEl.insertAdjacentElement('afterend', e);
+                                return e;
+                            })();
+                        errEl.textContent = message;
+                        inputEl.style.borderColor = 'var(--color-error, #ef4444)';
+                    }
+                });
+            }
+            // Pequeño delay para asegurar que el DOM haya procesado el estado antes del toast
+            await new Promise(r => setTimeout(r, 50));
+            await mostrarNotificacion(
+                err.validationErrors?.length > 0
+                    ? 'Corrige los errores del formulario'
+                    : 'Error al actualizar la tarea',
+                'error'
+            );
+        } finally {
+            // Siempre se remueve el listener al finalizar, sin importar el resultado
+            formulario.removeEventListener('submit', guardarCambiosAdmin);
+        }
     }
 
     formulario.addEventListener('submit', guardarCambiosAdmin);
 }
 // manejarEdicionTareaInstructor — abre el modal compartido de edición para el instructor.
 // Diferencia con manejarEdicionTareaAdmin:
+//   - Muestra los campos de nota (grade) y motivo de edición de nota
 //   - Al guardar, recarga cargarTareasInstructor() y cargarDashboardInstructor()
 //   - No actualiza todasLasTareas (esa variable es privada del panel admin)
 // Usa el mismo modal editModal y el mismo formulario editTaskForm del index.html.
 function manejarEdicionTareaInstructor(tarea) {
-    // Abrir el modal con los datos de la tarea precargados
-    // mostrarModalEdicion viene de tareasUI.js y rellena los campos del formulario
-    mostrarModalEdicion(tarea);
+    mostrarModalEdicion(tarea, false, 'instructor');
 
-    // Referencia al formulario compartido de edición
+    // Campos de calificación exclusivos del instructor
+    const gradeGrupo       = document.getElementById('editGradeGrupo');
+    const gradeReasonGrupo = document.getElementById('editGradeReasonGrupo');
+    const gradeInput       = document.getElementById('editTaskGrade');
+    const gradeReasonInput = document.getElementById('editTaskGradeReason');
+    const gradeError       = document.getElementById('editGradeError');
+    const gradeReasonError = document.getElementById('editGradeReasonError');
+    const comentarioGrupo  = document.getElementById('editCommentGrupo');
+
+    // Limpiar errores previos
+    if (gradeError)       gradeError.textContent = '';
+    if (gradeReasonError) gradeReasonError.textContent = '';
+
+    // Construir o reusar el grupo del checkbox de calificación
+    let chkGrupo = document.getElementById('editChkCalifGrupo');
+    if (!chkGrupo) {
+        chkGrupo = document.createElement('div');
+        chkGrupo.id        = 'editChkCalifGrupo';
+        chkGrupo.className = 'modal-admin__group modal-admin__group--checkbox';
+        const chkLabel = document.createElement('label');
+        chkLabel.className = 'modal-admin__checkbox-label';
+        const chkInput = document.createElement('input');
+        chkInput.type      = 'checkbox';
+        chkInput.id        = 'editChkCalificar';
+        chkInput.className = 'modal-admin__checkbox';
+        const chkTexto = document.createTextNode(' Editar calificación de tarea');
+        chkLabel.appendChild(chkInput);
+        chkLabel.appendChild(chkTexto);
+        chkGrupo.appendChild(chkLabel);
+        // Insertar antes del grupo de nota
+        if (gradeGrupo && gradeGrupo.parentNode) {
+            gradeGrupo.parentNode.insertBefore(chkGrupo, gradeGrupo);
+        }
+    }
+
+    const chkCalificar = document.getElementById('editChkCalificar');
+
+    // Estado inicial: checkbox OFF → campos ocultos
+    const yaCalificada = tarea.grade !== null && tarea.grade !== undefined;
+    if (chkCalificar) chkCalificar.checked = yaCalificada;
+
+    function actualizarVisibilidadCalif() {
+        const activo = chkCalificar && chkCalificar.checked;
+        if (gradeGrupo)       gradeGrupo.style.display       = activo ? '' : 'none';
+        if (gradeReasonGrupo) gradeReasonGrupo.style.display = activo ? '' : 'none';
+        if (comentarioGrupo)  comentarioGrupo.style.display  = activo ? '' : 'none';
+        // Limpiar errores al cambiar estado
+        if (!activo) {
+            if (gradeError)       gradeError.textContent = '';
+            if (gradeReasonError) gradeReasonError.textContent = '';
+        }
+    }
+
+    if (chkCalificar) chkCalificar.addEventListener('change', actualizarVisibilidadCalif);
+    actualizarVisibilidadCalif();
+
+    // Pre-rellenar la nota actual si existe
+    if (gradeInput) gradeInput.value = yaCalificada ? tarea.grade : '';
+    if (gradeReasonInput) gradeReasonInput.value = '';
+
     const formulario = document.getElementById('editTaskForm');
     if (!formulario) return;
 
-    // Función que se ejecuta al guardar los cambios desde el instructor
-    // Se define como función nombrada para poder removerla después del submit
-    // y evitar que se acumule un listener por cada edición
     async function guardarCambiosInstructor(event) {
         event.preventDefault();
 
-        // Leer los valores actuales del formulario de edición
         const tareaId     = document.getElementById('editTaskId').value;
         const titulo      = document.getElementById('editTaskTitle').value.trim();
         const descripcion = document.getElementById('editTaskDescription').value.trim();
         const estado      = document.getElementById('editTaskStatus').value;
 
-        // El campo comentario puede no existir en todos los formularios de edición
-        const comentEl   = document.getElementById('editTaskComment');
-        const comentario = comentEl && comentEl.value.trim() !== ''
-            ? comentEl.value.trim()
-            : undefined;
+        // Leer nota y motivo SOLO si el checkbox de calificación está activo
+        const chkActivo    = document.getElementById('editChkCalificar');
+        const calificando  = chkActivo && chkActivo.checked;
+        const gradeValStr  = calificando && gradeInput ? gradeInput.value.trim() : '';
+        const gradeReason  = calificando && gradeReasonInput ? gradeReasonInput.value.trim() : '';
+        const comentEl     = document.getElementById('editTaskComment');
+        const comentario   = calificando && comentEl ? comentEl.value.trim() || undefined : undefined;
 
-        // Construir el objeto con los datos actualizados
+        let gradeVal   = undefined;
+        let hayErrores = false;
+
+        if (calificando) {
+            // Validar nota — obligatoria cuando el checkbox está activo
+            if (gradeValStr === '') {
+                if (gradeError) gradeError.textContent = 'La nota es obligatoria para calificar.';
+                hayErrores = true;
+            } else {
+                const n = parseFloat(gradeValStr);
+                if (isNaN(n) || n < 0 || n > 100) {
+                    if (gradeError) gradeError.textContent = 'La nota debe ser un número entre 0 y 100.';
+                    hayErrores = true;
+                } else {
+                    gradeVal = n;
+                    if (gradeError) gradeError.textContent = '';
+                }
+            }
+            // Motivo obligatorio (mín 10 caracteres)
+            if (gradeReason.length < 10) {
+                if (gradeReasonError) gradeReasonError.textContent = 'El motivo es obligatorio (mín. 10 caracteres).';
+                hayErrores = true;
+            } else {
+                if (gradeReasonError) gradeReasonError.textContent = '';
+            }
+        }
+
+        if (hayErrores) {
+            await mostrarNotificacion('Corrige los errores antes de guardar', 'error');
+            return;
+        }
+
         const datosActualizados = {
             title:       titulo,
             description: descripcion !== '' ? descripcion : undefined,
@@ -1592,26 +2446,45 @@ function manejarEdicionTareaInstructor(tarea) {
             comment:     comentario,
         };
 
-        // Llamar al backend para actualizar la tarea
+        // Solo enviar grade si el checkbox estaba activo y se ingresó valor válido
+        if (calificando && gradeVal !== undefined) {
+            // Determinar el estado según la nota: < 70 = reprobada, >= 70 = completada
+            const rendimiento = calcularRendimiento(gradeVal);
+            datosActualizados.grade       = gradeVal;
+            datosActualizados.gradeReason = gradeReason;
+            // Sobreescribir el estado con el resultado de la calificación
+            datosActualizados.status = rendimiento.estado;
+        }
+
         const tareaActualizada = await actualizarTarea(tareaId, datosActualizados);
 
         if (tareaActualizada) {
-            // Cerrar el modal y recargar las tablas del instructor
+            if (gradeGrupo)       gradeGrupo.style.display       = 'none';
+            if (gradeReasonGrupo) gradeReasonGrupo.style.display = 'none';
+            if (comentarioGrupo)  comentarioGrupo.style.display  = 'none';
+            const chkEl = document.getElementById('editChkCalificar');
+            if (chkEl) chkEl.checked = false;
             ocultarModalEdicion();
-            // Se recargan ambas tablas para reflejar los cambios de forma consistente
-            cargarTareasInstructor();
+            // Actualizar fila en-place; si no existe hacer reload completo
+            const actualizado = actualizarFilaTareaInstructor(tareaActualizada);
+            if (!actualizado) cargarTareasInstructor();
             cargarDashboardInstructor();
-            await mostrarNotificacion('Tarea actualizada exitosamente', 'exito');
+            cargarTablaUsuariosInstructor();
+            // Refrescar panel de calificación INMEDIATAMENTE (sin await)
+            // para que si la tarea pasó a pendiente_aprobacion aparezca de una vez
+            cargarPanelCalificacion();
+            // Refrescar calendario sin bloquear la UI
+            obtenerTodasLasTareas().then(function(t) {
+                if (t) crearCalendario({ contenedorId: 'instrCalendario', paleta: 'instructor', soloLectura: false, tareas: t });
+            }).catch(function() {});
+            mostrarNotificacion('Tarea actualizada exitosamente', 'exito'); // sin await
         } else {
             await mostrarNotificacion('Error al actualizar la tarea', 'error');
         }
 
-        // Remover el listener después de ejecutarse para evitar duplicados
-        // en la próxima edición desde el panel instructor
         formulario.removeEventListener('submit', guardarCambiosInstructor);
     }
 
-    // Registrar el listener del submit para esta edición del instructor
     formulario.addEventListener('submit', guardarCambiosInstructor);
 }           
 
@@ -1624,8 +2497,7 @@ function crearFilaTareaAdmin(tarea, indice) {
     const celdaTitulo = document.createElement('td');
     celdaTitulo.textContent = tarea.title;
 
-    const celdaDesc = document.createElement('td');
-    celdaDesc.textContent = tarea.description || '—';
+    const celdaDesc = crearCeldaDescripcion(tarea);
 
     const celdaEstado = document.createElement('td');
     const badge = document.createElement('span');
@@ -1634,42 +2506,48 @@ function crearFilaTareaAdmin(tarea, indice) {
     celdaEstado.appendChild(badge);
 
     const celdaUsuario = document.createElement('td');
-    celdaUsuario.textContent = tarea.assignedUsersDisplay || 'Sin asignar';
+    celdaUsuario.textContent = formatearUsuariosDisplay(tarea.assignedUsersDisplay);
+
+    // Celda de fecha y hora de creación
+    const celdaFecha = document.createElement('td');
+    celdaFecha.className = 'col-fecha';
+    if (tarea.createdAt) {
+        const fecha = new Date(tarea.createdAt);
+        const dia   = fecha.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const hora  = fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+        const spanFecha = document.createElement('span');
+        spanFecha.className   = 'fecha-celda__fecha';
+        spanFecha.textContent = dia;
+        const spanHora = document.createElement('span');
+        spanHora.className   = 'fecha-celda__hora';
+        spanHora.textContent = hora;
+        celdaFecha.appendChild(spanFecha);
+        celdaFecha.appendChild(spanHora);
+    } else {
+        celdaFecha.textContent = '—';
+    }
 
     const celdaAcciones = document.createElement('td');
     const contenedor    = document.createElement('div');
     contenedor.classList.add('task-actions');
 
-    // Botón Editar — abre el modal compartido con el modo usuario
-    const btnEditar = document.createElement('button');
-    while (btnEditar.firstChild) btnEditar.removeChild(btnEditar.firstChild);
-    btnEditar.appendChild(crearIconoLucide('pencil'));
-    btnEditar.appendChild(document.createTextNode(' Editar'));
-    if (window.lucide) window.lucide.createIcons();
-    btnEditar.classList.add('btn-action', 'btn-action--edit');
-    btnEditar.type = 'button';
-    btnEditar.addEventListener('click', function() {
+    // Botón Editar — circular con ícono, igual que en la tabla de usuarios
+    const btnEditar = crearBotonIcono('pencil', 'Editar tarea', 'btn-accion--amarillo', function() {
         manejarEdicionTareaAdmin(tarea);
     });
 
-    const btnEliminar = document.createElement('button');
-    while (btnEliminar.firstChild) btnEliminar.removeChild(btnEliminar.firstChild);
-    btnEliminar.appendChild(crearIconoLucide('trash-2'));
-    btnEliminar.appendChild(document.createTextNode(' Eliminar'));
-    if (window.lucide) window.lucide.createIcons();
-    btnEliminar.classList.add('btn-action', 'btn-action--delete');
-    btnEliminar.type = 'button';
-    btnEliminar.addEventListener('click', async function() {
+    // Botón Eliminar — circular con ícono rojo
+    const btnEliminar = crearBotonIcono('trash-2', 'Eliminar tarea', 'btn-accion--rojo', async function() {
         const confirmado = await mostrarConfirmacion(
             '¿Eliminar tarea?',
-            `"${tarea.title}" será eliminada permanentemente.`,
-            'Sí, eliminar'
+            'Sí, eliminar',
+            'Cancelar',
+            `"${tarea.title}" será eliminada permanentemente.`
         );
         if (!confirmado) return;
 
         const eliminada = await eliminarTarea(tarea.id);
         if (eliminada) {
-            // Eliminación local: quita la tarea de memoria y repinta sin fetch
             todasLasTareas = todasLasTareas.filter(t => t.id !== tarea.id);
             actualizarDashboardLocal();
             aplicarFiltrosAdmin();
@@ -1688,141 +2566,273 @@ function crearFilaTareaAdmin(tarea, indice) {
     fila.appendChild(celdaDesc);
     fila.appendChild(celdaEstado);
     fila.appendChild(celdaUsuario);
+    fila.appendChild(celdaFecha);
     fila.appendChild(celdaAcciones);
 
     return fila;
 }
 
-// ── MODAL USUARIO (admin) ─────────────────────────────────────────────────────
+// ── MODAL USUARIO (admin e instructor) ───────────────────────────────────────
+// Rediseño v2: layout en dos columnas con header de avatar, sección de tareas
+// con scroll propio y formulario de asignación más compacto y visual.
 
 export async function abrirModalUsuario(usuario) {
     cerrarModalUsuarioExistente();
 
+    // Determinar si el modo activo es instructor para usar los colores correctos
+    const esInstructor = document.body.dataset.modo === 'instructor';
+
+    // ── Overlay ───────────────────────────────────────────────────────────────
     const overlay = document.createElement('div');
     overlay.className = 'modal-usuario-overlay';
     overlay.id        = 'modalUsuarioOverlay';
 
+    // ── Panel principal ───────────────────────────────────────────────────────
     const modal = document.createElement('div');
-    modal.className = 'modal-usuario';
+    modal.className = 'modal-usuario modal-usuario--v2';
 
-    // Header
+    // ── HEADER ────────────────────────────────────────────────────────────────
     const header = document.createElement('div');
-    header.className = 'modal-usuario__header';
+    header.className = 'modal-v2__header';
 
-    const infoTexto = document.createElement('div');
+    // Avatar con inicial del nombre
+    const avatar = document.createElement('div');
+    avatar.className = esInstructor ? 'modal-v2__avatar modal-v2__avatar--instructor' : 'modal-v2__avatar modal-v2__avatar--admin';
+    avatar.textContent = usuario.name.charAt(0).toUpperCase();
+
+    // Info del usuario
+    const infoBloque = document.createElement('div');
+    infoBloque.className = 'modal-v2__info';
+
     const titulo = document.createElement('h2');
-    titulo.className   = 'modal-usuario__titulo';
+    titulo.className   = 'modal-v2__titulo';
     titulo.textContent = usuario.name;
-    const subtitulo = document.createElement('p');
-    subtitulo.className   = 'modal-usuario__subtitulo';
-    subtitulo.textContent = `Documento: ${usuario.documento || usuario.id}`;
-    infoTexto.appendChild(titulo);
-    infoTexto.appendChild(subtitulo);
 
+    const metaFila = document.createElement('div');
+    metaFila.className = 'modal-v2__meta';
+
+    const rolMap = { admin: 'Administrador', instructor: 'Instructor', user: 'Estudiante' };
+    const chipRol = document.createElement('span');
+    chipRol.className   = 'modal-v2__chip';
+    chipRol.textContent = rolMap[usuario.role] || usuario.role;
+
+    const chipDoc = document.createElement('span');
+    chipDoc.className   = 'modal-v2__chip modal-v2__chip--gris';
+    chipDoc.textContent = `Doc: ${usuario.documento || usuario.id}`;
+
+    const chipEmail = document.createElement('span');
+    chipEmail.className   = 'modal-v2__chip modal-v2__chip--gris';
+    chipEmail.textContent = usuario.email || '';
+
+    metaFila.appendChild(chipRol);
+    metaFila.appendChild(chipDoc);
+    if (usuario.email) metaFila.appendChild(chipEmail);
+
+    // Chip de calificación promedio — visible para admin e instructor cuando el usuario es estudiante
+    // Usa el campo grade (nota real) en lugar del comment para calcular el promedio
+    if ((esInstructor || document.body.dataset.modo === 'admin') && usuario.role === 'user') {
+        const tareasUsuario = await obtenerTareasDeUsuario(usuario.id);
+        if (tareasUsuario) {
+            const notas = tareasUsuario
+                .filter(t => t.grade !== null && t.grade !== undefined)
+                .map(t => Number(t.grade))
+                .filter(n => !isNaN(n) && n >= 0 && n <= 100);
+            if (notas.length > 0) {
+                const promedio = (notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(1);
+                const r = calcularRendimiento(parseFloat(promedio));
+                const chipCalif = document.createElement('span');
+                chipCalif.className = 'modal-v2__chip';
+                chipCalif.style.cssText = `background:${r.bg};color:${r.color};font-weight:700;`;
+                chipCalif.textContent = `⭐ Promedio: ${promedio}/100 · ${r.rendimiento}`;
+                metaFila.appendChild(chipCalif);
+            } else {
+                // Tiene tareas completadas pero ninguna calificada aún
+                const chipSC = document.createElement('span');
+                chipSC.className = 'modal-v2__chip';
+                chipSC.style.cssText = 'background:#f3f4f6;color:#6b7280;font-style:italic;';
+                chipSC.textContent = 'Sin calificaciones';
+                metaFila.appendChild(chipSC);
+            }
+        }
+    }
+
+    infoBloque.appendChild(titulo);
+    infoBloque.appendChild(metaFila);
+
+    // Botón cerrar
     const btnCerrar = document.createElement('button');
-    btnCerrar.className   = 'modal-usuario__cerrar';
+    btnCerrar.className   = 'modal-v2__cerrar';
     btnCerrar.type        = 'button';
+    btnCerrar.title       = 'Cerrar';
     btnCerrar.appendChild(crearIconoLucide('x'));
-    if (window.lucide) window.lucide.createIcons();
     btnCerrar.addEventListener('click', cerrarModalUsuarioExistente);
 
-    header.appendChild(infoTexto);
+    header.appendChild(avatar);
+    header.appendChild(infoBloque);
     header.appendChild(btnCerrar);
     modal.appendChild(header);
 
-    // Cuerpo: dos columnas
+    // ── CUERPO: dos columnas ──────────────────────────────────────────────────
     const cuerpo = document.createElement('div');
-    cuerpo.className = 'modal-usuario__cuerpo';
+    cuerpo.className = 'modal-v2__cuerpo';
 
-    // ── Columna izquierda: tareas actuales ────────────────────────────────────
-    const seccionTareas = document.createElement('div');
-    seccionTareas.className = 'modal-usuario__tareas';
+    // ── Columna izquierda: tareas asignadas ───────────────────────────────────
+    const colTareas = document.createElement('div');
+    colTareas.className = 'modal-v2__col modal-v2__col--tareas';
 
+    const encabezadoTareas = document.createElement('div');
+    encabezadoTareas.className = 'modal-v2__col-header';
+
+    const iconoTareas = crearIconoLucide('clipboard-list');
     const tituloTareas = document.createElement('h3');
-    tituloTareas.className   = 'modal-usuario__seccion-titulo';
+    tituloTareas.className   = 'modal-v2__col-titulo';
     tituloTareas.textContent = 'Tareas asignadas';
-    seccionTareas.appendChild(tituloTareas);
 
+    encabezadoTareas.appendChild(iconoTareas);
+    encabezadoTareas.appendChild(tituloTareas);
+    colTareas.appendChild(encabezadoTareas);
+
+    // Cargar tareas
     const tareas = await obtenerTareasDeUsuario(usuario.id);
 
+    // Contador de tareas
+    const contador = document.createElement('span');
+    contador.className   = 'modal-v2__contador';
+    const cantidad       = tareas ? tareas.length : 0;
+    contador.textContent = `${cantidad} ${cantidad === 1 ? 'tarea' : 'tareas'}`;
+    encabezadoTareas.appendChild(contador);
+
+    // Lista de tareas con scroll propio
+    const listaTareas = document.createElement('div');
+    listaTareas.className = 'modal-v2__lista-tareas';
+
     if (!tareas || tareas.length === 0) {
-        const p = document.createElement('p');
-        p.className   = 'modal-vacio';
-        p.textContent = 'Este usuario no tiene tareas asignadas.';
-        seccionTareas.appendChild(p);
+        const vacio = document.createElement('div');
+        vacio.className = 'modal-v2__vacio';
+        const iconoVacio = crearIconoLucide('inbox');
+        const textoVacio = document.createElement('span');
+        textoVacio.textContent = 'Sin tareas asignadas';
+        vacio.appendChild(iconoVacio);
+        vacio.appendChild(textoVacio);
+        listaTareas.appendChild(vacio);
     } else {
         tareas.forEach(function(tarea) {
             const item = document.createElement('div');
-            item.className = 'modal-tarea-item';
+            item.className = 'modal-v2__tarea-item';
 
-            const texto = document.createElement('span');
-            texto.textContent = tarea.title;
+            // Título de la tarea — siempre visible arriba
+            const nombre = document.createElement('span');
+            nombre.className   = 'modal-v2__tarea-nombre';
+            nombre.textContent = tarea.title;
+            item.appendChild(nombre);
+
+            // Fila de badges: estado + calificación (siempre visible)
+            const filaBadges = document.createElement('div');
+            filaBadges.className = 'modal-v2__tarea-badges';
 
             const badge = document.createElement('span');
             badge.classList.add('status-badge', `status-${tarea.status}`);
             badge.textContent = formatearEstado(tarea.status);
+            filaBadges.appendChild(badge);
 
-            item.appendChild(texto);
-            item.appendChild(badge);
-            seccionTareas.appendChild(item);
+            // Nota o "Sin calificar" — siempre se muestra
+            if (tarea.grade !== null && tarea.grade !== undefined) {
+                const n = Number(tarea.grade);
+                const r = calcularRendimiento(n);
+                const chipNota = document.createElement('span');
+                chipNota.className = 'status-badge';
+                chipNota.style.cssText = `background:${r.bg};color:${r.color};font-weight:700;`;
+                chipNota.textContent = `${n} / 100 · ${r.rendimiento}`;
+                filaBadges.appendChild(chipNota);
+            } else {
+                const chipSC = document.createElement('span');
+                chipSC.className = 'status-badge';
+                chipSC.style.cssText = 'background:#f3f4f6;color:#6b7280;font-style:italic;';
+                chipSC.textContent = 'Sin calificar';
+                filaBadges.appendChild(chipSC);
+            }
+
+            item.appendChild(filaBadges);
+            listaTareas.appendChild(item);
         });
     }
 
-    cuerpo.appendChild(seccionTareas);
+    colTareas.appendChild(listaTareas);
+    cuerpo.appendChild(colTareas);
 
-    // ── Columna derecha: asignar nueva tarea ──────────────────────────────────
-    const seccionAsignar = document.createElement('div');
-    seccionAsignar.className = 'modal-usuario__asignar';
+    // ── Divisor visual ────────────────────────────────────────────────────────
+    const divisor = document.createElement('div');
+    divisor.className = 'modal-v2__divisor';
+    cuerpo.appendChild(divisor);
 
-    const tituloAsignar = document.createElement('h3');
-    tituloAsignar.className   = 'modal-usuario__seccion-titulo';
-    tituloAsignar.textContent = 'Asignar nueva tarea';
-    seccionAsignar.appendChild(tituloAsignar);
+    // ── Columna derecha: formulario de asignación ─────────────────────────────
+    const colForm = document.createElement('div');
+    colForm.className = 'modal-v2__col modal-v2__col--form';
+
+    const encabezadoForm = document.createElement('div');
+    encabezadoForm.className = 'modal-v2__col-header';
+
+    const iconoForm = crearIconoLucide('plus-circle');
+    const tituloForm = document.createElement('h3');
+    tituloForm.className   = 'modal-v2__col-titulo';
+    tituloForm.textContent = 'Asignar nueva tarea';
+
+    encabezadoForm.appendChild(iconoForm);
+    encabezadoForm.appendChild(tituloForm);
+    colForm.appendChild(encabezadoForm);
 
     const formAsignar = document.createElement('form');
-    formAsignar.className = 'form';
+    formAsignar.className = 'modal-v2__form';
 
-    // Campo título
+    // ── Campo Título ──────────────────────────────────────────────────────────
     const grupoTitulo = document.createElement('div');
-    grupoTitulo.className = 'form__group';
+    grupoTitulo.className = 'modal-v2__campo';
+
     const labelTitulo = document.createElement('label');
     labelTitulo.setAttribute('for', 'modal-tarea-titulo');
-    labelTitulo.className   = 'form__label';
+    labelTitulo.className   = 'modal-v2__label';
     labelTitulo.textContent = 'Título';
+
     const inputTitulo = document.createElement('input');
     inputTitulo.type        = 'text';
     inputTitulo.id          = 'modal-tarea-titulo';
     inputTitulo.className   = 'form__input';
-    inputTitulo.placeholder = 'Título de la tarea';
+    inputTitulo.placeholder = 'Ej: Revisar documentación del proyecto';
+
     grupoTitulo.appendChild(labelTitulo);
     grupoTitulo.appendChild(inputTitulo);
 
-    // Campo descripción
+    // ── Campo Descripción ─────────────────────────────────────────────────────
     const grupoDesc = document.createElement('div');
-    grupoDesc.className = 'form__group';
+    grupoDesc.className = 'modal-v2__campo';
+
     const labelDesc = document.createElement('label');
     labelDesc.setAttribute('for', 'modal-tarea-desc');
-    labelDesc.className   = 'form__label';
+    labelDesc.className = 'modal-v2__label';
     labelDesc.textContent = 'Descripción ';
-    const spanOpcional = document.createElement('span');
-    spanOpcional.className   = 'form__label--opcional';
-    spanOpcional.textContent = '(opcional)';
-    labelDesc.appendChild(spanOpcional);
+    const spanOpc = document.createElement('span');
+    spanOpc.className   = 'form__label--opcional';
+    spanOpc.textContent = '(opcional)';
+    labelDesc.appendChild(spanOpc);
+
     const textareaDesc = document.createElement('textarea');
     textareaDesc.id          = 'modal-tarea-desc';
     textareaDesc.className   = 'form__input form__textarea';
     textareaDesc.rows        = 2;
-    textareaDesc.placeholder = 'Descripción…';
+    textareaDesc.placeholder = 'Descripción detallada de la tarea...';
+
     grupoDesc.appendChild(labelDesc);
     grupoDesc.appendChild(textareaDesc);
 
-    // Campo estado
+    // ── Campo Estado ──────────────────────────────────────────────────────────
     const grupoEstado = document.createElement('div');
-    grupoEstado.className = 'form__group';
+    grupoEstado.className = 'modal-v2__campo';
+
     const labelEstado = document.createElement('label');
     labelEstado.setAttribute('for', 'modal-tarea-estado');
-    labelEstado.className   = 'form__label';
-    labelEstado.textContent = 'Estado';
+    labelEstado.className   = 'modal-v2__label';
+    labelEstado.textContent = 'Estado inicial';
+
     const selectEstado = document.createElement('select');
     selectEstado.id        = 'modal-tarea-estado';
     selectEstado.className = 'form__input';
@@ -1830,49 +2840,55 @@ export async function abrirModalUsuario(usuario) {
     const optDefault = document.createElement('option');
     optDefault.value = ''; optDefault.disabled = true; optDefault.selected = true;
     optDefault.textContent = 'Selecciona un estado';
+    selectEstado.appendChild(optDefault);
 
-    // El admin solo puede crear tareas con estos 3 estados (no "pendiente_aprobacion",
-    // ese lo pone el usuario cuando termina su trabajo)
+    // Solo se permiten estados iniciales al crear — el usuario gestiona los demás
     [
         ['pendiente',   'Pendiente'],
         ['en_progreso', 'En Progreso'],
-        ['completada',  'Completada'],
     ].forEach(([v, t]) => {
         const opt = document.createElement('option');
         opt.value = v; opt.textContent = t;
         selectEstado.appendChild(opt);
     });
 
-    selectEstado.insertBefore(optDefault, selectEstado.firstChild);
     grupoEstado.appendChild(labelEstado);
     grupoEstado.appendChild(selectEstado);
 
-    // Campo comentario (opcional)
+    // ── Campo Comentario ──────────────────────────────────────────────────────
     const grupoComentario = document.createElement('div');
-    grupoComentario.className = 'form__group';
+    grupoComentario.className = 'modal-v2__campo';
+
     const labelComentario = document.createElement('label');
     labelComentario.setAttribute('for', 'modal-tarea-comentario');
-    labelComentario.className = 'form__label';
+    labelComentario.className = 'modal-v2__label';
     labelComentario.textContent = 'Comentario ';
-    const spanOpcionalComentario = document.createElement('span');
-    spanOpcionalComentario.className   = 'form__label--opcional';
-    spanOpcionalComentario.textContent = '(opcional)';
-    labelComentario.appendChild(spanOpcionalComentario);
+    const spanOpcComentario = document.createElement('span');
+    spanOpcComentario.className   = 'form__label--opcional';
+    spanOpcComentario.textContent = '(opcional)';
+    labelComentario.appendChild(spanOpcComentario);
+
     const textareaComentario = document.createElement('textarea');
     textareaComentario.id          = 'modal-tarea-comentario';
     textareaComentario.className   = 'form__input form__textarea';
     textareaComentario.rows        = 2;
     textareaComentario.placeholder = 'Agrega un comentario inicial...';
+
     grupoComentario.appendChild(labelComentario);
     grupoComentario.appendChild(textareaComentario);
 
-    // Botón
+    // ── Botón submit ──────────────────────────────────────────────────────────
     const btnAsignar = document.createElement('button');
     btnAsignar.type      = 'submit';
-    btnAsignar.className = 'btn btn--admin-primary';
+    btnAsignar.className = esInstructor
+        ? 'btn modal-v2__btn-submit modal-v2__btn-submit--instructor'
+        : 'btn modal-v2__btn-submit modal-v2__btn-submit--admin';
+
+    const iconoSubmit = crearIconoLucide('send');
     const spanBtn = document.createElement('span');
-    spanBtn.className   = 'btn__text';
     spanBtn.textContent = 'Asignar Tarea';
+
+    btnAsignar.appendChild(iconoSubmit);
     btnAsignar.appendChild(spanBtn);
 
     formAsignar.appendChild(grupoTitulo);
@@ -1881,15 +2897,15 @@ export async function abrirModalUsuario(usuario) {
     formAsignar.appendChild(grupoComentario);
     formAsignar.appendChild(btnAsignar);
 
+    // ── Submit handler ────────────────────────────────────────────────────────
     formAsignar.addEventListener('submit', async function(event) {
         event.preventDefault();
 
-        const titulo     = inputTitulo.value.trim();
-        const desc       = textareaDesc.value.trim();
-        const estado     = selectEstado.value;
-        const comentario = textareaComentario.value.trim();
+        const tituloVal    = inputTitulo.value.trim();
+        const descVal      = textareaDesc.value.trim();
+        const estadoVal    = selectEstado.value;
+        const comentarioVal = textareaComentario.value.trim();
 
-        // FEAT #57: validación con mensajes del backend (Zod-matching)
         const validoTarea = await validarFormularioTarea({
             titleInput:  inputTitulo,
             statusInput: selectEstado,
@@ -1899,37 +2915,41 @@ export async function abrirModalUsuario(usuario) {
         if (!validoTarea) return;
 
         const datosTarea = {
-            title:         titulo,
-            description:   desc !== '' ? desc : undefined,
-            status:        estado,
-            comment:       comentario !== '' ? comentario : undefined,
+            title:         tituloVal,
+            description:   descVal      !== '' ? descVal      : undefined,
+            status:        estadoVal,
+            comment:       comentarioVal !== '' ? comentarioVal : undefined,
             assignedUsers: [Number(usuario.id)],
         };
-
-        console.log('datosTarea enviado:', JSON.stringify(datosTarea));
 
         const tareaCreada = await registrarTarea(datosTarea);
 
         if (tareaCreada) {
-            // CORRECCIÓN: se cierra el modal automáticamente al crear la tarea.
-            // Antes se rearía el modal llamando de nuevo a abrirModalUsuario(),
-            // lo que provocaba que el usuario tuviera que cerrarlo manualmente.
-            // Ahora se cierra solo y se recargan los datos en segundo plano.
             cerrarModalUsuarioExistente();
-            cargarTodasLasTareas();  // Recarga inmediata ANTES de la notificación
-            cargarDashboard();
-            await mostrarNotificacion(`Tarea "${titulo}" asignada correctamente`, 'exito');
+            // Recargar datos según el panel activo
+            if (esInstructor) {
+                cargarTareasInstructor();
+            } else {
+                cargarTodasLasTareas();
+                cargarDashboard();
+            }
+            await mostrarNotificacion(`Tarea "${tituloVal}" asignada correctamente`, 'exito');
+            registrarEvento('tarea_creada', `Tarea asignada: "${tituloVal}"`);
+            renderizarAuditoria(document.getElementById('auditoriaContenedor'));
         } else {
             await mostrarNotificacion('Error al asignar la tarea', 'error');
         }
     });
 
-    seccionAsignar.appendChild(formAsignar);
-    cuerpo.appendChild(seccionAsignar);
+    colForm.appendChild(formAsignar);
+    cuerpo.appendChild(colForm);
     modal.appendChild(cuerpo);
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+
+    // Inicializar íconos Lucide recién creados
+    if (window.lucide) window.lucide.createIcons();
 
     overlay.addEventListener('click', function(event) {
         if (event.target === overlay) cerrarModalUsuarioExistente();
@@ -1974,6 +2994,11 @@ function registrarCardsContraibles() {
         if (!encabezado || !cuerpo) return;
 
         const botonFlecha = encabezado.querySelector('.btn-toggle-card');
+
+        // Estado inicial: todas las cards arrancan contraídas
+        cuerpo.classList.add('oculto');
+        if (botonFlecha) botonFlecha.classList.add('contraido');
+        encabezado.classList.add('sin-borde');
 
         // Listener en el encabezado completo para que el clic en cualquier parte lo active
         encabezado.addEventListener('click', function() {
@@ -2248,6 +3273,15 @@ async function manejarCerrarSesion() {
     // Borrar todos los datos de sesión del localStorage
     // cerrarSesion() está en src/utils/sesion.js y elimina accessToken,
     // refreshToken y usuarioActual en un solo paso
+    if (window._panelCalificacionInterval) {
+        clearInterval(window._panelCalificacionInterval);
+        window._panelCalificacionInterval = null;
+    }
+    if (window._panelCalificacionInterval) {
+        clearInterval(window._panelCalificacionInterval);
+        window._panelCalificacionInterval = null;
+    }
+    registrarEvento('logout', 'Sesión cerrada');
     cerrarSesion();
 
     // Limpiar los campos del formulario antes de mostrar la pantalla de inicio
@@ -2434,10 +3468,10 @@ function registrarListenerCambioPassword() {
     function abrirModalPassword() {
         if (form) form.reset();
         // Limpiar mensajes de error del formulario anterior
-        const errores = modal.querySelectorAll('.form__error');
+        const errores = modal.querySelectorAll('.form__error, .modal-admin__error');
         errores.forEach(el => { el.textContent = ''; });
         // Limpiar clases de error de los inputs
-        const inputs = modal.querySelectorAll('.form__input');
+        const inputs = modal.querySelectorAll('.form__input, .modal-admin__input');
         inputs.forEach(el => el.classList.remove('error'));
         modal.classList.remove('hidden');
     }
@@ -2474,6 +3508,12 @@ function registrarListenerCambioPassword() {
     }
 
     // Submit del formulario de cambio de contraseña
+    // También escucha el botón externo al form (modal-admin__btn-guardar)
+    const btnSubmitExterno = document.getElementById('cambioPasswordSubmit');
+    if (btnSubmitExterno && form) {
+        btnSubmitExterno.addEventListener('click', function() { form.dispatchEvent(new Event('submit')); });
+    }
+
     if (form) {
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -2607,10 +3647,12 @@ export function registrarEventosNavegacion() {
                 // Sin este bloque completo, el instructor aterrizaba en la vista de usuario
                 if (datos.user.role === 'admin') {
                     // El rol admin activa el panel de administración con CRUD completo
+                    registrarEvento('login', `Sesión iniciada: ${datos.user.name}`);
                     await activarModoAdmin();
                 } else if (datos.user.role === 'instructor') {
                     // El rol instructor activa el panel docente con paleta verde
                     // Esta línea faltaba — causaba que instructor viera la vista de usuario
+                    registrarEvento('login', `Sesión iniciada: ${datos.user.name}`);
                     await activarModoInstructor();
                 } else {
                     // El rol user activa el panel personal con solo sus tareas
@@ -2680,7 +3722,9 @@ export function registrarEventosNavegacion() {
     // cualquier arreglo como archivo JSON con nombre y fecha en el nombre del archivo
     const btnExportarUsuariosAdmin = document.getElementById('adminBtnExportarUsuarios');
     if (btnExportarUsuariosAdmin) {
-        btnExportarUsuariosAdmin.addEventListener('click', async function() {
+        btnExportarUsuariosAdmin.addEventListener('click', async function(event) {
+            // Detener la propagación para que el clic no active el toggle de la card
+            event.stopPropagation();
             // Obtener la lista actualizada de usuarios desde el backend
             // No usamos una variable local porque puede haber usuarios nuevos desde que cargó la tabla
             const usuarios = await obtenerTodosLosUsuarios();
@@ -2698,7 +3742,9 @@ export function registrarEventosNavegacion() {
     // Usa los mismos datos del backend (todos los usuarios del sistema)
     const btnExportarUsuariosInstr = document.getElementById('instrBtnExportarUsuarios');
     if (btnExportarUsuariosInstr) {
-        btnExportarUsuariosInstr.addEventListener('click', async function() {
+        btnExportarUsuariosInstr.addEventListener('click', async function(event) {
+            // stopPropagation evita que el clic active el toggle de la card contenedora
+            event.stopPropagation();
             const usuarios = await obtenerTodosLosUsuarios();
             const exportado = exportarListaJSON(usuarios, 'usuarios');
             if (!exportado) {
@@ -2717,7 +3763,6 @@ export function registrarEventosNavegacion() {
     const btnAplicarInstr = document.getElementById('instrBtnAplicarFiltros');
     if (btnAplicarInstr) {
         btnAplicarInstr.addEventListener('click', function() {
-            // Aplicar los filtros seleccionados en los controles del instructor
             aplicarFiltrosInstructor();
         });
     }
@@ -2725,11 +3770,28 @@ export function registrarEventosNavegacion() {
     const btnLimpiarInstr = document.getElementById('instrBtnLimpiarFiltros');
     if (btnLimpiarInstr) {
         btnLimpiarInstr.addEventListener('click', function() {
-            // Limpiar el select de estado y recargar todas las tareas sin filtro
-            const filtroEstadoInstr = document.getElementById('instrFiltroEstado');
-            if (filtroEstadoInstr) filtroEstadoInstr.value = '';
-            // Recargar la tabla del instructor sin filtros activos
+            const filtroEstadoInstr  = document.getElementById('instrFiltroEstado');
+            const filtroUsuarioInstr = document.getElementById('instrFiltroUsuario');
+            const ordenInstr         = document.getElementById('instrOrdenSelect');
+            if (filtroEstadoInstr)  filtroEstadoInstr.value  = '';
+            if (filtroUsuarioInstr) filtroUsuarioInstr.value = '';
+            if (ordenInstr)         ordenInstr.value         = '';
             cargarTareasInstructor();
+        });
+    }
+
+    // Exportar tareas — panel instructor
+    const btnExportarTareasInstr = document.getElementById('instrBtnExportarTareas');
+    if (btnExportarTareasInstr) {
+        btnExportarTareasInstr.addEventListener('click', async function(event) {
+            event.stopPropagation();
+            const tareas = await obtenerTodasLasTareas();
+            const exportado = exportarTareasJSON(tareas);
+            if (!exportado) {
+                mostrarNotificacion('No hay tareas para exportar', 'advertencia');
+            } else {
+                mostrarNotificacion('Tareas exportadas correctamente', 'exito');
+            }
         });
     }
 
@@ -2973,6 +4035,10 @@ export function registrarEventosNavegacion() {
                 // Recargar las tablas del instructor para mostrar la nueva tarea
                 cargarTareasInstructor();
                 cargarDashboardInstructor();
+                // Refrescar calendario al crear nueva tarea
+                obtenerTodasLasTareas().then(function(t) {
+                    if (t) crearCalendario({ contenedorId: 'instrCalendario', paleta: 'instructor', soloLectura: false, tareas: t });
+                }).catch(function() {});
                 await mostrarNotificacion(`Tarea "${datosTarea.title}" creada correctamente`, 'exito');
             } else {
                 await mostrarNotificacion('Error al crear la tarea', 'error');
@@ -3122,7 +4188,13 @@ export function registrarEventosNavegacion() {
             const accion  = btn.dataset.action;
             const tareaId = btn.dataset.id;
 
-            if (accion === 'edit') {
+            if (accion === 'ver') {
+                // Usar obtenerTareaPorId para tener todos los datos (incluyendo assignedUsersDisplay)
+                // Reconstruir desde el DOM no tiene el nombre del usuario asignado
+                const tareaFresca = await obtenerTareaPorId(tareaId);
+                abrirModalVerTarea(tareaFresca || { id: tareaId });
+
+            } else if (accion === 'edit') {
                 // Buscar la tarea completa en el DOM para pasarla al modal
                 // Se reconstruye el objeto desde las celdas de la fila
                 const fila        = btn.closest('tr');
@@ -3151,6 +4223,12 @@ export function registrarEventosNavegacion() {
                 const formularioClonado = formularioEdicion.cloneNode(true);
                 formularioEdicion.parentNode.replaceChild(formularioClonado, formularioEdicion);
 
+                // Re-registrar Cancelar y X en el form clonado (cloneNode pierde los listeners)
+                const btnCancelClone = document.getElementById('editCancelBtn');
+                if (btnCancelClone) btnCancelClone.addEventListener('click', ocultarModalEdicion);
+                const btnCloseClone  = document.getElementById('editCloseBtn');
+                if (btnCloseClone)  btnCloseClone.addEventListener('click', ocultarModalEdicion);
+
                 formularioClonado.addEventListener('submit', async function(ev) {
                     ev.preventDefault();
 
@@ -3172,6 +4250,10 @@ export function registrarEventosNavegacion() {
                         actualizarFilaTarea(tareaActualizada);
                         ocultarModalEdicion();
                         await mostrarNotificacion('Tarea actualizada correctamente', 'exito');
+                        try {
+                            const tareasAct = await obtenerTodasLasTareas();
+                            crearCalendario({ contenedorId: 'instrCalendario', paleta: 'instructor', soloLectura: false, tareas: tareasAct });
+                        } catch { /* calendar refresh opcional */ }
                     } else {
                         await mostrarNotificacion('Error al actualizar la tarea', 'error');
                     }
@@ -3202,34 +4284,41 @@ export function registrarEventosNavegacion() {
     // Al final del cuerpo de registrarEventosNavegacion():
     registrarListenerCambioPassword();
     registrarListenerOlvidoPassword();
+
+    // Modal Ver Tarea — solo lectura
+    const verTareaModal = document.getElementById('verTareaModal');
+    const verTareaClose = document.getElementById('verTareaClose');
+    const verTareaCerrar = document.getElementById('verTareaCerrar');
+    function cerrarVerTarea() { if (verTareaModal) verTareaModal.classList.add('hidden'); }
+    if (verTareaClose)  verTareaClose.addEventListener('click', cerrarVerTarea);
+    if (verTareaCerrar) verTareaCerrar.addEventListener('click', cerrarVerTarea);
+    if (verTareaModal)  verTareaModal.addEventListener('click', function(e) { if (e.target === verTareaModal) cerrarVerTarea(); });
 }
 
 // cargarDashboardUsuario — carga las estadísticas del dashboard en el panel de usuario.
 // Usa IDs distintos a los del panel admin para que ambos paneles puedan coexistir
 // en el DOM sin sobrescribirse mutuamente.
 // Se llama desde activarModoUsuario() al entrar al panel de usuario.
-async function cargarDashboardUsuario() {
-    // obtenerDashboard viene de tareasApi.js y hace GET /api/tasks/dashboard
-    // Retorna { total, pendientes, enProgreso, aprobacion, completadas }
-    const data = await obtenerDashboard();
-    if (!data) return;
+function cargarDashboardUsuario(tareas) {
+    // Recibe las tareas ya cargadas en activarModoUsuario
+    // No hace fetch extra — evita el 401 por userId=undefined
+    if (!tareas || !Array.isArray(tareas)) return;
 
-    // Se mapean los IDs del DOM del panel usuario con las propiedades de la respuesta
-    // Los IDs tienen el prefijo "userDash" para distinguirlos de los del panel admin
     const el = {
         total:      document.getElementById('userDashTotal'),
         pendiente:  document.getElementById('userDashPendiente'),
         progreso:   document.getElementById('userDashProgreso'),
         aprobacion: document.getElementById('userDashAprobacion'),
         completada: document.getElementById('userDashCompletada'),
+        reprobada:  document.getElementById('userDashReprobada'),
     };
 
-    // Asignar los valores solo si el elemento existe en el DOM
-    if (el.total)      el.total.textContent      = data.total;
-    if (el.pendiente)  el.pendiente.textContent   = data.pendientes;
-    if (el.progreso)   el.progreso.textContent    = data.enProgreso;
-    if (el.aprobacion) el.aprobacion.textContent  = data.aprobacion ?? 0;
-    if (el.completada) el.completada.textContent  = data.completadas;
+    if (el.total)      el.total.textContent      = tareas.length;
+    if (el.pendiente)  el.pendiente.textContent  = tareas.filter(function(t) { return t.status === 'pendiente'; }).length;
+    if (el.progreso)   el.progreso.textContent   = tareas.filter(function(t) { return t.status === 'en_progreso'; }).length;
+    if (el.aprobacion) el.aprobacion.textContent = tareas.filter(function(t) { return t.status === 'pendiente_aprobacion'; }).length;
+    if (el.completada) el.completada.textContent = tareas.filter(function(t) { return t.status === 'completada'; }).length;
+    if (el.reprobada)  el.reprobada.textContent  = tareas.filter(function(t) { return t.status === 'reprobada'; }).length;
 }
 
 // registrarListenerOlvidoPassword — registra todos los eventos del flujo de recuperación.

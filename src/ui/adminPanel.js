@@ -11,7 +11,7 @@
 // Ninguna línea de este archivo usa innerHTML ni atributos style en JS.
 
 // Se importan las funciones de la capa API para operaciones CRUD de usuarios
-import { obtenerTodosLosUsuarios, crearUsuario, eliminarUsuario } from '../api/usuariosApi.js';
+import { obtenerTodosLosUsuarios, crearUsuario, eliminarUsuario, forceEliminarUsuario } from '../api/usuariosApi.js';
 
 // Se importa la URL base para construir las peticiones de tareas
 import { obtenerTodasLasTareas } from '../api/tareasApi.js';
@@ -19,7 +19,7 @@ import { obtenerTodasLasTareas } from '../api/tareasApi.js';
 // Se importan las funciones centralizadas de notificaciones.
 // adminPanel.js no debe importar Swal directamente; toda notificación
 // visual debe pasar por notificaciones.js según la guía 3 del proyecto.
-import { mostrarNotificacion, mostrarConfirmacion } from '../utils/notificaciones.js';
+import { mostrarNotificacion, mostrarConfirmacion, mostrarModalEliminarUsuario } from '../utils/notificaciones.js';
 
 // Función principal que monta el panel de administración en el contenedor recibido
 // Parámetro: contenedor — el elemento HTML donde se renderiza todo el panel
@@ -250,6 +250,14 @@ async function renderizarTablaUsuarios(contenedor) {
         // Celda con el nombre completo
         const celdaNombre = document.createElement('td');
         celdaNombre.textContent = usuario.name;
+        // Si el usuario está inactivo (borrado suave), se añade un badge visual
+        if (usuario.is_active === 0 || usuario.is_active === false) {
+            const badge = document.createElement('span');
+            badge.className   = 'status-badge status-inactivo';
+            badge.textContent = 'Inactivo';
+            badge.style.marginLeft = '6px';
+            celdaNombre.appendChild(badge);
+        }
 
         // Celda con el correo electrónico
         const celdaEmail = document.createElement('td');
@@ -260,13 +268,16 @@ async function renderizarTablaUsuarios(contenedor) {
         const divAcciones   = document.createElement('div');
         divAcciones.className = 'task-actions';
 
-        // Botón eliminar — data-id y data-nombre permiten leerlos desde el listener delegado
+        // Botón eliminar — data-id, data-nombre y data-activo permiten leerlos desde el listener delegado
         const btnEliminar = document.createElement('button');
         btnEliminar.type        = 'button';
         btnEliminar.className   = 'btn-action btn-action--delete';
-        btnEliminar.textContent = '🗑 Eliminar';
+        // Si ya está inactivo, mostrar "Reactivar"; si está activo, mostrar "Desactivar"
+        const estaActivo = usuario.is_active === 1 || usuario.is_active === true;
+        btnEliminar.textContent = estaActivo ? '🗑 Desactivar' : '✅ Reactivar';
         btnEliminar.dataset.id     = usuario.id;
         btnEliminar.dataset.nombre = usuario.name;
+        btnEliminar.dataset.activo = estaActivo ? '1' : '0';
 
         divAcciones.appendChild(btnEliminar);
         celdaAcciones.appendChild(divAcciones);
@@ -292,27 +303,55 @@ async function renderizarTablaUsuarios(contenedor) {
 
         const userId        = boton.dataset.id;
         const nombreUsuario = boton.dataset.nombre;
+        const estaActivo    = boton.dataset.activo === '1';
 
-        // Se pide confirmación con SweetAlert2 antes de eliminar
-        // buttonsStyling: false es necesario para que customClass funcione en los botones
-        // Se usa mostrarConfirmacion centralizado en lugar de Swal directo.
-        const confirmado = await mostrarConfirmacion(
-            '¿Eliminar usuario?',
-            `"${nombreUsuario}" será eliminado permanentemente.`,
-            'Sí, eliminar'
-        );
+        // Si el usuario está inactivo, se ofrece reactivarlo directamente
+        if (!estaActivo) {
+            const confirmar = await mostrarConfirmacion(
+                `¿Reactivar a ${nombreUsuario}?`,
+                'El usuario podrá volver a iniciar sesión en el sistema.'
+            );
+            if (!confirmar) return;
+            try {
+                const { reactivarUsuario } = await import('../api/usuariosApi.js');
+                const reactivado = await reactivarUsuario(userId);
+                if (reactivado) {
+                    await mostrarNotificacion(`${nombreUsuario} fue reactivado correctamente`, 'exito');
+                    await renderizarTablaUsuarios(contenedor);
+                } else {
+                    await mostrarNotificacion('Error al reactivar el usuario', 'error');
+                }
+            } catch (error) {
+                await mostrarNotificacion(error.message || 'Error al reactivar el usuario', 'error');
+            }
+            return;
+        }
 
-        if (!confirmado) return;
+        // Modal mejorado con modo normal (desactivar) o forzoso (eliminar permanente)
+        const resultado = await mostrarModalEliminarUsuario(nombreUsuario, estaActivo);
+        if (!resultado) return;
 
-        // Se llama a la capa API para eliminar el usuario del servidor
-        const exitoso = await eliminarUsuario(userId);
+        let exitoso = false;
+        try {
+            if (resultado.forzoso) {
+                exitoso = await forceEliminarUsuario(userId, resultado.motivo);
+            } else {
+                // Borrado suave: desactiva el usuario (is_active = 0) sin eliminarlo
+                exitoso = await eliminarUsuario(userId);
+            }
+        } catch (error) {
+            await mostrarNotificacion(error.message || 'Error al desactivar el usuario', 'error');
+            return;
+        }
 
         if (exitoso) {
-            // Se notifica el éxito de la eliminación con el módulo centralizado.
-            await mostrarNotificacion('Usuario eliminado correctamente', 'exito');
+            const mensaje = resultado.forzoso
+                ? 'Usuario eliminado permanentemente'
+                : `${nombreUsuario} fue desactivado correctamente`;
+            await mostrarNotificacion(mensaje, 'exito');
             await renderizarTablaUsuarios(contenedor);
         } else {
-            await mostrarNotificacion('Error al eliminar el usuario', 'error');
+            await mostrarNotificacion('Error al procesar la operación', 'error');
         }
     });
 }
@@ -389,11 +428,9 @@ async function montarSeccionTareas(contenedor) {
         celdaEstado.appendChild(badge);
 
         // Celda con los usuarios asignados
-        // Si assignedUsers existe y tiene elementos se unen con coma
+        // assignedUsersDisplay ya contiene los nombres resueltos por el backend
         const celdaUsuarios = document.createElement('td');
-        celdaUsuarios.textContent = tarea.assignedUsers && tarea.assignedUsers.length > 0
-            ? tarea.assignedUsers.join(', ')
-            : 'Sin asignar';
+        celdaUsuarios.textContent = tarea.assignedUsersDisplay || 'Sin asignar';
 
         fila.appendChild(celdaTitulo);
         fila.appendChild(celdaEstado);
@@ -410,8 +447,10 @@ async function montarSeccionTareas(contenedor) {
 // Se usa en la tabla de tareas del panel admin
 // Parámetro: estado — valor del campo status (pendiente, en_progreso, completada)
 function formatearEstado(estado) {
-    if (estado === 'pendiente')   return 'Pendiente';
-    if (estado === 'en_progreso') return 'En Progreso';
-    if (estado === 'completada')  return 'Completada';
+    if (estado === 'pendiente')            return 'Pendiente';
+    if (estado === 'en_progreso')          return 'En Progreso';
+    if (estado === 'completada')           return 'Completada';
+    if (estado === 'pendiente_aprobacion') return 'Por aprobar';
+    if (estado === 'reprobada')            return 'Reprobada';
     return estado;
 }

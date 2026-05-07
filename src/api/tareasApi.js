@@ -107,21 +107,25 @@ export async function registrarTarea(datosTarea) {
 // ── ACTUALIZAR TAREA (PUT completo) ───────────────────────────────────────────
 // PUT /api/tasks/:id
 // Acepta: { title, description, status, assignedUsers, comment }
+// Retorna: json.data si éxito, o lanza un Error con .validationErrors si 400
 export async function actualizarTarea(tareaId, datosTarea) {
-    try {
-        const url = `${API_BASE_URL}${API_PREFIX}/tasks/${tareaId}`;
-        const response = await fetchConAuth(url, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datosTarea),
-        });
-        const json = await response.json();
-        if (!response.ok) throw new Error(json.message || `Error al actualizar tarea ${tareaId}`);
-        return json.data;
-    } catch (error) {
-        console.error('actualizarTarea:', error);
-        return null;
+    const url = `${API_BASE_URL}${API_PREFIX}/tasks/${tareaId}`;
+    const response = await fetchConAuth(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosTarea),
+    });
+    const json = await response.json();
+    if (!response.ok) {
+        const err = new Error(json.message || `Error al actualizar tarea ${tareaId}`);
+        // Si el backend devolvió errores de validación (400), los adjuntamos al error
+        if (response.status === 400 && Array.isArray(json.data)) {
+            err.validationErrors = json.data;
+        }
+        console.error('actualizarTarea:', err);
+        throw err;
     }
+    return json.data;
 }
 
 // ── CAMBIAR SOLO EL ESTADO ────────────────────────────────────────────────────

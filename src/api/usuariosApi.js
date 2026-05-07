@@ -186,3 +186,18 @@ export async function reactivarUsuario(id) {
     if (!respuesta.ok) throw new Error(datos.message || 'No se pudo reactivar el usuario');
     return datos.data;
 }
+// ── ELIMINACIÓN FORZOSA DE USUARIO ───────────────────────────────────────────
+// DELETE /api/users/:id/force
+// Elimina sin importar estado ni tareas pendientes.
+// Requiere: { reason } en el body — mínimo 10 caracteres para auditoría.
+export async function forceEliminarUsuario(id, reason) {
+    const url = `${API_BASE_URL}${API_PREFIX}/users/${id}/force`;
+    const respuesta = await fetchConAuth(url, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+    });
+    const datos = await respuesta.json();
+    if (!respuesta.ok) throw new Error(datos.message || 'No se pudo eliminar el usuario forzosamente');
+    return true;
+}
