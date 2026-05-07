@@ -434,8 +434,23 @@ function renderizarDiccionarioRoles(contenedorEl) {
         desc.textContent = meta.descripcion;
         card.appendChild(desc);
         const btn = document.createElement('button');
-        btn.className   = 'btn btn-sm';
-        btn.textContent = 'Ver permisos';
+        btn.className = 'rol-card__btn-permisos';
+        btn.type      = 'button';
+        btn.style.borderColor = meta.color;
+        btn.style.color       = meta.color;
+        const btnIcono = document.createElement('i');
+        btnIcono.setAttribute('data-lucide', 'list');
+        btnIcono.classList.add('icono-accion');
+        btn.appendChild(btnIcono);
+        btn.appendChild(document.createTextNode(' Ver permisos'));
+        btn.addEventListener('mouseenter', function() {
+            btn.style.background = meta.color;
+            btn.style.color      = '#ffffff';
+        });
+        btn.addEventListener('mouseleave', function() {
+            btn.style.background  = '';
+            btn.style.color       = meta.color;
+        });
         btn.addEventListener('click', function() { abrirModalPermisos(rol, meta); });
         card.appendChild(btn);
         contenedorEl.appendChild(card);
@@ -1362,12 +1377,7 @@ function crearFilaTareaInstructor(tarea, indice) {
 
     // Botón Eliminar — circular con ícono rojo
     const btnEliminar = crearBotonIcono('trash-2', 'Eliminar tarea', 'btn-accion--rojo', async function() {
-        const confirmado = await mostrarConfirmacion(
-            '¿Eliminar tarea?',
-            'Sí, eliminar',
-            'Cancelar',
-            `"${tarea.title}" será eliminada permanentemente.`
-        );
+        const confirmado = await confirmarEliminarTarea(tarea.title);
         if (!confirmado) return;
 
         const eliminado = await eliminarTarea(tarea.id);
@@ -1630,6 +1640,85 @@ export async function cargarTablaUsuarios() {
     });
     // Inicializar íconos Lucide DESPUÉS de insertar todas las filas al DOM
     if (window.lucide) window.lucide.createIcons();
+}
+
+
+// confirmarEliminarTarea — modal DOM nativo estilo admin para confirmar eliminación
+function confirmarEliminarTarea(tituloTarea) {
+    return new Promise(function(resolve) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-usuario-overlay';
+        overlay.style.zIndex = '9999';
+
+        const panel = document.createElement('div');
+        panel.className = 'modal-usuario';
+        panel.style.cssText = 'max-width:420px;padding:0;overflow:hidden;';
+
+        // Header igual al modal-admin — borde rojo inferior
+        const header = document.createElement('div');
+        header.className = 'modal-usuario__header';
+        header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:2px solid #ef4444;';
+        const tituloEl = document.createElement('h3');
+        tituloEl.textContent = 'Eliminar tarea';
+        tituloEl.style.cssText = 'font-size:1.1rem;font-weight:700;color:var(--texto-oscuro);margin:0;';
+        const btnX = document.createElement('button');
+        btnX.className = 'modal-usuario__cerrar';
+        btnX.innerHTML = '✕';
+        btnX.addEventListener('click', function() { cerrar(false); });
+        header.appendChild(tituloEl);
+        header.appendChild(btnX);
+        panel.appendChild(header);
+
+        // Cuerpo centrado con ícono Lucide y descripción
+        const cuerpo = document.createElement('div');
+        cuerpo.style.cssText = 'padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:center;';
+        const iconoWrap = document.createElement('div');
+        iconoWrap.style.cssText = 'width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+        const icono = document.createElement('i');
+        icono.setAttribute('data-lucide', 'trash-2');
+        icono.style.cssText = 'width:26px;height:26px;stroke:#ef4444;fill:none;';
+        iconoWrap.appendChild(icono);
+        cuerpo.appendChild(iconoWrap);
+        const desc = document.createElement('p');
+        desc.innerHTML = '<strong style="color:var(--texto-oscuro)">“' + tituloTarea + '”</strong><br><span style="color:var(--texto-medio);font-size:0.875rem;">será eliminada permanentemente. Esta acción no se puede deshacer.</span>';
+        desc.style.cssText = 'margin:0;line-height:1.6;';
+        cuerpo.appendChild(desc);
+        panel.appendChild(cuerpo);
+
+        // Footer con botones y hover
+        const footer = document.createElement('div');
+        footer.style.cssText = 'display:flex;gap:0.75rem;padding:1rem 1.5rem 1.5rem;border-top:1px solid var(--borde-suave);';
+
+        const btnCancelar = document.createElement('button');
+        btnCancelar.textContent = 'Cancelar';
+        btnCancelar.type = 'button';
+        btnCancelar.style.cssText = 'flex:1;height:42px;border:none;cursor:pointer;border-radius:var(--radio-full);background:var(--fondo-gris);color:var(--texto-medio);font-size:0.875rem;font-weight:600;transition:background 0.15s,transform 0.1s;';
+        btnCancelar.addEventListener('mouseenter', function() { this.style.background='var(--borde-suave)'; this.style.transform='translateY(-1px)'; });
+        btnCancelar.addEventListener('mouseleave', function() { this.style.background='var(--fondo-gris)'; this.style.transform='translateY(0)'; });
+        btnCancelar.addEventListener('click', function() { cerrar(false); });
+
+        const btnConfirmar = document.createElement('button');
+        btnConfirmar.textContent = 'Sí, eliminar';
+        btnConfirmar.type = 'button';
+        btnConfirmar.style.cssText = 'flex:1;height:42px;border:none;cursor:pointer;border-radius:var(--radio-full);background:linear-gradient(135deg,#ef4444,#dc2626);color:white;font-size:0.875rem;font-weight:600;transition:opacity 0.15s,transform 0.1s;';
+        btnConfirmar.addEventListener('mouseenter', function() { this.style.opacity='0.88'; this.style.transform='translateY(-1px)'; });
+        btnConfirmar.addEventListener('mouseleave', function() { this.style.opacity='1'; this.style.transform='translateY(0)'; });
+        btnConfirmar.addEventListener('click', function() { cerrar(true); });
+
+        footer.appendChild(btnCancelar);
+        footer.appendChild(btnConfirmar);
+        panel.appendChild(footer);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+
+        if (window.lucide) window.lucide.createIcons();
+
+        function cerrar(resultado) {
+            if (overlay.parentNode) document.body.removeChild(overlay);
+            resolve(resultado);
+        }
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) cerrar(false); });
+    });
 }
 
 // crearBadgeRol — badge visual con el nombre y color del rol del usuario
@@ -2538,12 +2627,7 @@ function crearFilaTareaAdmin(tarea, indice) {
 
     // Botón Eliminar — circular con ícono rojo
     const btnEliminar = crearBotonIcono('trash-2', 'Eliminar tarea', 'btn-accion--rojo', async function() {
-        const confirmado = await mostrarConfirmacion(
-            '¿Eliminar tarea?',
-            'Sí, eliminar',
-            'Cancelar',
-            `"${tarea.title}" será eliminada permanentemente.`
-        );
+        const confirmado = await confirmarEliminarTarea(tarea.title);
         if (!confirmado) return;
 
         const eliminada = await eliminarTarea(tarea.id);
@@ -2981,6 +3065,8 @@ function registrarCardsContraibles() {
         ['instrToggleCrearTareas',  'instrCuerpoCrearTareas'],
         ['instrToggleUsuarios',     'instrCuerpoUsuarios'],
         ['instrToggleTareas',       'instrCuerpoTareas'],
+        // Card de tareas del panel usuario
+        ['toggleTareasUsuario',     'cuerpoTareasUsuario'],
     ];
 
     pares.forEach(function(par) {
@@ -3257,38 +3343,109 @@ function limpiarFormularioLogin() {
 //   3. Se redirige a la pantalla de inicio
 // Así ningún dato queda expuesto si otro usuario usa el mismo computador.
 async function manejarCerrarSesion() {
+    // Modal DOM nativo de confirmación de logout
+    // Reemplaza SweetAlert2 para evitar que el modal quede encima de la pantalla de inicio
+    const confirmado = await new Promise(function(resolve) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-usuario-overlay';
+        overlay.style.zIndex = '9999';
 
-    // Pedir confirmación antes de cerrar sesión
-    // mostrarConfirmacion viene de notificaciones.js y usa SweetAlert2
-    const confirmado = await mostrarConfirmacion(
-        '¿Cerrar sesión?',
-        'Sí, cerrar sesión',
-        'Cancelar',
-        'Se cerrará tu sesión actual y volverás a la pantalla de inicio.'
-    );
+        const panel = document.createElement('div');
+        panel.className = 'modal-usuario';
+        panel.style.cssText = 'max-width:400px;padding:0;overflow:hidden;text-align:center;';
 
-    // Si el usuario canceló no se hace nada
+        // Header con acento azul del sistema
+        const header = document.createElement('div');
+        header.style.cssText = `
+            padding: 1.5rem 1.5rem 0;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 0.75rem;
+        `;
+
+        // Ícono circular
+        const iconoWrap = document.createElement('div');
+        iconoWrap.style.cssText = `
+            width: 60px; height: 60px; border-radius: 50%;
+            border: 3px solid var(--color-admin);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--color-admin); font-size: 1.6rem; font-weight: 700;
+        `;
+        iconoWrap.textContent = '?';
+        header.appendChild(iconoWrap);
+
+        const titulo = document.createElement('h3');
+        titulo.textContent = '¿Cerrar sesión?';
+        titulo.style.cssText = 'font-size:1.15rem;font-weight:700;color:var(--texto-oscuro);margin:0;';
+        header.appendChild(titulo);
+
+        const desc = document.createElement('p');
+        desc.textContent = 'Se cerrará tu sesión actual y volverás a la pantalla de inicio.';
+        desc.style.cssText = 'font-size:0.875rem;color:var(--texto-medio);line-height:1.5;margin:0;';
+        header.appendChild(desc);
+
+        panel.appendChild(header);
+
+        // Footer con botones
+        const footer = document.createElement('div');
+        footer.style.cssText = `
+            display:flex; gap:0.75rem;
+            padding: 1.25rem 1.5rem 1.5rem;
+            margin-top: 1.25rem;
+            border-top: 1px solid var(--borde-suave);
+        `;
+
+        const btnCancelar = document.createElement('button');
+        btnCancelar.textContent = 'Cancelar';
+        btnCancelar.style.cssText = `
+            flex:1; height:42px; border:none; cursor:pointer;
+            border-radius:var(--radio-full);
+            background:var(--fondo-gris); color:var(--texto-medio);
+            font-size:0.875rem; font-weight:600;
+            transition: background 0.15s;
+        `;
+        btnCancelar.addEventListener('mouseenter', function() { this.style.background='var(--borde-suave)'; });
+        btnCancelar.addEventListener('mouseleave', function() { this.style.background='var(--fondo-gris)'; });
+        btnCancelar.addEventListener('click', function() { cerrar(false); });
+
+        const btnConfirmar = document.createElement('button');
+        btnConfirmar.textContent = 'Sí, cerrar sesión';
+        btnConfirmar.style.cssText = `
+            flex:1; height:42px; border:none; cursor:pointer;
+            border-radius:var(--radio-full);
+            background: var(--color-admin); color:white;
+            font-size:0.875rem; font-weight:600;
+            transition: opacity 0.15s, transform 0.1s;
+        `;
+        btnConfirmar.addEventListener('mouseenter', function() { this.style.opacity='0.88'; this.style.transform='translateY(-1px)'; });
+        btnConfirmar.addEventListener('mouseleave', function() { this.style.opacity='1'; this.style.transform='translateY(0)'; });
+        btnConfirmar.addEventListener('click', function() { cerrar(true); });
+
+        footer.appendChild(btnCancelar);
+        footer.appendChild(btnConfirmar);
+        panel.appendChild(footer);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+
+        function cerrar(resultado) {
+            // Eliminar el overlay ANTES de resolver la promesa
+            // Así la pantalla de inicio no aparece detrás del modal
+            if (overlay.parentNode) document.body.removeChild(overlay);
+            resolve(resultado);
+        }
+
+        overlay.addEventListener('click', function(e) { if (e.target === overlay) cerrar(false); });
+    });
+
     if (!confirmado) return;
 
-    // Borrar todos los datos de sesión del localStorage
-    // cerrarSesion() está en src/utils/sesion.js y elimina accessToken,
-    // refreshToken y usuarioActual en un solo paso
-    if (window._panelCalificacionInterval) {
-        clearInterval(window._panelCalificacionInterval);
-        window._panelCalificacionInterval = null;
-    }
+    // Limpiar intervalos activos
     if (window._panelCalificacionInterval) {
         clearInterval(window._panelCalificacionInterval);
         window._panelCalificacionInterval = null;
     }
     registrarEvento('logout', 'Sesión cerrada');
     cerrarSesion();
-
-    // Limpiar los campos del formulario antes de mostrar la pantalla de inicio
-    // Así el próximo usuario que abra la página no verá los datos del anterior
     limpiarFormularioLogin();
-
-    // Redirigir a la pantalla de inicio
     activarModoInicio();
 }
 
@@ -3791,6 +3948,23 @@ export function registrarEventosNavegacion() {
                 mostrarNotificacion('No hay tareas para exportar', 'advertencia');
             } else {
                 mostrarNotificacion('Tareas exportadas correctamente', 'exito');
+            }
+        });
+    }
+
+    // — EXPORTAR TAREAS — PANEL USUARIO
+    const btnExportarTareasUsuario = document.getElementById('userBtnExportarTareas');
+    if (btnExportarTareasUsuario) {
+        btnExportarTareasUsuario.addEventListener('click', async function(event) {
+            event.stopPropagation();
+            const usuarioSesion = obtenerUsuarioSesion();
+            if (!usuarioSesion) return;
+            const tareas = await obtenerTareasDeUsuario(usuarioSesion.id);
+            const exportado = exportarTareasJSON(tareas);
+            if (!exportado) {
+                await mostrarNotificacion('No tienes tareas para exportar', 'advertencia');
+            } else {
+                await mostrarNotificacion('Tareas exportadas correctamente', 'exito');
             }
         });
     }

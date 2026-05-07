@@ -4408,55 +4408,168 @@ body[data-modo="instructor"] {
 
 /* ──────────────────────────────────────────────
    SWEETALERT2 — Rediseño de modales de confirmación
-   ────────────────────────────────────────────── */
+   ── Los modales usan .swal-popup-v2 para lucir igual al resto del sistema ── */
 
+/* Popup: igual al .modal-admin — bordes 20px, sombra azul del sistema, slideIn */
 .swal-popup-v2 {
     border-radius: 20px !important;
     padding: 0 !important;
     overflow: hidden !important;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2) !important;
-    max-width: 400px !important;
+    max-width: 460px !important;
+    width: 90% !important;
+    box-shadow: 0 20px 60px rgba(2, 132, 199, 0.18), 0 4px 20px rgba(0,0,0,0.12) !important;
+    animation: slideIn 220ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    font-family: inherit !important;
 }
 
+/* Header del modal — gradiente azul igual al .modal-admin__header */
+.swal-popup-v2::before {
+    content: '';
+    display: block;
+    height: 6px;
+    background: linear-gradient(135deg, var(--color-admin) 0%, var(--color-admin-oscuro) 100%);
+    width: 100%;
+    flex-shrink: 0;
+}
+
+/* Ícono — centrado, tamaño consistente, sin margen excesivo */
 .swal-popup-v2 .swal2-icon {
-    margin: 2rem auto 0.5rem !important;
-    width: 60px !important; height: 60px !important;
+    margin: 1.6rem auto 0.2rem !important;
+    width: 64px !important;
+    height: 64px !important;
+    border-width: 3px !important;
 }
 
+/* Ícono warning — naranja pastel del sistema */
+.swal-popup-v2 .swal2-icon.swal2-warning {
+    border-color: #f59e0b !important;
+    color: #f59e0b !important;
+}
+
+/* Ícono error — rojo pastel */
+.swal-popup-v2 .swal2-icon.swal2-error {
+    border-color: #ef4444 !important;
+    color: #ef4444 !important;
+}
+.swal-popup-v2 .swal2-icon.swal2-error [class^="swal2-x-mark-line"] {
+    background-color: #ef4444 !important;
+}
+
+/* Ícono pregunta — azul del sistema */
+.swal-popup-v2 .swal2-icon.swal2-question {
+    border-color: var(--color-admin) !important;
+    color: var(--color-admin) !important;
+}
+
+/* Título — igual a .modal-admin__titulo pero negro porque fondo es blanco */
 .swal-popup-v2 .swal2-title {
     font-size: 1.2rem !important;
     font-weight: 700 !important;
     color: var(--texto-oscuro) !important;
-    padding: 0.25rem 2rem 0 !important;
+    padding: 0.4rem 1.8rem 0 !important;
+    line-height: 1.35 !important;
+    text-align: center !important;
 }
 
+/* Contenido HTML */
 .swal-popup-v2 .swal2-html-container {
-    font-size: 0.9rem !important;
-    color: #6b7280 !important;
-    margin: 0.5rem 1.5rem 0 !important;
+    font-size: 0.88rem !important;
+    color: var(--texto-medio) !important;
+    margin: 0.6rem 1.8rem 0 !important;
+    line-height: 1.6 !important;
+    text-align: left !important;
+    padding: 0 !important;
+}
+
+/* Textarea — estilo de los inputs del sistema */
+.swal-popup-v2 textarea {
+    width: 100% !important;
+    padding: 0.55rem 0.85rem !important;
+    border: 1.5px solid var(--borde-suave) !important;
+    border-radius: var(--radio-md) !important;
+    font-size: 0.875rem !important;
+    font-family: inherit !important;
+    resize: vertical !important;
+    outline: none !important;
+    background: var(--fondo-gris) !important;
+    color: var(--texto-oscuro) !important;
+    box-sizing: border-box !important;
+    transition: border-color 0.15s, box-shadow 0.15s !important;
     line-height: 1.5 !important;
+    min-height: 80px !important;
+}
+.swal-popup-v2 textarea:focus {
+    border-color: var(--color-admin) !important;
+    background: white !important;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12) !important;
 }
 
+/* Banner de validación — rojo suave sin ícono nativo */
+.swal-popup-v2 .swal2-validation-message {
+    border-radius: var(--radio-sm) !important;
+    font-size: 0.82rem !important;
+    margin: 0.4rem 1.8rem !important;
+    padding: 7px 12px !important;
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+    border: none !important;
+    justify-content: flex-start !important;
+    font-weight: 500 !important;
+}
+.swal-popup-v2 .swal2-validation-message::before { display: none !important; }
+
+/* Área de botones — separador gris claro, igual al footer del modal-admin */
 .swal-popup-v2 .swal2-actions {
-    margin: 1.5rem !important;
+    margin: 0 !important;
+    padding: 1rem 1.8rem 1.6rem !important;
     gap: 10px !important;
+    border-top: 1px solid var(--borde-suave) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: stretch !important;
 }
 
+/* Botones — igual al .btn del sistema */
 .swal-popup-v2 .swal2-confirm,
 .swal-popup-v2 .swal2-cancel {
     border-radius: var(--radio-full) !important;
-    padding: 0.6rem 1.5rem !important;
+    height: 42px !important;
+    padding: 0 1.5rem !important;
     font-size: 0.875rem !important;
     font-weight: 600 !important;
     border: none !important;
     box-shadow: none !important;
+    flex: 1 !important;
+    margin: 0 !important;
+    transition: opacity 0.15s ease, transform 0.1s ease !important;
+    cursor: pointer !important;
+}
+.swal-popup-v2 .swal2-confirm:hover,
+.swal-popup-v2 .swal2-cancel:hover {
+    opacity: 0.88 !important;
+    transform: translateY(-1px) !important;
+}
+.swal-popup-v2 .swal2-confirm:active,
+.swal-popup-v2 .swal2-cancel:active { transform: translateY(0) !important; }
+
+/* Botón cancelar — gris neutro del sistema */
+.swal-popup-v2 .swal2-cancel {
+    background: var(--fondo-gris) !important;
+    color: var(--texto-medio) !important;
+}
+.swal-popup-v2 .swal2-cancel:hover {
+    background: var(--borde-suave) !important;
+    opacity: 1 !important;
 }
 
-.swal-popup-v2 .swal2-cancel {
-    background: #f3f4f6 !important;
-    color: #6b7280 !important;
+/* Tarjetas de modo de eliminación — hover coherente */
+#swal-modo-container label {
+    border-radius: var(--radio-md) !important;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s !important;
 }
-.swal-popup-v2 .swal2-cancel:hover { background: #e5e7eb !important; }
+#swal-modo-container label:not([style*="not-allowed"]):hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
 
 /* ── Checkbox de calificación en modal instructor ────────────────────────── */
 .modal-admin__group--checkbox {
@@ -4655,4 +4768,129 @@ body:has(#vistaUsuario:not(.hidden)) .swal2-confirm:hover {
     color: var(--color-primario, #7c3aed) !important;
     background: transparent !important;
     font-weight: 700;
+}
+/* ── BOTÓN VER PERMISOS — color dinámico por rol via JS ─────────────────── */
+.rol-card__btn-permisos {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    justify-content: center;
+    padding: 7px 14px;
+    border: 1.5px solid;
+    border-radius: var(--radio-full);
+    background: transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    margin-top: 4px;
+}
+.rol-card__btn-permisos .icono-accion {
+    width: 13px;
+    height: 13px;
+}
+/* ── TABLA TAREAS ADMIN — sin scroll horizontal ─────────────────────────────*/
+#cuerpoTareas .tasks-table-container { overflow-x: visible; }
+
+#cardTareas { padding: var(--espacio-lg) var(--espacio-md); }
+
+#cuerpoTareas .tasks-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* # (4) | Título (14) | Descripción (16) | Estado (13) | Usuario (22) | Creación (16) | Acciones (15) */
+#cuerpoTareas .tasks-table th:nth-child(1),
+#cuerpoTareas .tasks-table td:nth-child(1) { width: 6%; }
+
+#cuerpoTareas .tasks-table th:nth-child(2),
+#cuerpoTareas .tasks-table td:nth-child(2) { width: 14%; }
+
+#cuerpoTareas .tasks-table th:nth-child(3),
+#cuerpoTareas .tasks-table td:nth-child(3) { width: 16%; }
+
+#cuerpoTareas .tasks-table th:nth-child(4),
+#cuerpoTareas .tasks-table td:nth-child(4) { width: 13%; }
+
+#cuerpoTareas .tasks-table th:nth-child(5),
+#cuerpoTareas .tasks-table td:nth-child(5) { width: 22%; }
+
+#cuerpoTareas .tasks-table th:nth-child(6),
+#cuerpoTareas .tasks-table td:nth-child(6) { width: 16%; }
+
+#cuerpoTareas .tasks-table th:nth-child(7),
+#cuerpoTareas .tasks-table td:nth-child(7) { width: 11%; }
+
+/* Base de todas las celdas */
+#cuerpoTareas .tasks-table__head th,
+#cuerpoTareas .tasks-table tbody td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    text-align: left;
+}
+
+/* # centrado */
+#cuerpoTareas .tasks-table th:nth-child(1),
+#cuerpoTareas .tasks-table td:nth-child(1) {
+    text-align: center;
+}
+
+/* Estado — centrado y visible para que el badge no se corte */
+#cuerpoTareas .tasks-table th:nth-child(4),
+#cuerpoTareas .tasks-table td:nth-child(4) {
+    text-align: center;
+    overflow: visible;
+    text-overflow: unset;
+}
+
+/* Usuario asignado — padding izquierdo extra para separarse del badge */
+#cuerpoTareas .tasks-table th:nth-child(5),
+#cuerpoTareas .tasks-table td:nth-child(5) {
+    padding-left: 1.8rem;
+}
+
+/* Acciones — visibles y alineadas a la izquierda */
+#cuerpoTareas .tasks-table th:nth-child(7),
+#cuerpoTareas .tasks-table td:nth-child(7) {
+    overflow: visible;
+    text-overflow: unset;
+}
+
+#cuerpoTareas .tasks-table td:nth-child(7) .acciones-columna {
+    justify-content: flex-start;
+}
+/* ── CARD TAREAS USUARIO — toggle igual al admin/instructor ─────────────────*/
+
+/* El h2 dentro del toggle usa tasks-header__title — igualarlo al admin */
+#toggleTareasUsuario .tasks-header__title {
+    font-size: var(--texto-lg);
+    font-weight: 700;
+    color: var(--texto-oscuro);
+    margin-bottom: 0;
+}
+
+/* Cabecera del toggle — padding propio, sin margin-bottom heredado */
+#toggleTareasUsuario {
+    padding: var(--espacio-lg) var(--espacio-xl);
+    margin-bottom: 0;
+}
+
+/* Sin borde cuando está contraída */
+#toggleTareasUsuario.sin-borde {
+    border-bottom-color: transparent;
+}
+
+/* Cuerpo contraible — padding lateral de la card */
+#cuerpoTareasUsuario {
+    padding: 0 var(--espacio-xl) var(--espacio-xl);
+}
+
+/* Oculto — igual que las otras cards */
+#cuerpoTareasUsuario.oculto {
+    display: none;
 }
