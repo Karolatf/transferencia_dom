@@ -63,6 +63,8 @@ export function formatearEstadoTarea(estado) {
         // El usuario marca este estado cuando considera que terminó su trabajo
         pendiente_aprobacion: 'Por aprobar',
         completada:           'Completada',
+        // Estado asignado automáticamente cuando la nota es menor a 70
+        reprobada:            'Reprobada',
     };
     // Si el estado no existe en el mapa se retorna el valor original como fallback
     return mapa[estado] || estado;
@@ -78,52 +80,66 @@ export function formatearEstadoTarea(estado) {
 //   - "⬇️ Exportar JSON" (data-action="export") — descarga la tarea como .json
 // Esto mejora la experiencia del usuario en el panel de usuario, donde la
 // eliminación de tareas es responsabilidad exclusiva del administrador.
+// crearBotonIconoUsuario — botón circular con ícono Lucide (igual que admin/instructor)
+function crearBotonIconoUsuario(nombreIcono, tooltip, claseColor, handler) {
+    const btn = document.createElement('button');
+    btn.className = `btn-accion-icono ${claseColor}`;
+    btn.title     = tooltip;
+    btn.type      = 'button';
+    const icono   = document.createElement('i');
+    icono.setAttribute('data-lucide', nombreIcono);
+    icono.classList.add('icono-accion');
+    btn.appendChild(icono);
+    if (handler) btn.addEventListener('click', handler);
+    return btn;
+}
+
 export function crearFilaTarea(tarea, indice) {
     const fila = document.createElement('tr');
     fila.dataset.id = tarea.id;
 
-    // # correlativo
     const celdaNum = document.createElement('td');
     celdaNum.textContent = indice + 1;
 
-    // Título
     const celdaTitulo = document.createElement('td');
     celdaTitulo.textContent = tarea.title;
 
-    // Descripción
+    // Descripción con botón Ver tarea (igual que admin/instructor)
     const celdaDesc = document.createElement('td');
-    celdaDesc.textContent = tarea.description || '—';
+    celdaDesc.style.maxWidth = '0';
+    const spanDesc = document.createElement('span');
+    spanDesc.className   = 'celda-desc__texto';
+    spanDesc.textContent = tarea.description || '—';
+    celdaDesc.appendChild(spanDesc);
+    const btnVer = document.createElement('button');
+    btnVer.type      = 'button';
+    btnVer.className = 'celda-desc__btn-ver';
+    btnVer.dataset.id     = tarea.id;
+    btnVer.dataset.action = 'ver';
+    btnVer.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Ver tarea';
+    celdaDesc.appendChild(btnVer);
 
-    // Estado (badge visual)
     const celdaEstado = document.createElement('td');
     const badge = document.createElement('span');
     badge.classList.add('status-badge', `status-${tarea.status}`);
     badge.textContent = formatearEstadoTarea(tarea.status);
     celdaEstado.appendChild(badge);
 
-    // Comentario
     const celdaComentario = document.createElement('td');
     celdaComentario.textContent = tarea.comment || '—';
 
-    // Acciones: Editar tarea y Exportar JSON
-    // Se eliminó el botón Eliminar — el usuario no debe poder borrar sus propias tareas
+    // Acciones con botón ícono circular igual que admin/instructor
     const celdaAcciones = document.createElement('td');
     const contenedor = document.createElement('div');
     contenedor.classList.add('task-actions');
 
-    // Botón Editar tarea — abre el modal de edición con los datos de esta tarea
-    const btnEditar = document.createElement('button');
-    btnEditar.textContent    = '✏️ Editar';
-    btnEditar.classList.add('btn-action', 'btn-action--edit');
-    btnEditar.type           = 'button';
+    // Botón Editar — circular con ícono lapicero
+    const btnEditar = crearBotonIconoUsuario('pencil', 'Editar tarea', 'btn-accion--amarillo', null);
     btnEditar.dataset.id     = tarea.id;
     btnEditar.dataset.action = 'edit';
 
-    // Botón Exportar JSON — descarga esta tarea como archivo .json individual
-    const btnExportar = document.createElement('button');
-    btnExportar.textContent    = '⬇️ Exportar';
-    btnExportar.classList.add('btn-action', 'btn-action--export');
-    btnExportar.type           = 'button';
+    // Botón Exportar — circular con ícono descarga
+    const btnExportar = crearBotonIconoUsuario('download', 'Exportar tarea', 'btn-accion--azul', null);
     btnExportar.dataset.id     = tarea.id;
     btnExportar.dataset.action = 'export';
 
@@ -138,6 +154,7 @@ export function crearFilaTarea(tarea, indice) {
     fila.appendChild(celdaComentario);
     fila.appendChild(celdaAcciones);
 
+    if (window.lucide) window.lucide.createIcons();
     return fila;
 }
 
@@ -158,8 +175,8 @@ export function actualizarFilaTarea(tareaActualizada) {
     fila.cells[2].textContent = tareaActualizada.description || '—';
 
     const badge = fila.cells[3].querySelector('.status-badge');
-    // Se eliminan las cuatro clases de estado posibles antes de agregar la nueva
-    badge.classList.remove('status-pendiente', 'status-en_progreso', 'status-pendiente_aprobacion', 'status-completada');
+    // Se eliminan las cinco clases de estado posibles antes de agregar la nueva
+    badge.classList.remove('status-pendiente', 'status-en_progreso', 'status-pendiente_aprobacion', 'status-completada', 'status-reprobada');
     badge.classList.add(`status-${tareaActualizada.status}`);
     badge.textContent = formatearEstadoTarea(tareaActualizada.status);
 
@@ -190,68 +207,92 @@ export function eliminarFilaTarea(tareaId) {
 //            y el select de estado solo muestra las opciones del usuario
 //   false → panel admin: todos los campos son editables y el select
 //            muestra las tres opciones incluyendo "Completada"
-export function mostrarModalEdicion(tarea, soloLecturaTituloDesc = false) {
-    // Se cargan los valores actuales de la tarea en los campos del formulario
+export function mostrarModalEdicion(tarea, soloLecturaTituloDesc = false, modoEdicion = null) {
+    const modo = modoEdicion || (soloLecturaTituloDesc ? 'usuario' : 'admin');
+
     document.getElementById('editTaskId').value          = tarea.id;
     document.getElementById('editTaskTitle').value       = tarea.title;
     document.getElementById('editTaskDescription').value = tarea.description || '';
-    document.getElementById('editTaskStatus').value      = tarea.status;
 
     const comentEl = document.getElementById('editTaskComment');
     if (comentEl) comentEl.value = tarea.comment || '';
 
-    const inputTitulo = document.getElementById('editTaskTitle');
-    const inputDesc   = document.getElementById('editTaskDescription');
+    const formEl = document.getElementById('editTaskForm');
+    if (formEl) {
+        formEl.querySelectorAll('.modal-admin__error').forEach(el => { el.textContent = ''; });
+        formEl.querySelectorAll('.modal-admin__input, .modal-admin__select, .modal-admin__textarea')
+            .forEach(el => { el.style.borderColor = ''; });
+    }
+
+    const inputTitulo  = document.getElementById('editTaskTitle');
+    const inputDesc    = document.getElementById('editTaskDescription');
     const selectEstado = document.getElementById('editTaskStatus');
 
-    // Se buscan las opciones que son exclusivas de cada modo
-    // opcion-usuario: "Pendiente por aprobar" — visible solo en modo usuario
-    // opcion-admin:   "Completada"            — visible solo en modo admin
-    const opcionesUsuario = selectEstado.querySelectorAll('.opcion-usuario');
-    const opcionesAdmin   = selectEstado.querySelectorAll('.opcion-admin');
-
-    if (soloLecturaTituloDesc) {
-        // MODO USUARIO: Título y Descripción son de solo lectura
-        // porque editarlos es responsabilidad exclusiva del administrador
+    // Solo el usuario tiene titulo/desc en solo lectura; admin e instructor pueden editarlos
+    if (modo === 'usuario') {
         inputTitulo.setAttribute('readonly', true);
         inputDesc.setAttribute('readonly', true);
-        inputTitulo.style.opacity = '0.55';
+        inputTitulo.style.opacity = '0.6';
         inputTitulo.style.cursor  = 'not-allowed';
-        inputDesc.style.opacity   = '0.55';
+        inputDesc.style.opacity   = '0.6';
         inputDesc.style.cursor    = 'not-allowed';
-
-        // MODO USUARIO: se muestran solo las opciones del usuario (En Progreso y Pendiente por aprobar)
-        // Se ocultan las opciones exclusivas del admin (Pendiente y Completada)
-        opcionesUsuario.forEach(function(opt) { opt.style.display = ''; });
-        opcionesAdmin.forEach(function(opt) { opt.style.display = 'none'; });
-
-        // Si la tarea tiene un estado que no está en el select del usuario,
-        // se fuerza a "en_progreso" para que el select no quede en un valor oculto.
-        // Los estados "pendiente" y "completada" son exclusivos del admin.
-        if (tarea.status === 'pendiente' || tarea.status === 'completada') {
-            selectEstado.value = 'en_progreso';
-        } else {
-            // "en_progreso" y "pendiente_aprobacion" sí están en el select del usuario
-            selectEstado.value = tarea.status;
-        }
     } else {
-        // MODO ADMIN: todos los campos son editables
         inputTitulo.removeAttribute('readonly');
         inputDesc.removeAttribute('readonly');
         inputTitulo.style.opacity = '';
         inputTitulo.style.cursor  = '';
         inputDesc.style.opacity   = '';
         inputDesc.style.cursor    = '';
+    }
 
-        // MODO ADMIN: se muestran los cuatro estados completos
-        opcionesUsuario.forEach(function(opt) { opt.style.display = ''; });
-        opcionesAdmin.forEach(function(opt) { opt.style.display = ''; });
+    // Filtrar opciones del select según modo:
+    //   instructor -> todos (opcion-instructor)
+    //   admin      -> pendiente, en_progreso, pendiente_aprobacion (opcion-admin)
+    //   usuario    -> en_progreso, pendiente_aprobacion (opcion-usuario)
+    const todasOpciones = selectEstado.querySelectorAll('option[value]');
+    todasOpciones.forEach(function(opt) {
+        if (modo === 'instructor') {
+            opt.style.display = opt.classList.contains('opcion-instructor') ? '' : 'none';
+        } else if (modo === 'admin') {
+            opt.style.display = opt.classList.contains('opcion-admin') ? '' : 'none';
+        } else {
+            opt.style.display = opt.classList.contains('opcion-usuario') ? '' : 'none';
+        }
+    });
 
-        // Se asigna el estado actual — todos los valores son válidos en modo admin
+    // Asignar valor del estado (con fallback para usuario)
+    if (modo === 'usuario') {
+        const estadosUsuario = ['en_progreso', 'pendiente_aprobacion'];
+        selectEstado.value = estadosUsuario.includes(tarea.status) ? tarea.status : 'en_progreso';
+    } else {
         selectEstado.value = tarea.status;
     }
 
-    // Se abre el modal eliminando la clase hidden
+    // Label de calificacion actual - solo lectura, solo visible en admin
+    const gradeAdminGrupo = document.getElementById('editGradeAdminGrupo');
+    const gradeAdminLabel = document.getElementById('editGradeAdminLabel');
+    if (gradeAdminGrupo && gradeAdminLabel) {
+        if (modo === 'admin') {
+            while (gradeAdminLabel.firstChild) gradeAdminLabel.removeChild(gradeAdminLabel.firstChild);
+            if (tarea.grade !== null && tarea.grade !== undefined) {
+                const nota  = Number(tarea.grade);
+                const nivel = nota >= 70 ? 'Aprobada' : 'Reprobada';
+                const color = nota >= 70 ? '#065f46' : '#991b1b';
+                const bg    = nota >= 70 ? '#d1fae5' : '#fee2e2';
+                gradeAdminLabel.style.cssText =
+                    'display:inline-flex;align-items:center;background:' + bg + ';color:' + color + ';' +
+                    'border-radius:9999px;padding:0.35rem 0.9rem;font-weight:700;font-size:0.95rem;';
+                gradeAdminLabel.textContent = nota + ' / 100 — ' + nivel;
+            } else {
+                gradeAdminLabel.style.cssText = 'color:#9ca3af;font-style:italic;font-size:0.9rem;';
+                gradeAdminLabel.textContent   = 'Sin calificación';
+            }
+            gradeAdminGrupo.style.display = '';
+        } else {
+            gradeAdminGrupo.style.display = 'none';
+        }
+    }
+
     document.getElementById('editModal').classList.remove('hidden');
 }
 
@@ -265,15 +306,26 @@ export function ocultarModalEdicion() {
     const comentEl = document.getElementById('editTaskComment');
     if (comentEl) comentEl.value = '';
 
-    // Se limpian los atributos readonly y los estilos al cerrar el modal,
-    // para que cuando el admin lo use desde su panel funcione con normalidad
+    // Limpiar errores de validación al cerrar
+    const formEl = document.getElementById('editTaskForm');
+    if (formEl) {
+        formEl.querySelectorAll('.modal-admin__error').forEach(el => { el.textContent = ''; });
+        formEl.querySelectorAll('.modal-admin__input, .modal-admin__select, .modal-admin__textarea')
+            .forEach(el => { el.style.borderColor = ''; });
+    }
+
+    // Restaurar inputs a estado normal (sin readonly ni estilos especiales)
     const inputTitulo = document.getElementById('editTaskTitle');
     const inputDesc   = document.getElementById('editTaskDescription');
 
-    inputTitulo.removeAttribute('readonly');
-    inputDesc.removeAttribute('readonly');
-    inputTitulo.style.opacity = '';
-    inputTitulo.style.cursor  = '';
-    inputDesc.style.opacity   = '';
-    inputDesc.style.cursor    = '';
+    if (inputTitulo) {
+        inputTitulo.removeAttribute('readonly');
+        inputTitulo.style.opacity = '';
+        inputTitulo.style.cursor  = '';
+    }
+    if (inputDesc) {
+        inputDesc.removeAttribute('readonly');
+        inputDesc.style.opacity = '';
+        inputDesc.style.cursor  = '';
+    }
 }
