@@ -181,10 +181,17 @@
 
         <!-- Tabla de tareas del usuario -->
         <section class="tasks-section hidden" id="tasksSection">
-            <div class="tasks-header">
+            <!-- Encabezado contraible igual que admin e instructor -->
+            <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleTareasUsuario">
                 <h2 class="tasks-header__title">Mis tareas asignadas</h2>
-                <span class="tasks-header__count" id="tasksCount">0 tareas</span>
+                <div class="admin-card__cabecera-derecha">
+                    <span class="tasks-header__count" id="tasksCount">0 tareas</span>
+                    <button class="btn-accion-icono btn-accion--azul" id="userBtnExportarTareas" title="Exportar mis tareas" type="button" onclick="event.stopPropagation()"><i data-lucide="download" class="icono-accion"></i></button>
+                    <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Mis tareas">&#9660;</button>
+                </div>
             </div>
+            <!-- Cuerpo contraible -->
+            <div id="cuerpoTareasUsuario">
 
             <!-- Buscador de tareas — movido del header a dentro de la sección de tareas -->
             <form class="buscador-tareas__form" id="userSearchTaskForm" novalidate>
@@ -223,6 +230,7 @@
                 <p class="tasks-empty__text">No tienes tareas asignadas</p>
                 <p class="tasks-empty__subtext">El administrador te asignara tareas desde su panel</p>
             </div>
+            </div><!-- fin cuerpoTareasUsuario -->
         </section>
 
         <!-- Post-its ancho completo -->

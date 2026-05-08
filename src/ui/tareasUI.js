@@ -293,7 +293,24 @@ export function mostrarModalEdicion(tarea, soloLecturaTituloDesc = false, modoEd
         }
     }
 
-    document.getElementById('editModal').classList.remove('hidden');
+    // Ocultar el checkbox de calificacion si el modo es usuario
+    const chkCalifGrupo = document.getElementById('editChkCalifGrupo');
+    if (chkCalifGrupo) {
+        chkCalifGrupo.style.display = modo === 'usuario' ? 'none' : '';
+    }
+
+    const editModal = document.getElementById('editModal');
+    editModal.classList.remove('hidden');
+
+    // Cerrar al hacer click fuera del panel (en el overlay)
+    function cerrarAlClickOverlay(e) {
+        if (e.target === editModal) {
+            editModal.classList.add('hidden');
+            editModal.removeEventListener('click', cerrarAlClickOverlay);
+        }
+    }
+    editModal.removeEventListener('click', cerrarAlClickOverlay);
+    editModal.addEventListener('click', cerrarAlClickOverlay);
 }
 
 export function ocultarModalEdicion() {
