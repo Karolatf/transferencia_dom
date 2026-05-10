@@ -709,7 +709,8 @@ body[data-modo="admin"]   {
 .status-reprobada   { background: #fee2e2; color: #991b1b; font-weight: 700; }
 /* Badge para el cuarto estado: naranja suave, diferente del amarillo de "pendiente" */
 /* Fondo #ffedd5 (naranja claro) — texto #9a3412 (naranja oscuro con buen contraste) */
-.status-pendiente_aprobacion { background: #ffedd5; color: #9a3412; font-size: 0.78rem; white-space: nowrap; }
+/* Sin font-size propio — hereda var(--texto-sm) de .status-badge para ser igual a los demás */
+.status-pendiente_aprobacion { background: #ffedd5; color: #9a3412; }
 /* Badge para usuario inactivo (borrado suave) */
 .status-inactivo { background: #f1f5f9; color: #64748b; font-size: 0.75rem; }
 
