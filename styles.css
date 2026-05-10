@@ -430,7 +430,7 @@ body[data-modo="admin"]   {
 
 .card--usuario-info .user-info__label {
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--texto-claro);
@@ -439,10 +439,10 @@ body[data-modo="admin"]   {
 }
 
 .card--usuario-info .user-info__value {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 0.95rem;
+    font-weight: 500;
     color: var(--texto-oscuro);
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
 }
 
 /* La fila de promedio ocupa las dos columnas */
