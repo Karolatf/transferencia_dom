@@ -375,38 +375,36 @@ export async function activarModoUsuario() {
     if (!tbody) return;
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
-    if (!tareas || tareas.length === 0) {
-        // Mostrar estado vacío si no hay tareas asignadas
+        if (!tareas || tareas.length === 0) {
+        // Mostrar estado vacío solo en la tabla — el calendario y las notas siguen activos
         const estadoVacio = document.getElementById('tasksEmptyState');
         if (estadoVacio) estadoVacio.classList.remove('hidden');
-        return;
+    } else {
+        // Ocultar el estado vacío y pintar cada tarea
+        const estadoVacio = document.getElementById('tasksEmptyState');
+        if (estadoVacio) estadoVacio.classList.add('hidden');
+
+        tareas.forEach(function(tarea, indice) {
+            // agregarTareaATabla viene de tareasUI.js y construye la fila con createElement
+            agregarTareaATabla(tarea, indice);
+        });
     }
 
-    // Ocultar el estado vacío y pintar cada tarea
-    const estadoVacio = document.getElementById('tasksEmptyState');
-    if (estadoVacio) estadoVacio.classList.add('hidden');
-
-    tareas.forEach(function(tarea, indice) {
-        // agregarTareaATabla viene de tareasUI.js y construye la fila con createElement
-        agregarTareaATabla(tarea, indice);
-    });
-
     // Cargar el dashboard de estadísticas del panel usuario.
-    // Se llama con los IDs del vistaUsuario (prefijo userDash) para no
-    // sobreescribir los valores del dashboard del panel admin.
-    cargarDashboardUsuario(tareas);   // pasar tareas ya cargadas, no hacer fetch extra
+    // Se llama siempre — cargarDashboardUsuario maneja el caso de arreglo vacío
+    cargarDashboardUsuario(tareas || []);
 
-    // Montar el calendario del usuario:
-    // soloLectura: false — el usuario puede agregar eventos propios además de ver los del instructor
+    // Montar el calendario del usuario SIEMPRE — se muestra aunque no haya tareas.
+    // crearCalendario acepta tareas=[] y renderiza el calendario completo sin puntos.
     await crearCalendario({
         contenedorId: 'usuarioCalendario',
         paleta:       'usuario',
         soloLectura:  false,
-        tareas:       tareas,
+        tareas:       tareas || [],
         userId:       usuarioSesion.id,   // para restringir borrado a eventos propios
     });
 
-    // Cargar los post-its personales
+    // Cargar los post-its personales SIEMPRE — no dependen de las tareas asignadas
     cargarPostits(usuarioSesion.id);
 }
 
