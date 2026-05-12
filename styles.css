@@ -65,6 +65,9 @@
     padding: 0;
 }
 
+/* Issue 6: eliminar el handle de redimensionamiento en todas las textareas del proyecto */
+textarea { resize: none; }
+
 html { font-size: 16px; }
 
 body {
@@ -494,7 +497,7 @@ body[data-modo="admin"]   {
 .form__input::placeholder { color: var(--texto-claro); }
 
 .form__textarea {
-    resize: vertical;
+    resize: none;
     min-height: 80px;
 }
 
@@ -1236,7 +1239,7 @@ body[data-modo="admin"]   {
     font-size: 0.83rem;
 }
 
-.modal-v2__form .form__textarea { resize: vertical; min-height: 52px; }
+.modal-v2__form .form__textarea { resize: none; min-height: 52px; }
 
 /* Botón de submit */
 .modal-v2__btn-submit {
@@ -2194,7 +2197,7 @@ body[data-modo="admin"]   {
     color: var(--color-admin-oscuro);
     padding: var(--espacio-xs);
     border-radius: var(--radio-sm);
-    margin-left: auto;
+    margin-left: 0;
     line-height: 1;
     /* La flecha rota suavemente al contraer o desplegar */
     transition: transform var(--transicion), color var(--transicion);
@@ -3529,7 +3532,7 @@ body[data-modo="instructor"] {
     padding: 8px 10px;
     font-size: 0.82rem;
     font-family: inherit;
-    resize: vertical;
+    resize: none;
     min-height: 64px;
     outline: none;
     transition: border-color 0.15s;
@@ -4093,9 +4096,11 @@ body[data-modo="instructor"] {
     transition: all 0.2s;
 }
 .panel-cal__btn-aprobar {
-    width: 100%; padding: 0.7rem 1rem;
+    /* Issue 8c: width auto + border-radius oval para que no ocupe todo el ancho */
+    width: auto; display: block; margin: 0.5rem auto 0;
+    padding: 0.7rem 1.75rem;
     background: linear-gradient(135deg, #059669, #047857);
-    color: #ffffff; border: none; border-radius: 0.6rem;
+    color: #ffffff; border: none; border-radius: var(--radio-full);
     font-size: 0.9rem; font-weight: 700; cursor: pointer;
     letter-spacing: 0.02em; transition: opacity 0.2s, transform 0.1s;
 }
@@ -4298,7 +4303,7 @@ body[data-modo="instructor"] {
 }
 
 .modal-admin__textarea {
-    resize: vertical;
+    resize: none;
     min-height: 80px;
 }
 
@@ -4490,7 +4495,7 @@ body[data-modo="instructor"] {
     border-radius: var(--radio-md) !important;
     font-size: 0.875rem !important;
     font-family: inherit !important;
-    resize: vertical !important;
+    resize: none !important;
     outline: none !important;
     background: var(--fondo-gris) !important;
     color: var(--texto-oscuro) !important;
@@ -4794,7 +4799,8 @@ body:has(#vistaUsuario:not(.hidden)) .swal2-confirm:hover {
 /* ── TABLA TAREAS ADMIN — sin scroll horizontal ─────────────────────────────*/
 #cuerpoTareas .tasks-table-container { overflow-x: visible; }
 
-#cardTareas { padding: var(--espacio-lg) var(--espacio-md); }
+#cardTareas,
+#instrCardTareas { padding: var(--espacio-xl); }
 
 #cuerpoTareas .tasks-table {
     table-layout: fixed;
