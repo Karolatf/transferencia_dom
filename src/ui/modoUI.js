@@ -97,6 +97,30 @@ function ocultarTodo() {
     if (vistaInstructor) vistaInstructor.classList.add('hidden');
 }
 
+// ── CONTRAER TODAS LAS CARDS ─────────────────────────────────────────────────
+// Issue 8a: garantiza que todas las cards arranquen contraídas al activar cualquier vista,
+// incluso en el segundo login (cuando registrarCardsContraibles no se vuelve a ejecutar).
+function contraerTodasLasCards() {
+    const pares = [
+        ['toggleUsuarios',          'cuerpoUsuarios'],
+        ['toggleTareas',            'cuerpoTareas'],
+        ['toggleCrearTareas',       'cuerpoCrearTareas'],
+        ['instrToggleCrearTareas',  'instrCuerpoCrearTareas'],
+        ['instrToggleUsuarios',     'instrCuerpoUsuarios'],
+        ['instrToggleTareas',       'instrCuerpoTareas'],
+        ['toggleTareasUsuario',     'cuerpoTareasUsuario'],
+    ];
+    pares.forEach(function(par) {
+        const encabezado = document.getElementById(par[0]);
+        const cuerpo     = document.getElementById(par[1]);
+        if (!encabezado || !cuerpo) return;
+        cuerpo.classList.add('oculto');
+        const botonFlecha = encabezado.querySelector('.btn-toggle-card');
+        if (botonFlecha) botonFlecha.classList.add('contraido');
+        encabezado.classList.add('sin-borde');
+    });
+}
+
 export function activarModoInicio() {
     ocultarTodo();
     pantallaInicio.classList.remove('hidden');
@@ -269,6 +293,7 @@ async function cargarPostits(userId) {
 
 export async function activarModoUsuario() {
     ocultarTodo();
+    contraerTodasLasCards(); // Issue 8a: garantizar cards contraídas al entrar
     vistaUsuario.classList.remove('hidden');
     document.body.dataset.modo = 'usuario';
 
@@ -686,6 +711,7 @@ function abrirModalPermisos(rol, meta) {
 
 export async function activarModoAdmin() {
     ocultarTodo();
+    contraerTodasLasCards(); // Issue 8a: garantizar cards contraídas al entrar
     vistaAdmin.classList.remove('hidden');
     document.body.dataset.modo = 'admin';
     // Carga inicial en paralelo: no bloqueamos la UI
@@ -711,6 +737,7 @@ export async function activarModoAdmin() {
 // Se llama desde main.js cuando role === 'instructor'.
 export async function activarModoInstructor() {
     ocultarTodo();
+    contraerTodasLasCards(); // Issue 8a: garantizar cards contraídas al entrar
     vistaInstructor.classList.remove('hidden');
     document.body.dataset.modo = 'instructor';
 
@@ -748,13 +775,15 @@ export async function activarModoInstructor() {
         window._panelCalificacionInterval = null;
     }
     window._panelCalificacionInterval = setInterval(async function() {
-        // Verificar que la vistaInstructor esté VISIBLE (no hidden).
-        // La condición anterior usaba getElementById que siempre retorna
-        // el elemento (es HTML estático), por lo que el intervalo nunca se cancelaba.
         const vistaInstr = document.getElementById('vistaInstructor');
         const estaVisible = vistaInstr && !vistaInstr.classList.contains('hidden');
         if (estaVisible) {
-            await cargarPanelCalificacion();
+            // Issue 8b: no recargar el panel si el instructor está escribiendo en el input de nota
+            const focoEnNota = document.activeElement &&
+                document.activeElement.classList.contains('panel-cal__input-nota');
+            if (!focoEnNota) {
+                await cargarPanelCalificacion();
+            }
             cargarDashboardInstructor();
             cargarTablaUsuariosInstructor();
         } else {
@@ -1827,15 +1856,26 @@ function crearFilaUsuario(usuario, indice) {
             async function() {
                 const resultado = await mostrarModalToggleEstado(usuario.name, 'desactivar');
                 if (!resultado) return; // Canceló
-                try {
-                    await desactivarUsuario(usuario.id);
-                    registrarEvento('rol_cambiado', `${usuario.name} fue desactivado`);
-                    renderizarAuditoria(document.getElementById('auditoriaContenedor'));
-                    await mostrarNotificacion(`${usuario.name} fue desactivado. Motivo: ${resultado.motivo}`, 'exito');
-                    cargarTablaUsuarios();
-                } catch (error) {
-                    await mostrarNotificacion(error.message || 'No se pudo desactivar', 'error');
-                }
+
+                // OPTIMISTIC UPDATE: actualizar el badge de estado en el DOM al instante
+                const celdaEstadoEl = tdEstado;
+                while (celdaEstadoEl.firstChild) celdaEstadoEl.removeChild(celdaEstadoEl.firstChild);
+                celdaEstadoEl.appendChild(crearBadgeEstado(0));
+
+                // Auditoría y toast sin esperar al backend
+                registrarEvento('rol_cambiado', `${usuario.name} fue desactivado`);
+                renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+                mostrarNotificacion(`${usuario.name} fue desactivado. Motivo: ${resultado.motivo}`, 'exito');
+
+                // Llamada al backend en background — si falla revierte el badge
+                desactivarUsuario(usuario.id, resultado.motivo)
+                    .then(() => { cargarTablaUsuarios(); })
+                    .catch(async (error) => {
+                        // Revertir badge a Activo si el backend rechazó
+                        while (celdaEstadoEl.firstChild) celdaEstadoEl.removeChild(celdaEstadoEl.firstChild);
+                        celdaEstadoEl.appendChild(crearBadgeEstado(1));
+                        await mostrarNotificacion(error.message || 'No se pudo desactivar', 'error');
+                    });
             }
         ));
     } else {
@@ -1843,15 +1883,26 @@ function crearFilaUsuario(usuario, indice) {
             async function() {
                 const resultado = await mostrarModalToggleEstado(usuario.name, 'activar');
                 if (!resultado) return; // Canceló
-                try {
-                    await reactivarUsuario(usuario.id);
-                    registrarEvento('login', `${usuario.name} fue reactivado`);
-                    renderizarAuditoria(document.getElementById('auditoriaContenedor'));
-                    await mostrarNotificacion(`${usuario.name} fue reactivado. Motivo: ${resultado.motivo}`, 'exito');
-                    cargarTablaUsuarios();
-                } catch (error) {
-                    await mostrarNotificacion(error.message || 'No se pudo reactivar', 'error');
-                }
+
+                // OPTIMISTIC UPDATE: actualizar el badge de estado en el DOM al instante
+                const celdaEstadoEl = tdEstado;
+                while (celdaEstadoEl.firstChild) celdaEstadoEl.removeChild(celdaEstadoEl.firstChild);
+                celdaEstadoEl.appendChild(crearBadgeEstado(1));
+
+                // Auditoría y toast sin esperar al backend
+                registrarEvento('login', `${usuario.name} fue reactivado`);
+                renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+                mostrarNotificacion(`${usuario.name} fue reactivado. Motivo: ${resultado.motivo}`, 'exito');
+
+                // Llamada al backend en background — si falla revierte el badge
+                reactivarUsuario(usuario.id)
+                    .then(() => { cargarTablaUsuarios(); })
+                    .catch(async (error) => {
+                        // Revertir badge a Inactivo si el backend rechazó
+                        while (celdaEstadoEl.firstChild) celdaEstadoEl.removeChild(celdaEstadoEl.firstChild);
+                        celdaEstadoEl.appendChild(crearBadgeEstado(0));
+                        await mostrarNotificacion(error.message || 'No se pudo reactivar', 'error');
+                    });
             }
         ));
     }
@@ -1864,20 +1915,56 @@ function crearFilaUsuario(usuario, indice) {
             if (!resultado) return; // Canceló
 
             try {
-                if (resultado.forzoso) {
-                    // Cierre forzoso — no requiere estado inactivo ni tareas completadas
-                    await forceEliminarUsuario(usuario.id, resultado.motivo);
-                } else {
-                    // Eliminación estándar — el backend valida que esté inactivo
-                    await eliminarUsuario(usuario.id);
+                // —— OPTIMISTIC UPDATE (compartido para ambos modos) ———————————————————
+                // Quitamos la fila y mostramos el toast al instante sin esperar al backend.
+                // La auditoría (“Actividad reciente”) solo se registra en el .then(), cuando
+                // el backend confirma el éxito. Si falla, se revierte con cargarTablaUsuarios().
+                if (fila && fila.parentNode) fila.parentNode.removeChild(fila);
+
+                const tbodyUsers = document.getElementById('usersTableBody');
+                const contadorEl = document.getElementById('adminUsersCount');
+                if (contadorEl && tbodyUsers) {
+                    const n = tbodyUsers.querySelectorAll('tr').length;
+                    contadorEl.textContent = `${n} ${n === 1 ? 'usuario' : 'usuarios'}`;
                 }
-                await mostrarNotificacion(`${usuario.name} fue eliminado correctamente`, 'exito');
-                registrarEvento('usuario_eliminado', `Usuario eliminado: ${usuario.name}`);
-                renderizarAuditoria(document.getElementById('auditoriaContenedor'));
-                cargarTablaUsuarios();
-                cargarTodasLasTareas();
-                cargarDashboard();
+                mostrarNotificacion(`${usuario.name} fue eliminado correctamente`, 'exito');
+
+                if (resultado.forzoso) {
+                    forceEliminarUsuario(usuario.id, resultado.motivo)
+                        .then(() => {
+                            // Backend confirmó: ahora sí registrar en auditoría
+                            registrarEvento('usuario_eliminado', `Usuario eliminado: ${usuario.name}`);
+                            renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+                            cargarTodasLasTareas();
+                            cargarDashboard();
+                        })
+                        .catch(async (error) => {
+                            cargarTablaUsuarios(); // revertir
+                            await mostrarNotificacion(
+                                error.message || 'No se pudo eliminar el usuario',
+                                'error'
+                            );
+                        });
+                } else {
+                    // Pasa el motivo — el backend lo exige y rechaza con 400 si faltan tareas
+                    eliminarUsuario(usuario.id, resultado.motivo)
+                        .then(() => {
+                            // Backend confirmó: ahora sí registrar en auditoría
+                            registrarEvento('usuario_eliminado', `Usuario eliminado: ${usuario.name}`);
+                            renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+                            cargarTodasLasTareas();
+                            cargarDashboard();
+                        })
+                        .catch(async (error) => {
+                            cargarTablaUsuarios(); // revertir si el backend rechaza
+                            await mostrarNotificacion(
+                                error.message || 'No se pudo eliminar el usuario',
+                                'error'
+                            );
+                        });
+                }
             } catch (error) {
+                cargarTablaUsuarios();
                 await mostrarNotificacion(
                     error.message || 'No se pudo eliminar el usuario',
                     'error'
@@ -3004,7 +3091,16 @@ export async function abrirModalUsuario(usuario) {
             assignedUsers: [Number(usuario.id)],
         };
 
-        const tareaCreada = await registrarTarea(datosTarea);
+        let tareaCreada;
+        try {
+            tareaCreada = await registrarTarea(datosTarea);
+        } catch (errorAsignar) {
+            await mostrarNotificacion(
+                errorAsignar.message || 'No se pudo asignar la tarea',
+                'error'
+            );
+            return;
+        }
 
         if (tareaCreada) {
             cerrarModalUsuarioExistente();
@@ -3018,8 +3114,6 @@ export async function abrirModalUsuario(usuario) {
             await mostrarNotificacion(`Tarea "${tituloVal}" asignada correctamente`, 'exito');
             registrarEvento('tarea_creada', `Tarea asignada: "${tituloVal}"`);
             renderizarAuditoria(document.getElementById('auditoriaContenedor'));
-        } else {
-            await mostrarNotificacion('Error al asignar la tarea', 'error');
         }
     });
 
@@ -4073,7 +4167,7 @@ export function registrarEventosNavegacion() {
                 title:         titulo,
                 description:   descInput && descInput.value.trim() !== '' ? descInput.value.trim() : undefined,
                 status:        estado,
-                comment:       commentInput && commentInput.value.trim() !== '' ? commentInput.value.trim() : null,
+                comment:       commentInput && commentInput.value.trim() !== '' ? commentInput.value.trim() : undefined,
                 assignedUsers: assignedUsers,
             };
 
@@ -4082,15 +4176,14 @@ export function registrarEventosNavegacion() {
             try {
                 tareaCreada = await registrarTarea(datosTarea);
             } catch (errorCreacion) {
-                // Si el backend responde 400 (Zod) se muestran los mensajes descriptivos
-                if (errorCreacion.errors && errorCreacion.errors.length > 0) {
-                    await mostrarNotificacion(errorCreacion.errors[0].message, 'error');
-                } else {
-                    await mostrarNotificacion(
-                        errorCreacion.message || 'No se pudo crear la tarea',
-                        'error'
-                    );
+                // Mostrar el mensaje exacto que devuelve el backend
+                // Si hay errores de validación Zod, mostrar el campo y mensaje del primero
+                let msgError = errorCreacion.message || 'No se pudo crear la tarea';
+                if (Array.isArray(errorCreacion.validationErrors) && errorCreacion.validationErrors.length > 0) {
+                    const primero = errorCreacion.validationErrors[0];
+                    msgError = primero.message || msgError;
                 }
+                await mostrarNotificacion(msgError, 'error');
                 return;
             }
 

@@ -221,7 +221,7 @@ export function mostrarModalToggleEstado(nombreUsuario, accion) {
             border: 1.5px solid var(--borde-suave);
             border-radius: var(--radio-md);
             font-size: 0.875rem; font-family: inherit;
-            resize: vertical; outline: none;
+            resize: none; outline: none;
             background: var(--fondo-gris); color: var(--texto-oscuro);
             box-sizing: border-box; line-height: 1.5;
             transition: border-color 0.15s, box-shadow 0.15s;
@@ -408,9 +408,9 @@ export function mostrarModalEliminarUsuario(nombreUsuario, estaActivo) {
             return label;
         }
 
-        const tarjetaNormal  = crearTarjeta('normal', 'normal', !estaActivo, 'Eliminación estándar',
-            estaActivo ? 'Requiere que el usuario esté <strong>inactivo</strong> primero.' : 'El usuario está inactivo.', estaActivo);
-        const tarjetaForzoso = crearTarjeta('forzoso', 'forzoso', estaActivo, 'Cierre forzoso',
+        const tarjetaNormal  = crearTarjeta('normal', 'normal', true, 'Eliminación estándar',
+            'Elimina solo si el usuario no tiene tareas pendientes.', false);
+        const tarjetaForzoso = crearTarjeta('forzoso', 'forzoso', false, 'Cierre forzoso',
             'Elimina sin importar estado ni tareas pendientes.', false);
 
         tarjetas.appendChild(tarjetaNormal);
@@ -433,7 +433,7 @@ export function mostrarModalEliminarUsuario(nombreUsuario, estaActivo) {
             border: 1.5px solid var(--borde-suave);
             border-radius: var(--radio-md);
             font-size: 0.875rem; font-family: inherit;
-            resize: vertical; outline: none;
+            resize: none; outline: none;
             background: var(--fondo-gris); color: var(--texto-oscuro);
             box-sizing: border-box; line-height: 1.5;
             transition: border-color 0.15s, box-shadow 0.15s;

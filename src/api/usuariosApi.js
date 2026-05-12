@@ -99,18 +99,25 @@ export async function actualizarUsuario(id, datosUsuario) {
     }
 }
 
-// ── ELIMINAR USUARIO ──────────────────────────────────────────────────────────
+// ── ELIMINAR USUARIO (estándar) ───────────────────────────────────────────────
 // DELETE /api/users/:id
-export async function eliminarUsuario(id) {
+// Elimina permanentemente si el usuario NO tiene tareas pendientes/en_progreso.
+// Requiere { reason } en el body (mín. 10 caracteres) para auditoría.
+// Si el usuario tiene tareas activas, el backend responde 400 con el detalle.
+export async function eliminarUsuario(id, reason) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/users/${id}`;
-        const response = await fetchConAuth(url, { method: 'DELETE' });
+        const response = await fetchConAuth(url, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason }),
+        });
         const json = await response.json();
-        if (!json.success) throw new Error(json.message || `Error al eliminar usuario ${id}`);
+        if (!response.ok) throw new Error(json.message || `Error al eliminar usuario ${id}`);
         return true;
     } catch (error) {
         console.error('eliminarUsuario:', error);
-        return false;
+        throw error; // relanzar para que adminPanel muestre el mensaje del backend
     }
 }
 
@@ -168,9 +175,14 @@ export async function cambiarPassword(userId, datos) {
 // desactivarUsuario — PATCH /api/users/:id/deactivate
 // Marca al usuario como inactivo (is_active = 0) sin eliminarlo
 // El backend responde 400 si tiene tareas activas — ese mensaje llega en error.message
-export async function desactivarUsuario(id) {
+// Issue 4: se agrega el parámetro motivo y se envía en el body para persistir deactivation_reason
+export async function desactivarUsuario(id, motivo) {
     const url      = `${API_BASE_URL}${API_PREFIX}/users/${id}/deactivate`;
-    const respuesta = await fetchConAuth(url, { method: 'PATCH' });
+    const respuesta = await fetchConAuth(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: motivo }),
+    });
     const datos    = await respuesta.json();
     // Si el backend rechaza (400 con tareas activas, 404 no existe), lanzar error
     if (!respuesta.ok) throw new Error(datos.message || 'No se pudo desactivar el usuario');

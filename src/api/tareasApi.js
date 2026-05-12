@@ -88,20 +88,24 @@ export async function obtenerTareaPorId(id) {
 // POST /api/tasks
 // Cuerpo: { title, description, status, assignedUsers, comment }
 export async function registrarTarea(datosTarea) {
-    try {
-        const url = `${API_BASE_URL}${API_PREFIX}/tasks`;
-        const response = await fetchConAuth(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datosTarea),
-        });
-        const json = await response.json();
-        if (!response.ok) throw new Error(json.message || 'Error al registrar la tarea');
-        return json.data;
-    } catch (error) {
-        console.error('registrarTarea:', error);
-        return null;
+    const url = `${API_BASE_URL}${API_PREFIX}/tasks`;
+    const response = await fetchConAuth(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosTarea),
+    });
+    const json = await response.json();
+    if (!response.ok) {
+        const err = new Error(json.message || 'Error al registrar la tarea');
+        // Adjuntar errores de validación Zod si vienen en json.data
+        if (response.status === 400 && Array.isArray(json.data) && json.data.length > 0) {
+            err.validationErrors = json.data;
+            // Sobreescribir el mensaje genérico con el primer error específico
+            err.message = json.data[0].message || json.message || 'Error al registrar la tarea';
+        }
+        throw err;
     }
+    return json.data;
 }
 
 // ── ACTUALIZAR TAREA (PUT completo) ───────────────────────────────────────────

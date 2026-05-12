@@ -326,8 +326,10 @@
             <!-- Encabezado contraíble: título + flecha de toggle -->
             <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleCrearTareas">
                 <h2 class="admin-card__titulo">Crear Tarea</h2>
-                <!-- Flecha que rota al contraer o desplegar -->
-                <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Crear Tarea">▼</button>
+                <!-- Issue 1: btn-toggle-card envuelto en admin-card__cabecera-derecha para alinear con las otras cards -->
+                <div class="admin-card__cabecera-derecha">
+                    <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Crear Tarea">▼</button>
+                </div>
             </div>
             <!-- Cuerpo contraíble: formulario de creación de tarea -->
             <div class="admin-card__cuerpo" id="cuerpoCrearTareas">
@@ -609,7 +611,10 @@
         <section class="admin-card admin-card--full" id="instrCardCrearTareas">
             <div class="admin-card__cabecera admin-card__cabecera--toggle" id="instrToggleCrearTareas">
                 <h2 class="admin-card__titulo">Crear Tarea</h2>
-                <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Crear Tarea">▼</button>
+                <!-- Issue 1: btn-toggle-card envuelto en admin-card__cabecera-derecha -->
+                <div class="admin-card__cabecera-derecha">
+                    <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Crear Tarea">▼</button>
+                </div>
             </div>
             <div class="admin-card__cuerpo" id="instrCuerpoCrearTareas">
                 <form id="instrCreateTaskForm" class="form" novalidate>

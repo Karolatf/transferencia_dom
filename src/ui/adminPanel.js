@@ -336,18 +336,18 @@ async function renderizarTablaUsuarios(contenedor) {
             if (resultado.forzoso) {
                 exitoso = await forceEliminarUsuario(userId, resultado.motivo);
             } else {
-                // Borrado suave: desactiva el usuario (is_active = 0) sin eliminarlo
-                exitoso = await eliminarUsuario(userId);
+                // Eliminación estándar: borra de la BD solo si no tiene tareas activas
+                exitoso = await eliminarUsuario(userId, resultado.motivo);
             }
         } catch (error) {
-            await mostrarNotificacion(error.message || 'Error al desactivar el usuario', 'error');
+            await mostrarNotificacion(error.message || 'Error al eliminar el usuario', 'error');
             return;
         }
 
         if (exitoso) {
             const mensaje = resultado.forzoso
-                ? 'Usuario eliminado permanentemente'
-                : `${nombreUsuario} fue desactivado correctamente`;
+                ? 'Usuario eliminado permanentemente (cierre forzoso)'
+                : `${nombreUsuario} fue eliminado correctamente`;
             await mostrarNotificacion(mensaje, 'exito');
             await renderizarTablaUsuarios(contenedor);
         } else {
