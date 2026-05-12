@@ -60,6 +60,7 @@ import { PERMISOS_POR_ROL, METADATOS_ROL } from '../utils/rolesPermisos.js';
 
 import { crearCalendario } from '../utils/eventosCalendario.js';
 import { obtenerNotas, crearNota as crearNotaApi, eliminarNota as eliminarNotaApi } from '../api/notesApi.js';
+import { registrarRutas, iniciarRouter, navegarA, limpiarHashActual } from '../router.js';
 
 // crearIconoLucide — función privada reutilizable para crear íconos Lucide en el DOM
 // Parámetro: nombreIcono — string con el nombre del ícono según la librería Lucide
@@ -72,6 +73,146 @@ function crearIconoLucide(nombreIcono, claseExtra) {
     return icono;
 }
 
+
+// ── SIDEBAR ───────────────────────────────────────────────────────────────────
+
+function abrirSidebar(sufijo) {
+    const sidebar = document.getElementById('sidebar' + sufijo);
+    const overlay = document.getElementById('overlay' + sufijo);
+    const btn     = document.getElementById('btnHamburguesa' + sufijo);
+    if (sidebar) sidebar.classList.add('sidebar--abierto');
+    if (overlay) overlay.classList.add('sidebar-overlay--visible');
+    if (btn)     btn.classList.add('btn-hamburguesa--abierto');
+    if (btn)     btn.setAttribute('aria-expanded', 'true');
+}
+
+function cerrarSidebar(sufijo) {
+    const sidebar = document.getElementById('sidebar' + sufijo);
+    const overlay = document.getElementById('overlay' + sufijo);
+    const btn     = document.getElementById('btnHamburguesa' + sufijo);
+    if (sidebar) sidebar.classList.remove('sidebar--abierto');
+    if (overlay) overlay.classList.remove('sidebar-overlay--visible');
+    if (btn)     btn.classList.remove('btn-hamburguesa--abierto');
+    if (btn)     btn.setAttribute('aria-expanded', 'false');
+}
+
+function _expandirCard(cuerpoId) {
+    const cuerpo = document.getElementById(cuerpoId);
+    if (!cuerpo) return;
+    cuerpo.classList.remove('oculto');
+    const cabecera = cuerpo.previousElementSibling;
+    if (cabecera) {
+        const btnFlecha = cabecera.querySelector('.btn-toggle-card');
+        if (btnFlecha) btnFlecha.classList.remove('contraido');
+        cabecera.classList.remove('sin-borde');
+    }
+}
+
+function _mostrarSeccion(vistaId, sidebarId, sufijo, nombre, mapaExpandir) {
+    const vista = document.getElementById(vistaId);
+    if (!vista) return;
+
+    vista.querySelectorAll('.spa-seccion').forEach(function(s) {
+        s.classList.add('spa-seccion--oculta');
+    });
+
+    const target = vista.querySelector('.spa-seccion[data-seccion="' + nombre + '"]');
+    if (target) target.classList.remove('spa-seccion--oculta');
+
+    const sidebar = document.getElementById(sidebarId);
+    if (sidebar) {
+        sidebar.querySelectorAll('.sidebar__link[data-seccion]').forEach(function(l) {
+            l.classList.remove('sidebar__link--activo');
+        });
+        const link = sidebar.querySelector('.sidebar__link[data-seccion="' + nombre + '"]');
+        if (link) link.classList.add('sidebar__link--activo');
+    }
+
+    const cuerpoId = mapaExpandir[nombre];
+    if (cuerpoId) _expandirCard(cuerpoId);
+
+    // Limpiar formularios y filtros al volver a una sección
+    if (nombre === 'crear-tarea') {
+        ['createTaskForm', 'instrCreateTaskForm'].forEach(function(id) {
+            const f = document.getElementById(id);
+            if (f) {
+                f.reset();
+                f.querySelectorAll('.form__error').forEach(function(e) { e.textContent = ''; });
+                f.querySelectorAll('.form__input, .form__textarea, .form__select').forEach(function(el) {
+                    el.classList.remove('error');
+                });
+            }
+        });
+        // Resetear el dropdown de usuarios: desmarcar checkboxes y restaurar texto
+        ['usuariosDropdownPanel', 'instrUsuariosDropdownPanel'].forEach(function(panelId) {
+            const p = document.getElementById(panelId);
+            if (!p) return;
+            p.querySelectorAll('input[type="checkbox"]').forEach(function(cb) { cb.checked = false; });
+        });
+        ['usuariosDropdownTexto', 'instrUsuariosDropdownTexto'].forEach(function(textoId) {
+            const t = document.getElementById(textoId);
+            if (t) t.textContent = 'Seleccionar usuarios...';
+        });
+    }
+    if (nombre === 'tareas') {
+        [
+            ['adminFiltroEstado', 'adminFiltroUsuario'],
+            ['instrFiltroEstado', 'instrFiltroUsuario'],
+        ].forEach(function(pair) {
+            const sel = document.getElementById(pair[0]);
+            const inp = document.getElementById(pair[1]);
+            if (sel) sel.selectedIndex = 0;
+            if (inp) inp.value = '';
+        });
+        // Recargar la tabla de tareas según la vista activa
+        if (vistaId === 'vistaAdmin') cargarTodasLasTareas();
+        else if (vistaId === 'vistaInstructor') cargarTareasInstructor();
+    }
+
+    cerrarSidebar(sufijo);
+}
+
+function mostrarSeccionUsuario(nombre) {
+    _mostrarSeccion('vistaUsuario', 'sidebarUsuario', 'Usuario', nombre, {
+        'tareas': 'cuerpoTareasUsuario',
+    });
+}
+
+function mostrarSeccionAdmin(nombre) {
+    _mostrarSeccion('vistaAdmin', 'sidebarAdmin', 'Admin', nombre, {
+        'crear-tarea': 'cuerpoCrearTareas',
+        'usuarios':    'cuerpoUsuarios',
+        'tareas':      'cuerpoTareas',
+    });
+}
+
+function mostrarSeccionInstructor(nombre) {
+    _mostrarSeccion('vistaInstructor', 'sidebarInstructor', 'Instructor', nombre, {
+        'crear-tarea': 'instrCuerpoCrearTareas',
+        'estudiantes': 'instrCuerpoUsuarios',
+        'tareas':      'instrCuerpoTareas',
+    });
+}
+
+function _configurarSidebar(sufijo, manejadorNavegacion) {
+    const hamburguesa = document.getElementById('btnHamburguesa' + sufijo);
+    const cerrar      = document.getElementById('sidebarCerrar'  + sufijo);
+    const overlay     = document.getElementById('overlay'        + sufijo);
+    const sidebar     = document.getElementById('sidebar'        + sufijo);
+
+    if (hamburguesa) hamburguesa.addEventListener('click', function() { abrirSidebar(sufijo); });
+    if (cerrar)      cerrar.addEventListener('click',      function() { cerrarSidebar(sufijo); });
+    if (overlay)     overlay.addEventListener('click',     function() { cerrarSidebar(sufijo); });
+
+    if (sidebar) {
+        sidebar.querySelectorAll('.sidebar__link[data-seccion]').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                manejadorNavegacion(link.dataset.seccion);
+            });
+        });
+    }
+}
 
 // ── REFERENCIAS A VISTAS ──────────────────────────────────────────────────────
 
@@ -125,9 +266,8 @@ export function activarModoInicio() {
     ocultarTodo();
     pantallaInicio.classList.remove('hidden');
     document.body.dataset.modo = 'inicio';
-    // Limpiar los campos del formulario para no exponer datos del usuario anterior
-    // Esto es especialmente importante en computadores compartidos
     limpiarFormularioLogin();
+    limpiarHashActual();
 }
 
 // ── ACTIVAR MODO USUARIO (ACTUALIZADO) ────────────────────────────────────────
@@ -431,6 +571,24 @@ export async function activarModoUsuario() {
 
     // Cargar los post-its personales SIEMPRE — no dependen de las tareas asignadas
     cargarPostits(usuarioSesion.id);
+
+    // ── SPA: hero + router + sidebar ─────────────────────────────────────────
+    const heroNombre = document.getElementById('heroNombreUsuario');
+    if (heroNombre) heroNombre.textContent = usuarioSesion.name;
+
+    registrarRutas({
+        'usuario/inicio': function() { mostrarSeccionUsuario('inicio'); },
+        'usuario/tareas': function() { mostrarSeccionUsuario('tareas'); },
+        'usuario/notas':  function() { mostrarSeccionUsuario('notas');  },
+    });
+
+    _configurarSidebar('Usuario', function(seccion) {
+        navegarA('usuario/' + seccion);
+    });
+
+    iniciarRouter();
+    navegarA('usuario/inicio');
+    if (window.lucide) window.lucide.createIcons();
 }
 
 // renderizarDiccionarioRoles — cards de roles en la columna derecha del admin
@@ -711,24 +869,40 @@ function abrirModalPermisos(rol, meta) {
 
 export async function activarModoAdmin() {
     ocultarTodo();
-    contraerTodasLasCards(); // Issue 8a: garantizar cards contraídas al entrar
+    contraerTodasLasCards();
     vistaAdmin.classList.remove('hidden');
     document.body.dataset.modo = 'admin';
-    // Carga inicial en paralelo: no bloqueamos la UI
+
     cargarDashboard();
     cargarTablaUsuarios();
     cargarTodasLasTareas();
-    // Se inicializa el dropdown de usuarios de la card "Crear Tarea"
-    // await garantiza que los checkboxes están cargados antes de continuar
     await inicializarDropdownUsuarios();
 
-    // Inicializar la columna de auditoría vacía
     const contenedorAuditoria = document.getElementById('auditoriaContenedor');
     if (contenedorAuditoria) renderizarAuditoria(contenedorAuditoria);
 
-    // Inicializar la columna derecha de roles
     const contenedorRoles = document.getElementById('rolesContenedor');
     if (contenedorRoles) renderizarDiccionarioRoles(contenedorRoles);
+
+    // ── SPA: hero + router + sidebar ─────────────────────────────────────────
+    const usuarioSesion = obtenerUsuarioSesion();
+    const heroNombre = document.getElementById('heroNombreAdmin');
+    if (heroNombre && usuarioSesion) heroNombre.textContent = usuarioSesion.name;
+
+    registrarRutas({
+        'admin/inicio':      function() { mostrarSeccionAdmin('inicio');      },
+        'admin/crear-tarea': function() { mostrarSeccionAdmin('crear-tarea'); },
+        'admin/usuarios':    function() { mostrarSeccionAdmin('usuarios');    },
+        'admin/tareas':      function() { mostrarSeccionAdmin('tareas');      },
+    });
+
+    _configurarSidebar('Admin', function(seccion) {
+        navegarA('admin/' + seccion);
+    });
+
+    iniciarRouter();
+    navegarA('admin/inicio');
+    if (window.lucide) window.lucide.createIcons();
 }
 
 // ── ACTIVAR MODO INSTRUCTOR ───────────────────────────────────────────────────
@@ -791,6 +965,26 @@ export async function activarModoInstructor() {
             window._panelCalificacionInterval = null;
         }
     }, 10000);
+
+    // ── SPA: hero + router + sidebar ─────────────────────────────────────────
+    const usuarioSesionInstr = obtenerUsuarioSesion();
+    const heroNombreInstr = document.getElementById('heroNombreInstructor');
+    if (heroNombreInstr && usuarioSesionInstr) heroNombreInstr.textContent = usuarioSesionInstr.name;
+
+    registrarRutas({
+        'instructor/inicio':      function() { mostrarSeccionInstructor('inicio');      },
+        'instructor/crear-tarea': function() { mostrarSeccionInstructor('crear-tarea'); },
+        'instructor/estudiantes': function() { mostrarSeccionInstructor('estudiantes'); },
+        'instructor/tareas':      function() { mostrarSeccionInstructor('tareas');      },
+    });
+
+    _configurarSidebar('Instructor', function(seccion) {
+        navegarA('instructor/' + seccion);
+    });
+
+    iniciarRouter();
+    navegarA('instructor/inicio');
+    if (window.lucide) window.lucide.createIcons();
 }
 
 // calcularRendimiento — determina el nivel de rendimiento y el estado resultante
@@ -827,6 +1021,9 @@ function calcularRendimiento(nota) {
     }
 }
 
+// Página activa del panel de calificación — persiste entre llamadas del intervalo
+let _paginaCalificacion = 1;
+
 // cargarPanelCalificacion — lista las tareas con status=pendiente_aprobacion
 // para que el instructor las apruebe con una nota del 0 al 100
 async function cargarPanelCalificacion() {
@@ -856,8 +1053,10 @@ async function cargarPanelCalificacion() {
             return;
         }
 
-        const lista = document.createElement('div');
-        lista.className = 'panel-cal__lista';
+        const CARDS_POR_PAGINA = 3;
+
+        // Construir todos los elementos card
+        const todasLasCards = [];
 
         tareasPendientes.forEach(function(tarea) {
             const card = document.createElement('div');
@@ -960,24 +1159,10 @@ async function cargarPanelCalificacion() {
                         grade:  nota,
                     });
 
-                    // Eliminar la card del DOM sin recargar toda la lista
-                    if (card.parentNode) card.parentNode.removeChild(card);
-
-                    // Si no quedan cards, mostrar vacío
-                    if (lista.querySelectorAll('.panel-cal__card').length === 0) {
-                        while (lista.firstChild) lista.removeChild(lista.firstChild);
-                        const vacioWrap = document.createElement('div');
-                        vacioWrap.className = 'panel-cal__vacio';
-                        const icVacio = document.createElement('div');
-                        icVacio.textContent = '🎉';
-                        icVacio.style.cssText = 'font-size:2.5rem;margin-bottom:0.5rem;';
-                        const txVacio = document.createElement('p');
-                        txVacio.textContent = 'Todas las entregas han sido revisadas';
-                        txVacio.style.cssText = 'color:#6b7280;font-size:0.9rem;margin:0;';
-                        vacioWrap.appendChild(icVacio);
-                        vacioWrap.appendChild(txVacio);
-                        lista.appendChild(vacioWrap);
-                    }
+                    // Eliminar de la lista de cards y re-renderizar
+                    const idx = todasLasCards.indexOf(card);
+                    if (idx !== -1) todasLasCards.splice(idx, 1);
+                    _renderPagina();
 
                     // Actualizar fila en tabla de tareas (estado cambia a completada/reprobada)
                     obtenerTareaPorId(tarea.id).then(function(tareaFresca) {
@@ -1004,10 +1189,70 @@ async function cargarPanelCalificacion() {
             });
 
             card.appendChild(btnAprobar);
-            lista.appendChild(card);
+            todasLasCards.push(card);
         });
 
-        panel.appendChild(lista);
+        // Renderiza la página actual de cards (3 por página) con controles de paginación
+        function _renderPagina() {
+            const viejaLista = panel.querySelector('.panel-cal__lista');
+            const viejaPag   = panel.querySelector('.panel-cal__paginacion');
+            if (viejaLista) panel.removeChild(viejaLista);
+            if (viejaPag)   panel.removeChild(viejaPag);
+
+            if (todasLasCards.length === 0) {
+                const vacioWrap = document.createElement('div');
+                vacioWrap.className = 'panel-cal__vacio';
+                const icVacio = document.createElement('div');
+                icVacio.textContent = '🎉';
+                icVacio.style.cssText = 'font-size:2.5rem;margin-bottom:0.5rem;';
+                const txVacio = document.createElement('p');
+                txVacio.textContent = 'Todas las entregas han sido revisadas';
+                txVacio.style.cssText = 'color:#6b7280;font-size:0.9rem;margin:0;';
+                vacioWrap.appendChild(icVacio);
+                vacioWrap.appendChild(txVacio);
+                panel.appendChild(vacioWrap);
+                return;
+            }
+
+            const totalPaginas = Math.ceil(todasLasCards.length / CARDS_POR_PAGINA);
+            if (_paginaCalificacion > totalPaginas) _paginaCalificacion = totalPaginas;
+
+            const inicio = (_paginaCalificacion - 1) * CARDS_POR_PAGINA;
+            const lista = document.createElement('div');
+            lista.className = 'panel-cal__lista';
+            todasLasCards.slice(inicio, inicio + CARDS_POR_PAGINA).forEach(function(c) {
+                lista.appendChild(c);
+            });
+            panel.appendChild(lista);
+
+            if (totalPaginas > 1) {
+                const paginacion = document.createElement('div');
+                paginacion.className = 'panel-cal__paginacion';
+
+                const btnPrev = document.createElement('button');
+                btnPrev.className = 'panel-cal__pag-btn';
+                btnPrev.textContent = '←';
+                btnPrev.disabled = _paginaCalificacion === 1;
+                btnPrev.addEventListener('click', function() { _paginaCalificacion--; _renderPagina(); });
+
+                const indicador = document.createElement('span');
+                indicador.className = 'panel-cal__pag-indicador';
+                indicador.textContent = _paginaCalificacion + ' / ' + totalPaginas;
+
+                const btnNext = document.createElement('button');
+                btnNext.className = 'panel-cal__pag-btn';
+                btnNext.textContent = '→';
+                btnNext.disabled = _paginaCalificacion === totalPaginas;
+                btnNext.addEventListener('click', function() { _paginaCalificacion++; _renderPagina(); });
+
+                paginacion.appendChild(btnPrev);
+                paginacion.appendChild(indicador);
+                paginacion.appendChild(btnNext);
+                panel.appendChild(paginacion);
+            }
+        }
+
+        _renderPagina();
 
     } catch (error) {
         const err = document.createElement('p');
@@ -1351,14 +1596,14 @@ async function abrirModalVerTarea(tareaInicial) {
         // Badge de nota
         const badgeNota = document.createElement('span');
         badgeNota.className = 'status-badge';
-        badgeNota.style.cssText = `background:${r.bg};color:${r.color};font-weight:700;font-size:1rem;padding:0.3rem 0.9rem;`;
+        badgeNota.style.cssText = `background:${r.bg};color:${r.color};font-weight:700;`;
         badgeNota.textContent = `${nota} / 100`;
         califEl.appendChild(badgeNota);
 
         // Badge de rendimiento
         const badgeRend = document.createElement('span');
         badgeRend.className = 'status-badge';
-        badgeRend.style.cssText = `background:${r.bg};color:${r.color};font-weight:600;font-size:0.85rem;padding:0.25rem 0.75rem;margin-left:0.5rem;`;
+        badgeRend.style.cssText = `background:${r.bg};color:${r.color};font-weight:600;`;
         badgeRend.textContent = `${r.icono} ${r.rendimiento} · ${r.label}`;
         califEl.appendChild(badgeRend);
 
@@ -1592,6 +1837,9 @@ async function inicializarDropdownInstructor() {
             panel.classList.add('hidden');
             btn.setAttribute('aria-expanded', 'false');
         } else {
+            const rect = btn.getBoundingClientRect();
+            const espacioAbajo = window.innerHeight - rect.bottom - 8;
+            panel.style.maxHeight = Math.min(380, Math.max(120, espacioAbajo)) + 'px';
             panel.classList.remove('hidden');
             btn.setAttribute('aria-expanded', 'true');
         }
@@ -2818,9 +3066,17 @@ export async function abrirModalUsuario(usuario) {
                 const r = calcularRendimiento(parseFloat(promedio));
                 const chipCalif = document.createElement('span');
                 chipCalif.className = 'modal-v2__chip';
-                chipCalif.style.cssText = `background:${r.bg};color:${r.color};font-weight:700;`;
-                chipCalif.textContent = `⭐ Promedio: ${promedio}/100 · ${r.rendimiento}`;
+                chipCalif.style.cssText = `background:${r.bg};color:${r.color};font-weight:700;display:inline-flex;align-items:center;gap:4px;`;
+                const iconoStar = crearIconoLucide('star');
+                iconoStar.style.cssText = 'width:12px;height:12px;flex-shrink:0;';
+                chipCalif.appendChild(iconoStar);
+                chipCalif.appendChild(document.createTextNode(`Promedio: ${promedio}/100`));
                 metaFila.appendChild(chipCalif);
+                const chipRend = document.createElement('span');
+                chipRend.className = 'modal-v2__chip';
+                chipRend.style.cssText = `background:transparent;color:${r.color};font-weight:600;font-size:0.75rem;`;
+                chipRend.textContent = r.rendimiento;
+                metaFila.appendChild(chipRend);
             } else {
                 // Tiene tareas completadas pero ninguna calificada aún
                 const chipSC = document.createElement('span');
@@ -2916,10 +3172,15 @@ export async function abrirModalUsuario(usuario) {
                 const n = Number(tarea.grade);
                 const r = calcularRendimiento(n);
                 const chipNota = document.createElement('span');
-                chipNota.className = 'status-badge';
+                chipNota.className = 'status-badge modal-v2__badge-nota';
                 chipNota.style.cssText = `background:${r.bg};color:${r.color};font-weight:700;`;
-                chipNota.textContent = `${n} / 100 · ${r.rendimiento}`;
+                chipNota.textContent = `${n}/100`;
                 filaBadges.appendChild(chipNota);
+                const chipRend = document.createElement('span');
+                chipRend.className = 'modal-v2__rend-label';
+                chipRend.style.cssText = `color:${r.color};font-weight:600;font-size:0.72rem;`;
+                chipRend.textContent = r.rendimiento;
+                filaBadges.appendChild(chipRend);
             } else {
                 const chipSC = document.createElement('span');
                 chipSC.className = 'status-badge';
@@ -3328,6 +3589,9 @@ async function inicializarDropdownUsuarios() {
             btn.classList.remove('abierto');
             btn.setAttribute('aria-expanded', 'false');
         } else {
+            const rect = btn.getBoundingClientRect();
+            const espacioAbajo = window.innerHeight - rect.bottom - 8;
+            panel.style.maxHeight = Math.min(380, Math.max(120, espacioAbajo)) + 'px';
             panel.classList.remove('hidden');
             btn.classList.add('abierto');
             btn.setAttribute('aria-expanded', 'true');
@@ -3414,7 +3678,11 @@ function limpiarFormularioLogin() {
     // Resetear el botón del ojo (mostrar/ocultar contraseña) a su estado inicial
     if (inputPassword) inputPassword.type = 'password';
     const btnToggle = document.getElementById('btnTogglePassword');
-    if (btnToggle) btnToggle.textContent = '👁️';
+    const iconoToggle = document.getElementById('iconoTogglePassword');
+    if (iconoToggle) {
+        iconoToggle.setAttribute('data-lucide', 'eye');
+        if (window.lucide) window.lucide.createIcons();
+    }
 
     // Ocultar el mensaje de bienvenida post-login si está visible
     // El mensaje dice "Sesión iniciada · [nombre]" y debe desaparecer al volver
@@ -3465,9 +3733,9 @@ async function manejarCerrarSesion() {
         const iconoWrap = document.createElement('div');
         iconoWrap.style.cssText = `
             width: 60px; height: 60px; border-radius: 50%;
-            border: 3px solid var(--color-admin);
+            border: 3px solid var(--color-modal-acento);
             display: flex; align-items: center; justify-content: center;
-            color: var(--color-admin); font-size: 1.6rem; font-weight: 700;
+            color: var(--color-modal-acento); font-size: 1.6rem; font-weight: 700;
         `;
         iconoWrap.textContent = '?';
         header.appendChild(iconoWrap);
@@ -3511,7 +3779,7 @@ async function manejarCerrarSesion() {
         btnConfirmar.style.cssText = `
             flex:1; height:42px; border:none; cursor:pointer;
             border-radius:var(--radio-full);
-            background: var(--color-admin); color:white;
+            background: var(--color-modal-acento); color:white;
             font-size:0.875rem; font-weight:600;
             transition: opacity 0.15s, transform 0.1s;
         `;
@@ -3840,12 +4108,16 @@ export function registrarEventosNavegacion() {
     const bienvenidaTexto = document.getElementById('loginBienvenidaTexto');
     const btnToggle       = document.getElementById('btnTogglePassword');
 
-    // Botón 👁️ — alternar visibilidad de la contraseña
+    // Botón ojo — alternar visibilidad de la contraseña usando ícono Lucide
     if (btnToggle) {
         btnToggle.addEventListener('click', function () {
             const tipo = inputPassword.type === 'password' ? 'text' : 'password';
-            inputPassword.type    = tipo;
-            btnToggle.textContent = tipo === 'password' ? '👁️' : '🙈';
+            inputPassword.type = tipo;
+            const iconoEl = document.getElementById('iconoTogglePassword');
+            if (iconoEl) {
+                iconoEl.setAttribute('data-lucide', tipo === 'text' ? 'eye-off' : 'eye');
+                if (window.lucide) window.lucide.createIcons();
+            }
         });
     }
 
