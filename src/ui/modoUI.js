@@ -832,10 +832,11 @@ function calcularRendimiento(nota) {
 async function cargarPanelCalificacion() {
     const panel = document.getElementById('instrPanelCalificacion');
     if (!panel) return;
-    while (panel.firstChild) panel.removeChild(panel.firstChild);
-
+    // Anti-parpadeo: cargar datos ANTES de limpiar el panel
     try {
         const todasLasTareas   = await obtenerTodasLasTareas();
+        // Limpiar AHORA que los datos están listos — sin parpadeo
+        while (panel.firstChild) panel.removeChild(panel.firstChild);
         const tareasPendientes = todasLasTareas
             ? todasLasTareas.filter(function(t) { return t.status === 'pendiente_aprobacion'; })
             : [];
@@ -1059,14 +1060,16 @@ async function cargarTablaUsuariosInstructor() {
     const tbody = document.getElementById('instrUsersTableBody');
     if (!tbody) return;
 
-    // Limpiar el tbody antes de rellenarlo para evitar duplicados
-    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-
+    // Anti-parpadeo: cargar datos ANTES de limpiar el DOM.
+    // Si limpiamos primero y los datos tardan, la tabla parpadea en blanco.
     const [usuarios, todasTareas] = await Promise.all([
         obtenerTodosLosUsuarios(),
         obtenerTodasLasTareas(),
     ]);
     if (!usuarios) return;
+
+    // Limpiar AHORA que tenemos datos — sin parpadeo visible
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
     // Filtrar: solo mostrar estudiantes (role === 'user') y excluir al instructor logueado
     const usuarioLogueado = obtenerUsuarioSesion();
@@ -1169,6 +1172,10 @@ async function cargarTablaUsuariosInstructor() {
 
         tbody.appendChild(fila);
     });
+
+    // Inicializar íconos Lucide para los botones "Ver" recién insertados en el DOM.
+    // Sin esta llamada los <i data-lucide="eye"> quedan como elementos vacíos.
+    if (window.lucide) window.lucide.createIcons();
 }
 
 // aplicarFiltrosInstructor — filtra la tabla de tareas del instructor por estado, usuario y orden.
