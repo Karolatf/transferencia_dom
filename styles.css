@@ -83,8 +83,7 @@ body {
 
 /* FONDOS POR MODO */
 body[data-modo="inicio"] {
-    /* Overlay oscuro + Tu nueva imagen local (sin texto) */
-    background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.75)), 
+    background: linear-gradient(rgba(8, 8, 24, 0.58), rgba(8, 8, 24, 0.58)),
                 url('/bg-inicio.jpg');
     background-size: cover;
     background-position: center;
@@ -787,7 +786,6 @@ body[data-modo="admin"]   {
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: var(--sombra-lg);
-    animation: slideIn 200ms ease;
 }
 
 .modal__header {
@@ -849,7 +847,7 @@ body[data-modo="admin"]   {
     max-height: 88vh;
     overflow-y: auto;
     box-shadow: 0 12px 40px rgba(0,0,0,0.18);
-    animation: slideIn 220ms ease;
+    animation: slideIn 160ms ease-out 16ms both;
     position: relative;
 }
 
@@ -976,7 +974,7 @@ body[data-modo="admin"]   {
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
-    animation: slideIn 220ms ease;
+    animation: slideIn 160ms ease-out 16ms both;
 }
 
 /* ── Header ─────────────────────────────────────────────────────── */
@@ -1191,6 +1189,16 @@ body[data-modo="admin"]   {
     word-break: break-word;
     max-width: 100%;
 }
+.modal-v2__badge-nota {
+    white-space: nowrap !important;
+    font-size: 0.73rem !important;
+    text-align: center;
+}
+.modal-v2__rend-label {
+    display: inline-block;
+    font-size: 0.72rem;
+    line-height: 1.2;
+}
 
 .modal-v2__tarea-nombre {
     font-size: 0.83rem;
@@ -1220,10 +1228,9 @@ body[data-modo="admin"]   {
 .modal-v2__form {
     display: flex;
     flex-direction: column;
-    gap: var(--espacio-sm);
+    gap: var(--espacio-md);
     flex: 1;
 }
-
 .modal-v2__campo { display: flex; flex-direction: column; gap: 5px; }
 
 .modal-v2__label {
@@ -1255,7 +1262,7 @@ body[data-modo="admin"]   {
     font-weight: 700;
     cursor: pointer;
     transition: background-color var(--transicion), transform 80ms;
-    margin-top: var(--espacio-xs);
+    margin-top: auto;
     color: white;
 }
 
@@ -1559,14 +1566,13 @@ body[data-modo="admin"]   {
     padding:          0;
     overflow:         hidden;
     border-radius:    24px;
-    /* Glass effect */
-    background:       rgba(255, 255, 255, 0.05);
-    backdrop-filter:  blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border:           1px solid rgba(255, 255, 255, 0.28);
-    box-shadow:       0 25px 50px -12px rgba(0, 0, 0, 0.6),
+    background:       rgba(16, 8, 38, 0.68);
+    backdrop-filter:  blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border:           1px solid rgba(255, 255, 255, 0.18);
+    box-shadow:       0 25px 50px -12px rgba(0, 0, 0, 0.55),
                       inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    animation:        slideIn 200ms ease;
+    animation:        none;
 }
 
 /* Paso 3 — Header: fondo oscuro translúcido, borde inferior sutil */
@@ -1706,7 +1712,7 @@ body[data-modo="admin"]   {
     border:          none;
     border-radius:   var(--radio-lg);
     font-size:       var(--texto-md);
-    font-weight:     600;
+    font-weight:     500;
     cursor:          pointer;
     transition:      background-color var(--transicion), transform var(--transicion);
     margin-top:      var(--espacio-sm);
@@ -1743,8 +1749,8 @@ body[data-modo="admin"]   {
 
 /* ANIMACIONES */
 @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-14px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateY(-7px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeOverlay {
@@ -1760,21 +1766,20 @@ body[data-modo="admin"]   {
 
 /* 1 — Overlay: mismo fondo oscuro con blur */
 #olvidoPasswordModal {
-    background:           rgba(8, 12, 28, 0.72);
-    backdrop-filter:      blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(8, 12, 28, 0.75);
 }
 
 /* 2 — Tarjeta: glass effect idéntico a .modal--registro-v2 */
 #olvidoPasswordModal .modal {
-    background:           rgba(255, 255, 255, 0.05);
-    backdrop-filter:      blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border:               1px solid rgba(255, 255, 255, 0.28);
+    background:           rgba(16, 8, 38, 0.68);
+    backdrop-filter:      blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    border:               1px solid rgba(255, 255, 255, 0.18);
     border-radius:        24px;
-    box-shadow:           0 25px 50px -12px rgba(0, 0, 0, 0.6),
+    box-shadow:           0 25px 50px -12px rgba(0, 0, 0, 0.55),
                           inset 0 1px 0 rgba(255, 255, 255, 0.12);
     padding:              var(--espacio-xl);
+    animation:            none;
 }
 
 /* 3 — Título: blanco puro */
@@ -1855,7 +1860,7 @@ body[data-modo="admin"]   {
     border-radius: var(--radio-full);
     color:         #ffffff;
     padding:       var(--espacio-sm) var(--espacio-lg);
-    font-weight:   600;
+    font-weight:   500;
     font-size:     var(--texto-sm);
     cursor:        pointer;
     width:         auto;
@@ -2031,99 +2036,194 @@ body[data-modo="admin"]   {
     }
 }
 
-/* REDISEÑO PANTALLA DE INICIO — Layout centrado */
+/* ── PANTALLA DE INICIO — Liquid Glass ───────────────────────────────────── */
 .pantalla-inicio {
     width: 100%;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
-    min-height: 100vh;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Orbs flotantes para profundidad y color */
+.login-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: orbFloat 14s ease-in-out infinite;
+}
+.login-orb--1 {
+    width: 560px; height: 560px;
+    background: radial-gradient(circle, rgba(147, 51, 234, 0.65), rgba(79, 70, 229, 0.3) 60%, transparent);
+    filter: blur(72px);
+    top: -18%; left: -14%;
+    animation-delay: 0s;
+}
+.login-orb--2 {
+    width: 480px; height: 480px;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.6), rgba(99, 102, 241, 0.25) 60%, transparent);
+    filter: blur(60px);
+    bottom: -14%; right: -10%;
+    animation-delay: -7s;
+}
+.login-orb--3 {
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.5), transparent 70%);
+    filter: blur(50px);
+    top: 38%; right: 18%;
+    animation-delay: -3.5s;
+}
+
+@keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%       { transform: translate(28px, -18px) scale(1.04); }
+    66%       { transform: translate(-18px, 14px) scale(0.97); }
 }
 
 .inicio__columna-panel {
     width: 100%;
-    max-width: 450px;
+    max-width: 496px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
+
+/* Card principal — liquid glass multicapa */
+.inicio__glass-card {
+    background: rgba(255, 255, 255, 0.13);
+    backdrop-filter: blur(48px) saturate(160%);
+    -webkit-backdrop-filter: blur(48px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 28px;
+    padding: 44px 40px 36px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--espacio-md);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+        0 1px 0   rgba(255, 255, 255, 0.24) inset,
+        0 32px 64px rgba(0, 0, 0, 0.38),
+        0 8px  24px rgba(0, 0, 0, 0.22);
+}
+
+/* Logo circular encima del título */
+.login-logo {
     display: flex;
     justify-content: center;
 }
-
-
-.inicio__glass-card {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 24px;
-    padding: 40px;
-    width: 100%;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-    gap: var(--espacio-lg);
+.login-logo__icono {
+    width: 56px;
+    height: 56px;
+    background: rgba(167, 89, 232, 0.18);
+    border: 1.5px solid rgba(199, 130, 240, 0.35);
+    border-radius: 18px;
+    padding: 13px;
+    color: #c084fc;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px rgba(147, 51, 234, 0.25);
 }
 
-/* Ajustes de texto para el nuevo fondo oscuro */
+/* Header */
 .inicio__glass-card .inicio__titulo {
     color: #ffffff;
-    font-size: 1.8rem;
+    font-size: 1.7rem;
     font-weight: 700;
     letter-spacing: -0.025em;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     text-align: center;
 }
-
 .inicio__glass-card .inicio__subtitulo {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.52);
+    font-size: 0.88rem;
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 0;
+}
+.inicio__glass-card .inicio__header {
+    margin-bottom: 0;
 }
 
-.inicio__glass-card .form__label,
-.inicio__glass-card .login-registro-texto {
-    color: rgba(255, 255, 255, 0.85);
+/* Labels */
+.inicio__glass-card .form__label {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
-/* Inputs cristalinos para no romper la estética */
-.inicio__glass-card .form__input {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+/* ── Input con ícono prefijo ── */
+.login-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.login-field__icon {
+    position: absolute;
+    left: 14px;
+    width: 16px;
+    height: 16px;
+    color: rgba(255, 255, 255, 0.38);
+    pointer-events: none;
+    flex-shrink: 0;
+}
+.login-field__input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(255, 255, 255, 0.11) !important;
+    color: #ffffff !important;
+    padding-left: 42px !important;
+    border-radius: 12px !important;
+    font-size: 0.93rem;
+    transition: background 0.22s, border-color 0.22s, box-shadow 0.22s;
+}
+.login-field__input--pass {
+    padding-right: 46px !important;
+}
+.login-field__input::placeholder {
+    color: rgba(255, 255, 255, 0.3) !important;
+}
+.login-field__input:focus {
+    background: rgba(255, 255, 255, 0.11) !important;
+    border-color: rgba(192, 132, 252, 0.65) !important;
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.2), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+    outline: none;
 }
 
-.inicio__glass-card .form__input::placeholder {
+/* Toggle ojo */
+.login-field__toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
     color: rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+    line-height: 0;
 }
+.login-field__toggle:hover { color: rgba(255, 255, 255, 0.85); }
+.login-field__toggle svg  { width: 17px; height: 17px; }
 
-.inicio__glass-card .form__input:focus {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: var(--color-primario);
-    box-shadow: 0 0 0 4px rgba(199, 98, 227, 0.2);
-}
-
-/* Nota al pie dentro de la card glass                                        */
+/* Nota al pie */
 .inicio__nota {
     text-align: center;
     font-size: var(--texto-sm);
-    color: var(--texto-claro);
+    color: rgba(255, 255, 255, 0.35);
     margin-top: var(--espacio-sm);
 }
 
-
-/* RESPONSIVE — Pantalla de inicio en móvil (menos de 768px)                  */
-/* En móvil la imagen se oculta y el panel ocupa toda la pantalla             */
+/* Responsive */
 @media (max-width: 768px) {
-    /* En móvil volvemos a la columna única                                   */
-    .pantalla-inicio {
-        flex-direction: column;
-    }
-
-    /* El panel ocupa toda la pantalla en móvil                               */
-    .inicio__columna-panel {
-        min-height: 100vh;
-        padding: var(--espacio-lg);
-    }
+    .pantalla-inicio { flex-direction: column; }
+    .inicio__columna-panel { min-height: 100vh; padding: var(--espacio-lg); }
+    .inicio__glass-card { padding: 36px 26px 28px; }
 }
 /* DASHBOARD DE ESTADÍSTICAS (panel admin)
    GET /api/tasks/dashboard → { total, pendientes, enProgreso, completadas } */
@@ -2309,9 +2409,10 @@ body[data-modo="admin"]   {
     border-radius: var(--radio-md);
     box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     z-index: 100;
-    min-height: 320px;
-    max-height: 420px;
+    min-height: 120px;
+    max-height: min(380px, 40vh);
     overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 /* Encabezado del panel con contador */
@@ -2433,71 +2534,48 @@ body[data-modo="admin"]   {
    LOGIN FORM — Módulo de Autenticación JWT
    ============================================================ */
 
+/* ── LOGIN FORM ───────────────────────────────────────────────────────────── */
 .login-form-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
     width: 100%;
 }
 
 .login-form {
     display: flex;
     flex-direction: column;
-    /* Reducido de 1rem a 0.5rem — los campos quedan más juntos y menos dispersos */
-    /* Antes el espacio se veía raro y desproporcionado entre los campos */
-    gap: 0.1rem;
+    gap: 0.15rem;
 }
 
+/* Botón de ingreso — gradiente + glow */
 .btn-acceso--login {
     width: 100%;
-    background: var(--color-primario);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 14px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-top: 10px;
-    box-shadow: 0 10px 15px -3px rgba(199, 98, 227, 0.3);
-}
-
-.btn-acceso--login:hover {
-    background: var(--color-primario-oscuro);
-    transform: translateY(-2px);
-    box-shadow: 0 20px 25px -5px rgba(199, 98, 227, 0.4);
-}
-
-.btn-acceso--login:active { transform: translateY(0); }
-.btn-acceso--login:disabled { opacity: 0.6; cursor: not-allowed; }
-
-/* Wrapper del input de contraseña — necesario para el botón 👁️ */
-.input-password-wrapper {
-    position: relative;
     display: flex;
     align-items: center;
-}
-
-.input-password-wrapper .form__input {
-    padding-right: 2.8rem;
-    width: 100%;
-}
-
-/* Botón mostrar/ocultar contraseña */
-.btn-toggle-password {
-    position: absolute;
-    right: 0.6rem;
-    background: none;
-    border: none;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #9333ea 0%, #7c3aed 55%, #6d28d9 100%);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    padding: 14px 24px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
     cursor: pointer;
-    font-size: 1.1rem;
-    padding: 0.25rem;
-    opacity: 0.6;
-    transition: opacity 0.2s;
+    margin-top: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.45), 0 1px 0 rgba(255,255,255,0.15) inset;
 }
-
-.btn-toggle-password:hover { opacity: 1; }
+.btn-acceso--login svg { width: 18px; height: 18px; }
+.btn-acceso--login:hover {
+    background: linear-gradient(135deg, #a855f7 0%, #9333ea 55%, #7c3aed 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px rgba(124, 58, 237, 0.55), 0 1px 0 rgba(255,255,255,0.15) inset;
+}
+.btn-acceso--login:active  { transform: translateY(0); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4); }
+.btn-acceso--login:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
 /* Mensaje de bienvenida post-login */
 .login-bienvenida {
@@ -2505,17 +2583,20 @@ body[data-modo="admin"]   {
     align-items:     center;
     justify-content: center;
     gap:             0.6rem;
-    background:      rgba(199, 98, 227, 0.15);
-    border:          1px solid rgba(199, 98, 227, 0.45);
-    border-radius:   10px;
+    background:      rgba(192, 132, 252, 0.12);
+    border:          1px solid rgba(192, 132, 252, 0.38);
+    border-radius:   12px;
     padding:         0.75rem 1rem;
     animation:       fadeInDown 0.4s ease;
 }
-
-.login-bienvenida__icono { font-size: 1.4rem; }
-
+.login-bienvenida__icono-svg {
+    width: 20px;
+    height: 20px;
+    color: #e9d5ff;
+    flex-shrink: 0;
+}
 .login-bienvenida__texto {
-    font-size:   0.95rem;
+    font-size:   0.92rem;
     font-weight: 600;
     color:       #e9d5ff;
     margin:      0;
@@ -2526,13 +2607,71 @@ body[data-modo="admin"]   {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Contenedor del enlace "¿Olvidó su contraseña?" — centrado horizontalmente */
-/* El texto-align center asegura que el botón .btn-link quede centrado */
-/* Se usa text-align porque .btn-link es un elemento inline-level */
+/* Separador */
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.login-divider__line {
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+.login-divider__texto {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Registro */
+.login-registro-texto {
+    text-align:  center;
+    color:       rgba(255, 255, 255, 0.88);
+    font-size:   0.84rem;
+    margin:      0;
+}
+.login-registro-btn {
+    background:  none;
+    border:      none;
+    color:       rgba(255, 255, 255, 0.55);
+    cursor:      pointer;
+    font-size:   0.84rem !important;
+    font-weight: 500;
+    padding:     0;
+    transition:  color 0.2s;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: rgba(192, 132, 252, 0.45);
+}
+.login-registro-btn:hover {
+    color: #f3e8ff;
+    text-decoration-color: rgba(233, 213, 255, 0.7);
+}
+
+/* Olvidó contraseña */
 .link-acceso {
     text-align: center;
     width: 100%;
-    display: block;
+}
+.link-acceso .btn-link {
+    color: rgba(255, 255, 255, 0.55) !important;
+    font-size: 0.84rem !important;
+    font-weight: 400 !important;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: rgba(255, 255, 255, 0.18);
+}
+.link-acceso .btn-link:hover {
+    color: rgba(255, 255, 255, 0.85) !important;
+    text-decoration-color: rgba(255, 255, 255, 0.45);
 }
 
 
@@ -2551,33 +2690,7 @@ body[data-modo="admin"]   {
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
 }
 
-/* Texto y botón de enlace de "Regístrate aquí" debajo del login */
-.login-registro-texto {
-    text-align:  center;
-    color:       var(--texto-medio);
-    margin-top:  var(--espacio-sm);
-}
-
-/* El botón de registro parece un enlace pero es un button para semántica correcta */
-.login-registro-btn {
-    background: none;
-    border:     none;
-    color:      #929aa5;
-    cursor:     pointer;
-    font-size:  var(--texto-md);
-    text-decoration: underline;
-    padding:    0;;
-}
-
-.login-registro-btn:hover {
-    color: #e2e8f0;
-    text-decoration-color: #e2e8f0;
-}
-
-.login-registro-btn:active {
-    color: #ffffff;
-    text-decoration-color: #ffffff;
-}
+/* reglas de .login-registro-texto y .login-registro-btn movidas al bloque LOGIN FORM */
 
 /* Barra de búsqueda del panel de usuario — misma apariencia que la del admin
    pero con los colores del tema morado del panel de usuario */
@@ -3353,12 +3466,12 @@ body[data-modo="instructor"] {
     box-sizing: border-box;
 }
 .cal2__form-input:focus,
-.cal2__form-select:focus { border-color: var(--color-instructor); }
+.cal2__form-select:focus { border-color: var(--color-modal-acento); }
 .cal2__form-grupo { display: flex; flex-direction: column; gap: 4px; }
 .cal2__form-grupo--oculto { display: none; }
 .cal2__form-error { font-size: 0.7rem; color: #dc2626; min-height: 14px; }
 .cal2__form-btn {
-    background-color: var(--color-instructor);
+    background-color: var(--color-modal-acento);
     color: #ffffff;
     border: none;
     border-radius: var(--radio-md);
@@ -3369,7 +3482,7 @@ body[data-modo="instructor"] {
     transition: background-color 0.15s, opacity 0.15s;
     width: 100%;
 }
-.cal2__form-btn:hover    { background-color: var(--color-instructor-oscuro); }
+.cal2__form-btn:hover    { filter: brightness(0.88); }
 .cal2__form-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 
@@ -3825,7 +3938,7 @@ body[data-modo="instructor"] {
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
-    animation: slideIn 220ms ease;
+    animation: slideIn 160ms ease-out 16ms both;
 }
 
 .modal-editar__header {
@@ -3898,7 +4011,7 @@ body[data-modo="instructor"] {
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
-    animation: slideIn 220ms ease;
+    animation: slideIn 160ms ease-out 16ms both;
 }
 
 .modal-rol__cuerpo {
@@ -4030,8 +4143,40 @@ body[data-modo="instructor"] {
 
 /* ── Nuevo panel de calificación rediseñado (clases panel-cal__*) ── */
 .panel-cal__lista {
-    display: flex; flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
+    align-items: stretch;
+}
+.panel-cal__card {
+    display: flex;
+    flex-direction: column;
+}
+@media (max-width: 900px) {
+    .panel-cal__lista { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .panel-cal__lista { grid-template-columns: 1fr; }
+}
+.panel-cal__paginacion {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.75rem; margin-top: 1rem;
+}
+.panel-cal__pag-btn {
+    width: 36px; height: 36px;
+    border: 1.5px solid #d1d5db; border-radius: 50%;
+    background: #fff; color: #374151;
+    font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+}
+.panel-cal__pag-btn:hover:not(:disabled) {
+    background: #f3f4f6; border-color: #059669; color: #059669;
+}
+.panel-cal__pag-btn:disabled { opacity: 0.35; cursor: default; }
+.panel-cal__pag-indicador {
+    font-size: 0.82rem; font-weight: 600;
+    color: #6b7280; min-width: 50px; text-align: center;
 }
 .panel-cal__vacio {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -4069,6 +4214,7 @@ body[data-modo="instructor"] {
 .panel-cal__sec-calif {
     background: #f9fafb; border: 1px solid #f0f0f0;
     border-radius: 0.6rem; padding: 0.85rem 1rem;
+    margin-top: auto;
     margin-bottom: 0.85rem;
 }
 .panel-cal__label-nota {
@@ -4096,8 +4242,7 @@ body[data-modo="instructor"] {
     transition: all 0.2s;
 }
 .panel-cal__btn-aprobar {
-    /* Issue 8c: width auto + border-radius oval para que no ocupe todo el ancho */
-    width: auto; display: block; margin: 0.5rem auto 0;
+    width: auto; display: block; margin: 0 auto 0;
     padding: 0.7rem 1.75rem;
     background: linear-gradient(135deg, #059669, #047857);
     color: #ffffff; border: none; border-radius: var(--radio-full);
@@ -4127,13 +4272,13 @@ body[data-modo="instructor"] {
 .instructor-widgets {
     display: flex;
     gap: var(--espacio-lg);
-    align-items: flex-start;
+    align-items: stretch;
     margin-bottom: var(--espacio-lg);
 }
 
-/* Calendario: columna izquierda, ancho fijo y compacto */
+/* Calendario: ancho fijo, crece en altura igual que el panel */
 #instrCalendario {
-    width: 320px;
+    width: 340px;
     flex-shrink: 0;
     background: #ffffff;
     border: 1px solid var(--borde-suave);
@@ -4603,6 +4748,33 @@ body[data-modo="instructor"] {
     flex-shrink: 0;
 }
 /* ═══════════════════════════════════════════════════════════════════════════
+   OVERRIDES MODO USUARIO — paleta morada en modales y controles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Modal header → morado ───────────────────────────────────────────────── */
+[data-modo="usuario"] .modal-admin__header,
+[data-modo="usuario"] .modal-overlay .modal-admin__header {
+    background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-primario-oscuro) 100%);
+}
+
+/* ── Botón guardar modal → morado ────────────────────────────────────────── */
+[data-modo="usuario"] .modal-admin__btn-guardar {
+    background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-primario-oscuro) 100%);
+    box-shadow: 0 2px 8px rgba(199, 98, 227, 0.35);
+}
+[data-modo="usuario"] .modal-admin__btn-guardar:hover {
+    box-shadow: 0 4px 12px rgba(199, 98, 227, 0.45);
+}
+
+/* ── Inputs, selects y textareas focus → morado ──────────────────────────── */
+[data-modo="usuario"] .modal-admin__input:focus,
+[data-modo="usuario"] .modal-admin__select:focus,
+[data-modo="usuario"] .modal-admin__textarea:focus {
+    border-color: var(--color-primario);
+    box-shadow: 0 0 0 3px rgba(199, 98, 227, 0.12);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    OVERRIDES MODO INSTRUCTOR — paleta verde en modales, cards y controles
    Todos los selectores usan [data-modo="instructor"] como raíz para no
    afectar el panel admin ni el panel usuario.
@@ -4777,12 +4949,13 @@ body:has(#vistaUsuario:not(.hidden)) .swal2-confirm:hover {
 }
 /* ── BOTÓN VER PERMISOS — color dinámico por rol via JS ─────────────────── */
 .rol-card__btn-permisos {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 5px;
-    width: 100%;
     justify-content: center;
-    padding: 7px 14px;
+    gap: 5px;
+    width: fit-content;
+    margin: 6px auto 0;
+    padding: 6px 20px;
     border: 1.5px solid;
     border-radius: var(--radio-full);
     background: transparent;
@@ -4790,7 +4963,6 @@ body:has(#vistaUsuario:not(.hidden)) .swal2-confirm:hover {
     font-weight: 600;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
-    margin-top: 4px;
 }
 .rol-card__btn-permisos .icono-accion {
     width: 13px;
@@ -4900,4 +5072,414 @@ body:has(#vistaUsuario:not(.hidden)) .swal2-confirm:hover {
 /* Oculto — igual que las otras cards */
 #cuerpoTareasUsuario.oculto {
     display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SPA: HAMBURGUESA, SIDEBAR, HERO Y SECCIONES
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── BOTÓN HAMBURGUESA ───────────────────────────────────────────────────────── */
+.btn-hamburguesa {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--radio-md);
+    cursor: pointer;
+    transition: background var(--transicion), transform var(--transicion);
+    flex-shrink: 0;
+}
+
+.btn-hamburguesa:hover {
+    background: rgba(255, 255, 255, 0.32);
+    transform: scale(1.05);
+}
+
+.btn-hamburguesa__linea {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 200ms ease;
+}
+
+.btn-hamburguesa--abierto .btn-hamburguesa__linea:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.btn-hamburguesa--abierto .btn-hamburguesa__linea:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+.btn-hamburguesa--abierto .btn-hamburguesa__linea:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Usuario: header blanco → botón con acento morado visible */
+body[data-modo="usuario"] .btn-hamburguesa {
+    background: rgba(199, 98, 227, 0.1);
+    border-color: rgba(199, 98, 227, 0.25);
+}
+body[data-modo="usuario"] .btn-hamburguesa:hover {
+    background: rgba(199, 98, 227, 0.2);
+}
+body[data-modo="usuario"] .btn-hamburguesa__linea {
+    background: var(--color-primario);
+}
+
+/* ── SIDEBAR DRAWER ──────────────────────────────────────────────────────────── */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    background: #fff;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar--abierto {
+    transform: translateX(0);
+}
+
+/* Overlay oscuro detrás del sidebar */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 280ms ease;
+}
+
+.sidebar-overlay--visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Cabecera del sidebar: icono de marca + nombre + botón cerrar */
+.sidebar__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1rem 1rem;
+    border-bottom: 1px solid var(--borde-suave);
+}
+
+.sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: var(--texto-md);
+    color: var(--color-modal-acento);
+}
+
+.sidebar__brand-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--color-modal-acento);
+}
+
+.sidebar__cerrar {
+    width: 30px;
+    height: 30px;
+    background: var(--fondo-gris);
+    border: 1px solid var(--borde-suave);
+    border-radius: var(--radio-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--texto-medio);
+    transition: background var(--transicion), color var(--transicion);
+}
+
+.sidebar__cerrar:hover {
+    background: var(--borde-suave);
+    color: var(--texto-oscuro);
+}
+
+/* Lista de navegación */
+.sidebar__nav {
+    flex: 1;
+    list-style: none;
+    padding: 0.6rem 0;
+    overflow-y: auto;
+}
+
+.sidebar__nav li {
+    padding: 0 0.5rem;
+    margin-bottom: 2px;
+}
+
+/* Ítem de navegación */
+.sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: var(--radio-md);
+    color: var(--texto-medio);
+    font-size: var(--texto-sm);
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    transition: background var(--transicion), color var(--transicion);
+}
+
+.sidebar__link:hover {
+    background: var(--fondo-gris);
+    color: var(--texto-oscuro);
+}
+
+/* Ítem activo */
+.sidebar__link--activo {
+    background: color-mix(in srgb, var(--color-modal-acento) 12%, transparent);
+    color: var(--color-modal-acento);
+    font-weight: 600;
+}
+
+.sidebar__link-icon {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+/* Pie del sidebar: acciones globales */
+.sidebar__footer {
+    padding: 0.6rem 0.5rem 0.75rem;
+    border-top: 1px solid var(--borde-suave);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sidebar__link--footer {
+    font-size: var(--texto-sm);
+    color: var(--texto-medio);
+}
+
+.sidebar__link--danger {
+    color: #ef4444;
+}
+
+.sidebar__link--danger:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* ── SPA SECCIONES ───────────────────────────────────────────────────────────── */
+.spa-seccion {
+    display: block;
+    animation: spaFadeIn 220ms ease;
+}
+
+.spa-seccion--oculta {
+    display: none !important;
+}
+
+@keyframes spaFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── HERO DE BIENVENIDA ──────────────────────────────────────────────────────── */
+.spa-hero {
+    background: linear-gradient(
+        135deg,
+        var(--color-modal-acento) 0%,
+        color-mix(in srgb, var(--color-modal-acento) 75%, #1e1b4b) 100%
+    );
+    border-radius: var(--radio-xl);
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.spa-hero__info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.spa-hero__avatar {
+    width: 54px;
+    height: 54px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.spa-hero__avatar-icon {
+    width: 28px;
+    height: 28px;
+    color: #fff;
+}
+
+.spa-hero__saludo {
+    font-size: var(--texto-xl);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+}
+
+.spa-hero__rol {
+    font-size: var(--texto-sm);
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 0.2rem;
+}
+
+.spa-hero__acciones {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.spa-hero__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    background: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: var(--radio-full);
+    color: #fff;
+    font-size: var(--texto-sm);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background var(--transicion), transform var(--transicion);
+    white-space: nowrap;
+}
+
+.spa-hero__btn:hover {
+    background: rgba(255, 255, 255, 0.38);
+    transform: translateY(-1px);
+}
+
+.spa-hero__btn--secundario {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+.spa-hero__btn svg,
+.spa-hero__btn i {
+    width: 15px;
+    height: 15px;
+}
+
+/* ── GRID INICIO ADMIN (auditoría + roles + sistema) ────────────────────────── */
+.admin-inicio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+/* Forzar que las columnas llenen su área del grid */
+.admin-inicio-grid .columna-auditoria,
+.admin-inicio-grid .columna-roles,
+.admin-inicio-grid .columna-sistema {
+    width: 100%;
+    max-height: none;
+    position: static;
+    box-sizing: border-box;
+}
+
+/* Cabeceras de las columnas alineadas con icono */
+.admin-inicio-grid .columna__titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--color-admin);
+    border-bottom-color: var(--color-admin);
+}
+
+/* Columna sistema: mismo estilo visual que auditoria/roles */
+.columna-sistema {
+    background: #ffffff;
+    border-radius: var(--radio-lg);
+    border: 1px solid var(--borde-suave);
+    box-shadow: var(--sombra-sm);
+    padding: var(--espacio-md);
+}
+
+/* Items de info del sistema */
+.sistema-info { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 0.25rem; }
+.sistema-info__item {
+    display: flex; align-items: flex-start; gap: 0.55rem;
+}
+.sistema-info__icono {
+    font-size: 1.05rem; flex-shrink: 0; margin-top: 1px;
+}
+.sistema-info__label {
+    display: block; font-size: 0.67rem; font-weight: 700;
+    color: var(--texto-claro); text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 1px;
+}
+.sistema-info__valor {
+    display: block; font-size: 0.78rem; font-weight: 600;
+    color: var(--texto-oscuro); line-height: 1.3;
+}
+.sistema-info__estado {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: #059669;
+}
+.sistema-info__dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #059669; flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(5,150,105,0.2);
+}
+
+@media (max-width: 1024px) {
+    .admin-inicio-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 700px) {
+    .admin-inicio-grid { grid-template-columns: 1fr; }
+}
+
+/* ── RESPONSIVE HERO ─────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .spa-hero {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1.25rem 1.25rem;
+    }
+
+    .spa-hero__saludo {
+        font-size: var(--texto-lg);
+    }
+}
+
+/* ── HEADER NAV ADAPTADO PARA HAMBURGUESA ────────────────────────────────────── */
+/* El header__nav ahora solo contiene el botón hamburguesa */
+.header__nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }

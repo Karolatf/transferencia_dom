@@ -6,110 +6,93 @@
     <title>Sistema de Gestion de Tareas - SENA</title>
     <!-- Favicon del proyecto: icono de lista de tareas con paleta morada del sistema -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="stylesheet" href="styles.css">
+
     <!-- Lucide Icons vía CDN — se carga antes del JS propio para que los iconos existan al inicializar -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script type="module" crossorigin src="/assets/index-CXwtWJ7c.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-C_Yp5SzW.css">
 </head>
 <body data-modo="inicio">
 
 <!-- PANTALLA DE INICIO -->
 <div class="pantalla-inicio" id="pantallaInicio">
 
-    <!-- Orbs de color para efecto liquid glass -->
-    <div class="login-orb login-orb--1" aria-hidden="true"></div>
-    <div class="login-orb login-orb--2" aria-hidden="true"></div>
-    <div class="login-orb login-orb--3" aria-hidden="true"></div>
-
     <div class="inicio__columna-panel">
         <div class="inicio__glass-card">
-
-            <!-- Ícono de la aplicación -->
-            <div class="login-logo">
-                <i data-lucide="shield-check" class="login-logo__icono"></i>
-            </div>
-
             <header class="inicio__header">
                 <h1 class="inicio__titulo">Gestión de Tareas</h1>
                 <p class="inicio__subtitulo">Ingresa tus credenciales para continuar</p>
             </header>
 
+            <!-- LOGIN FORM — reemplaza los dos acceso-card originales -->
+            <!-- El formulario envía las credenciales al backend y recibe el JWT -->
             <div class="login-form-wrapper">
 
                 <!-- Mensaje de bienvenida — aparece tras un login exitoso -->
                 <div class="login-bienvenida hidden" id="loginBienvenida">
-                    <i data-lucide="check-circle" class="login-bienvenida__icono-svg"></i>
+                    <span class="login-bienvenida__icono">👋</span>
                     <p class="login-bienvenida__texto" id="loginBienvenidaTexto">¡Bienvenido!</p>
                 </div>
 
                 <form class="login-form" id="loginForm" novalidate>
 
-                    <!-- Campo de correo electrónico -->
+
+                    <!-- Campo de correo electrónico — reemplaza al campo de documento -->
+                    <!-- El login ahora usa email + contraseña en lugar de documento + contraseña -->
+                    <!-- El id cambia a loginEmail para que los listeners en modoUI.js funcionen -->
                     <div class="form__group">
                         <label for="loginEmail" class="form__label">Correo electrónico</label>
-                        <div class="login-field">
-                            <i data-lucide="mail" class="login-field__icon"></i>
-                            <input
-                                type="text"
-                                id="loginEmail"
-                                class="form__input login-field__input"
-                                placeholder="ejemplo@correo.com"
-                                autocomplete="email"
-                            >
-                        </div>
+                        <input
+                            type="text"
+                            id="loginEmail"
+                            class="form__input"
+                            placeholder="ejemplo@correo.com"
+                            autocomplete="email"
+                        >
                         <span class="form__error" id="loginEmailError"></span>
                     </div>
 
-                    <!-- Campo de contraseña con ícono y toggle -->
+                    <!-- Campo: contraseña con botón para mostrar/ocultar -->
                     <div class="form__group">
                         <label for="loginPassword" class="form__label">Contraseña</label>
-                        <div class="login-field">
-                            <i data-lucide="lock" class="login-field__icon"></i>
+                        <div class="input-password-wrapper">
                             <input
                                 type="password"
                                 id="loginPassword"
-                                class="form__input login-field__input login-field__input--pass"
+                                class="form__input"
                                 placeholder="Tu contraseña"
                                 autocomplete="current-password"
                             >
                             <button
                                 type="button"
-                                class="login-field__toggle"
+                                class="btn-toggle-password"
                                 id="btnTogglePassword"
                                 aria-label="Mostrar u ocultar contraseña"
-                            >
-                                <i data-lucide="eye" id="iconoTogglePassword"></i>
-                            </button>
+                            >👁️</button>
                         </div>
                         <span class="form__error" id="loginPasswordError"></span>
                     </div>
 
-                    <!-- Botón de ingreso -->
+                    <!-- Botón principal de ingreso -->
                     <button type="submit" class="btn-acceso btn-acceso--login" id="btnLogin">
-                        <i data-lucide="log-in"></i>
                         Ingresar al Sistema
                     </button>
                 </form>
 
-                <!-- Separador -->
-                <div class="login-divider">
-                    <span class="login-divider__line"></span>
-                    <span class="login-divider__texto">o</span>
-                    <span class="login-divider__line"></span>
-                </div>
-
-                <!-- Registro -->
+                <!-- Enlace de registro debajo del formulario de login -->
+                <!-- Al hacer clic abre el modal de registro sin recargar la página -->
                 <p class="login-registro-texto">
-                    ¿No tienes cuenta?
+                    ¿No tienes cuenta? 
                     <button type="button" class="login-registro-btn" id="btnAbrirRegistro">
-                        Regístrate
+                        Regístrate 
                     </button>
                 </p>
 
-                <!-- Olvidó contraseña -->
+                <!-- Enlace de recuperación de contraseña — aparece bajo los botones de login -->
+                <!-- Al hacer clic abre el modal olvidoPasswordModal con el flujo de 3 pasos -->
                 <p class="link-acceso">
                     <button type="button" class="btn-link" id="btnOlvidoPassword">¿Olvidó su contraseña?</button>
                 </p>
-
             </div>
         </div>
     </div>
@@ -1326,6 +1309,6 @@
     </div>
 </div>
 
-<script type="module" src="/src/main.js"></script>
+
 </body>
 </html>
