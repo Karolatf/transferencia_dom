@@ -60,7 +60,19 @@ import { PERMISOS_POR_ROL, METADATOS_ROL } from '../utils/rolesPermisos.js';
 
 import { crearCalendario } from '../utils/eventosCalendario.js';
 import { obtenerNotas, crearNota as crearNotaApi, eliminarNota as eliminarNotaApi } from '../api/notesApi.js';
-import { registrarRutas, iniciarRouter, navegarA, limpiarHashActual } from '../router.js';
+import { registrarRuta, registrarRutas, iniciarRouter, ir, navegarA, irAModal, volverDeModal, limpiarHashActual, resetearEstadoRouter } from '../router.js';
+import { RUTAS, SECCIONES_USUARIO, SECCIONES_ADMIN, SECCIONES_INSTRUCTOR } from '../rutas.js';
+
+// Estado pendiente para modales con datos — se setea antes de ir(RUTAS.X.Y)
+let _pendingVerTarea        = null;
+let _pendingEditarTarea     = null;
+let _pendingVerUsuario      = null;
+let _pendingEditarUsuario   = null;
+let _pendingCambiarRol      = null;
+let _pendingDesactivar      = null;
+let _pendingActivar         = null;
+let _pendingEliminarUsuario = null;
+let _pendingEliminarTarea   = null;
 
 // crearIconoLucide — función privada reutilizable para crear íconos Lucide en el DOM
 // Parámetro: nombreIcono — string con el nombre del ícono según la librería Lucide
@@ -577,17 +589,18 @@ export async function activarModoUsuario() {
     if (heroNombre) heroNombre.textContent = usuarioSesion.name;
 
     registrarRutas({
-        'usuario/inicio': function() { mostrarSeccionUsuario('inicio'); },
-        'usuario/tareas': function() { mostrarSeccionUsuario('tareas'); },
-        'usuario/notas':  function() { mostrarSeccionUsuario('notas');  },
+        [RUTAS.USUARIO.INICIO]: function() { mostrarSeccionUsuario('inicio'); },
+        [RUTAS.USUARIO.TAREAS]: function() { mostrarSeccionUsuario('tareas'); },
+        [RUTAS.USUARIO.NOTAS]:  function() { mostrarSeccionUsuario('notas');  },
     });
 
     _configurarSidebar('Usuario', function(seccion) {
-        navegarA('usuario/' + seccion);
+        const ruta = SECCIONES_USUARIO[seccion];
+        if (ruta) ir(ruta);
     });
 
     iniciarRouter();
-    navegarA('usuario/inicio');
+    ir(RUTAS.USUARIO.INICIO);
     if (window.lucide) window.lucide.createIcons();
 }
 
@@ -890,18 +903,19 @@ export async function activarModoAdmin() {
     if (heroNombre && usuarioSesion) heroNombre.textContent = usuarioSesion.name;
 
     registrarRutas({
-        'admin/inicio':      function() { mostrarSeccionAdmin('inicio');      },
-        'admin/crear-tarea': function() { mostrarSeccionAdmin('crear-tarea'); },
-        'admin/usuarios':    function() { mostrarSeccionAdmin('usuarios');    },
-        'admin/tareas':      function() { mostrarSeccionAdmin('tareas');      },
+        [RUTAS.ADMIN.INICIO]:      function() { mostrarSeccionAdmin('inicio');      },
+        [RUTAS.ADMIN.CREAR_TAREA]: function() { mostrarSeccionAdmin('crear-tarea'); },
+        [RUTAS.ADMIN.USUARIOS]:    function() { mostrarSeccionAdmin('usuarios');    },
+        [RUTAS.ADMIN.TAREAS]:      function() { mostrarSeccionAdmin('tareas');      },
     });
 
     _configurarSidebar('Admin', function(seccion) {
-        navegarA('admin/' + seccion);
+        const ruta = SECCIONES_ADMIN[seccion];
+        if (ruta) ir(ruta);
     });
 
     iniciarRouter();
-    navegarA('admin/inicio');
+    ir(RUTAS.ADMIN.INICIO);
     if (window.lucide) window.lucide.createIcons();
 }
 
@@ -972,18 +986,19 @@ export async function activarModoInstructor() {
     if (heroNombreInstr && usuarioSesionInstr) heroNombreInstr.textContent = usuarioSesionInstr.name;
 
     registrarRutas({
-        'instructor/inicio':      function() { mostrarSeccionInstructor('inicio');      },
-        'instructor/crear-tarea': function() { mostrarSeccionInstructor('crear-tarea'); },
-        'instructor/estudiantes': function() { mostrarSeccionInstructor('estudiantes'); },
-        'instructor/tareas':      function() { mostrarSeccionInstructor('tareas');      },
+        [RUTAS.INSTRUCTOR.INICIO]:      function() { mostrarSeccionInstructor('inicio');      },
+        [RUTAS.INSTRUCTOR.CREAR_TAREA]: function() { mostrarSeccionInstructor('crear-tarea'); },
+        [RUTAS.INSTRUCTOR.ESTUDIANTES]: function() { mostrarSeccionInstructor('estudiantes'); },
+        [RUTAS.INSTRUCTOR.TAREAS]:      function() { mostrarSeccionInstructor('tareas');      },
     });
 
     _configurarSidebar('Instructor', function(seccion) {
-        navegarA('instructor/' + seccion);
+        const ruta = SECCIONES_INSTRUCTOR[seccion];
+        if (ruta) ir(ruta);
     });
 
     iniciarRouter();
-    navegarA('instructor/inicio');
+    ir(RUTAS.INSTRUCTOR.INICIO);
     if (window.lucide) window.lucide.createIcons();
 }
 
@@ -1402,7 +1417,10 @@ async function cargarTablaUsuariosInstructor() {
         icoVer.className = 'icono-accion';
         btnVer.appendChild(icoVer);
         btnVer.appendChild(document.createTextNode(' Ver'));
-        btnVer.addEventListener('click', function() { abrirModalUsuario(usuario); });
+        btnVer.addEventListener('click', function() {
+            _pendingVerUsuario = usuario;
+            ir(RUTAS.INSTRUCTOR.VER_ESTUDIANTE);
+        });
 
         contenedor.appendChild(btnVer);
         celdaAcciones.appendChild(contenedor);
@@ -1484,12 +1502,12 @@ async function cargarTareasInstructor() {
     const tbody = document.getElementById('instrTasksTableBody');
     if (!tbody) return;
 
-    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-
+    // Anti-parpadeo: fetch primero, limpiar DOM después
     const [todasTareas, todosUsuarios] = await Promise.all([
         obtenerTodasLasTareas(),
         obtenerTodosLosUsuarios(),
     ]);
+    while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
     if (!todasTareas || !todosUsuarios) return;
 
     // Solo IDs de estudiantes (role=user)
@@ -1541,7 +1559,13 @@ function crearCeldaDescripcion(tarea) {
     btn.type      = 'button';
     btn.className = 'celda-desc__btn-ver';
     btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Ver tarea';
-    btn.addEventListener('click', function() { abrirModalVerTarea(tarea); });
+    btn.addEventListener('click', function() {
+        _pendingVerTarea = tarea;
+        const modo = document.body.dataset.modo;
+        if (modo === 'admin') ir(RUTAS.ADMIN.VER_TAREA);
+        else if (modo === 'instructor') ir(RUTAS.INSTRUCTOR.VER_TAREA);
+        else ir(RUTAS.USUARIO.VER_TAREA);
+    });
     celda.appendChild(btn);
 
     return celda;
@@ -1651,45 +1675,14 @@ function crearFilaTareaInstructor(tarea, indice) {
 
     // Botón Editar — circular con ícono, igual que en la tabla de usuarios
     const btnEditar = crearBotonIcono('pencil', 'Editar tarea', 'btn-accion--amarillo', function() {
-        manejarEdicionTareaInstructor(tarea);
+        _pendingEditarTarea = tarea;
+        ir(RUTAS.INSTRUCTOR.EDITAR_TAREA);
     });
 
     // Botón Eliminar — circular con ícono rojo
-    const btnEliminar = crearBotonIcono('trash-2', 'Eliminar tarea', 'btn-accion--rojo', async function() {
-        const confirmado = await confirmarEliminarTarea(tarea.title);
-        if (!confirmado) return;
-
-        const eliminado = await eliminarTarea(tarea.id);
-        if (eliminado) {
-            // Eliminar fila ANTES del toast para que sea inmediato
-            const tbody = document.getElementById('instrTasksTableBody');
-            const filaEl = tbody ? tbody.querySelector(`tr[data-id="${tarea.id}"]`) : null;
-            if (filaEl) {
-                filaEl.remove();
-                // Renumerar filas restantes
-                if (tbody) {
-                    Array.from(tbody.querySelectorAll('tr')).forEach(function(fila, i) {
-                        if (fila.cells[0]) fila.cells[0].textContent = i + 1;
-                    });
-                }
-            } else {
-                cargarTareasInstructor();
-            }
-            // Actualizar contador de la card
-            const contador = document.getElementById('instrTasksCount');
-            if (contador && tbody) {
-                const n = tbody.querySelectorAll('tr').length;
-                contador.textContent = `${n} ${n === 1 ? 'tarea' : 'tareas'}`;
-            }
-            // Toast + actualizaciones en background (sin bloquear)
-            mostrarNotificacion('Tarea eliminada correctamente', 'exito');
-            cargarDashboardInstructor();
-            cargarTablaUsuariosInstructor();
-            registrarEvento('tarea_eliminada', `Tarea eliminada: "${tarea.title}"`);
-            renderizarAuditoria(document.getElementById('auditoriaContenedor'));
-        } else {
-            await mostrarNotificacion('Error al eliminar la tarea', 'error');
-        }
+    const btnEliminar = crearBotonIcono('trash-2', 'Eliminar tarea', 'btn-accion--rojo', function() {
+        _pendingEliminarTarea = { tarea };
+        ir(RUTAS.INSTRUCTOR.ELIMINAR_TAREA);
     });
 
     contenedor.appendChild(btnEditar);
@@ -2092,139 +2085,36 @@ function crearFilaUsuario(usuario, indice) {
 
     // Botón Ver / Asignar
     tdAcciones.appendChild(crearBotonIcono('eye', 'Ver y asignar tareas', 'btn-accion--azul',
-        function() { abrirModalUsuario(usuario); }
+        function() { _pendingVerUsuario = usuario; ir(RUTAS.ADMIN.VER_USUARIO); }
     ));
 
     // Botón Editar datos
     tdAcciones.appendChild(crearBotonIcono('pencil', 'Editar usuario', 'btn-accion--amarillo',
-        function() { abrirModalEditarUsuario(usuario); }
+        function() { _pendingEditarUsuario = usuario; ir(RUTAS.ADMIN.EDITAR_USUARIO); }
     ));
 
     // Botón Cambiar rol (mini-dropdown)
     tdAcciones.appendChild(crearBotonIcono('user-check', 'Cambiar rol', 'btn-accion--azul',
-        function() { abrirDropdownRol(usuario, fila); }
+        function() { _pendingCambiarRol = { usuario, fila }; ir(RUTAS.ADMIN.CAMBIAR_ROL); }
     ));
 
     // Botón Desactivar o Activar según estado actual — modal mejorado con motivo obligatorio
     if (usuario.is_active === 1 || usuario.is_active === true) {
         tdAcciones.appendChild(crearBotonIcono('user-x', 'Desactivar usuario', 'btn-accion--gris',
-            async function() {
-                const resultado = await mostrarModalToggleEstado(usuario.name, 'desactivar');
-                if (!resultado) return; // Canceló
-
-                // OPTIMISTIC UPDATE: actualizar el badge de estado en el DOM al instante
-                const celdaEstadoEl = tdEstado;
-                while (celdaEstadoEl.firstChild) celdaEstadoEl.removeChild(celdaEstadoEl.firstChild);
-                celdaEstadoEl.appendChild(crearBadgeEstado(0));
-
-                // Auditoría y toast sin esperar al backend
-                registrarEvento('rol_cambiado', `${usuario.name} fue desactivado`);
-                renderizarAuditoria(document.getElementById('auditoriaContenedor'));
-                mostrarNotificacion(`${usuario.name} fue desactivado. Motivo: ${resultado.motivo}`, 'exito');
-
-                // Llamada al backend en background — si falla revierte el badge
-                desactivarUsuario(usuario.id, resultado.motivo)
-                    .then(() => { cargarTablaUsuarios(); })
-                    .catch(async (error) => {
-                        // Revertir badge a Activo si el backend rechazó
-                        while (celdaEstadoEl.firstChild) celdaEstadoEl.removeChild(celdaEstadoEl.firstChild);
-                        celdaEstadoEl.appendChild(crearBadgeEstado(1));
-                        await mostrarNotificacion(error.message || 'No se pudo desactivar', 'error');
-                    });
-            }
+            function() { _pendingDesactivar = { usuario, tdEstado }; ir(RUTAS.ADMIN.DESACTIVAR); }
         ));
     } else {
         tdAcciones.appendChild(crearBotonIcono('user-check', 'Activar usuario', 'btn-accion--verde',
-            async function() {
-                const resultado = await mostrarModalToggleEstado(usuario.name, 'activar');
-                if (!resultado) return; // Canceló
-
-                // OPTIMISTIC UPDATE: actualizar el badge de estado en el DOM al instante
-                const celdaEstadoEl = tdEstado;
-                while (celdaEstadoEl.firstChild) celdaEstadoEl.removeChild(celdaEstadoEl.firstChild);
-                celdaEstadoEl.appendChild(crearBadgeEstado(1));
-
-                // Auditoría y toast sin esperar al backend
-                registrarEvento('login', `${usuario.name} fue reactivado`);
-                renderizarAuditoria(document.getElementById('auditoriaContenedor'));
-                mostrarNotificacion(`${usuario.name} fue reactivado. Motivo: ${resultado.motivo}`, 'exito');
-
-                // Llamada al backend en background — si falla revierte el badge
-                reactivarUsuario(usuario.id)
-                    .then(() => { cargarTablaUsuarios(); })
-                    .catch(async (error) => {
-                        // Revertir badge a Inactivo si el backend rechazó
-                        while (celdaEstadoEl.firstChild) celdaEstadoEl.removeChild(celdaEstadoEl.firstChild);
-                        celdaEstadoEl.appendChild(crearBadgeEstado(0));
-                        await mostrarNotificacion(error.message || 'No se pudo reactivar', 'error');
-                    });
-            }
+            function() { _pendingActivar = { usuario, tdEstado }; ir(RUTAS.ADMIN.ACTIVAR); }
         ));
     }
 
     // Botón Eliminar — modal mejorado con modo normal/forzoso y motivo obligatorio
     tdAcciones.appendChild(crearBotonIcono('trash-2', 'Eliminar permanentemente', 'btn-accion--rojo',
-        async function() {
+        function() {
             const estaActivo = usuario.is_active === 1 || usuario.is_active === true;
-            const resultado  = await mostrarModalEliminarUsuario(usuario.name, estaActivo);
-            if (!resultado) return; // Canceló
-
-            try {
-                // —— OPTIMISTIC UPDATE (compartido para ambos modos) ———————————————————
-                // Quitamos la fila y mostramos el toast al instante sin esperar al backend.
-                // La auditoría (“Actividad reciente”) solo se registra en el .then(), cuando
-                // el backend confirma el éxito. Si falla, se revierte con cargarTablaUsuarios().
-                if (fila && fila.parentNode) fila.parentNode.removeChild(fila);
-
-                const tbodyUsers = document.getElementById('usersTableBody');
-                const contadorEl = document.getElementById('adminUsersCount');
-                if (contadorEl && tbodyUsers) {
-                    const n = tbodyUsers.querySelectorAll('tr').length;
-                    contadorEl.textContent = `${n} ${n === 1 ? 'usuario' : 'usuarios'}`;
-                }
-                mostrarNotificacion(`${usuario.name} fue eliminado correctamente`, 'exito');
-
-                if (resultado.forzoso) {
-                    forceEliminarUsuario(usuario.id, resultado.motivo)
-                        .then(() => {
-                            // Backend confirmó: ahora sí registrar en auditoría
-                            registrarEvento('usuario_eliminado', `Usuario eliminado: ${usuario.name}`);
-                            renderizarAuditoria(document.getElementById('auditoriaContenedor'));
-                            cargarTodasLasTareas();
-                            cargarDashboard();
-                        })
-                        .catch(async (error) => {
-                            cargarTablaUsuarios(); // revertir
-                            await mostrarNotificacion(
-                                error.message || 'No se pudo eliminar el usuario',
-                                'error'
-                            );
-                        });
-                } else {
-                    // Pasa el motivo — el backend lo exige y rechaza con 400 si faltan tareas
-                    eliminarUsuario(usuario.id, resultado.motivo)
-                        .then(() => {
-                            // Backend confirmó: ahora sí registrar en auditoría
-                            registrarEvento('usuario_eliminado', `Usuario eliminado: ${usuario.name}`);
-                            renderizarAuditoria(document.getElementById('auditoriaContenedor'));
-                            cargarTodasLasTareas();
-                            cargarDashboard();
-                        })
-                        .catch(async (error) => {
-                            cargarTablaUsuarios(); // revertir si el backend rechaza
-                            await mostrarNotificacion(
-                                error.message || 'No se pudo eliminar el usuario',
-                                'error'
-                            );
-                        });
-                }
-            } catch (error) {
-                cargarTablaUsuarios();
-                await mostrarNotificacion(
-                    error.message || 'No se pudo eliminar el usuario',
-                    'error'
-                );
-            }
+            _pendingEliminarUsuario = { usuario, fila, estaActivo };
+            ir(RUTAS.ADMIN.ELIMINAR_USUARIO);
         }
     ));
 
@@ -2274,7 +2164,10 @@ function abrirDropdownRol(usuario, filaEl) {
     btnCerrar.type      = 'button';
     btnCerrar.title     = 'Cerrar';
     btnCerrar.appendChild(crearIconoLucide('x'));
-    btnCerrar.addEventListener('click', function() { overlay.remove(); });
+    btnCerrar.addEventListener('click', function() {
+        overlay.remove();
+        if (window.location.hash === '#' + RUTAS.ADMIN.CAMBIAR_ROL) volverDeModal();
+    });
 
     header.appendChild(iconoBadge);
     header.appendChild(infoBloque);
@@ -2355,6 +2248,7 @@ function abrirDropdownRol(usuario, filaEl) {
             card.appendChild(textoWrap);
             card.addEventListener('click', async function() {
                 overlay.remove();
+                if (window.location.hash === '#' + RUTAS.ADMIN.CAMBIAR_ROL) volverDeModal();
                 try {
                     await cambiarRolUsuario(usuario.id, rol.valor);
                     await mostrarNotificacion(`Rol de ${usuario.name} → ${rol.texto}`, 'exito');
@@ -2378,7 +2272,10 @@ function abrirDropdownRol(usuario, filaEl) {
     if (window.lucide) window.lucide.createIcons();
 
     overlay.addEventListener('click', function(event) {
-        if (event.target === overlay) overlay.remove();
+        if (event.target === overlay) {
+            overlay.remove();
+            if (window.location.hash === '#' + RUTAS.ADMIN.CAMBIAR_ROL) volverDeModal();
+        }
     });
 }
 
@@ -2527,7 +2424,10 @@ async function abrirModalEditarUsuario(usuario) {
 
 function cerrarModalEditarUsuarioExistente() {
     const existing = document.getElementById('modalEditarUsuarioOverlay');
-    if (existing) existing.remove();
+    if (existing) {
+        existing.remove();
+        if (window.location.hash === '#' + RUTAS.ADMIN.EDITAR_USUARIO) volverDeModal();
+    }
 }
 
 // ── DASHBOARD LOCAL ──────────────────────────────────────────────────────────
@@ -2641,6 +2541,19 @@ function manejarEdicionTareaAdmin(tarea) {
     if (_gradeGrupoA)       _gradeGrupoA.style.display       = 'none';
     if (_gradeReasonGrupoA) _gradeReasonGrupoA.style.display = 'none';
     if (_chkCalifGrupoA)    _chkCalifGrupoA.style.display    = 'none';
+
+    // Resetear select de estado siempre primero, luego bloquear solo si ya está calificada
+    const selectEstadoA = document.getElementById('editTaskStatus');
+    if (selectEstadoA) {
+        selectEstadoA.disabled      = false;
+        selectEstadoA.style.opacity = '';
+        selectEstadoA.style.cursor  = '';
+        if (tarea.status === 'completada' || tarea.status === 'reprobada') {
+            selectEstadoA.disabled      = true;
+            selectEstadoA.style.opacity = '0.6';
+            selectEstadoA.style.cursor  = 'not-allowed';
+        }
+    }
 
     const formulario = document.getElementById('editTaskForm');
 
@@ -2794,8 +2707,11 @@ function manejarEdicionTareaInstructor(tarea) {
 
     const chkCalificar = document.getElementById('editChkCalificar');
 
-    // Estado inicial: checkbox OFF → campos ocultos
+    // Estado inicial: el checkbox solo se muestra si la tarea YA tiene calificación
+    // Si no está calificada, el grupo entero se oculta — el instructor no puede editar
+    // una calificación que no existe todavía (para eso está el panel de calificación)
     const yaCalificada = tarea.grade !== null && tarea.grade !== undefined;
+    if (chkGrupo) chkGrupo.style.display = yaCalificada ? '' : 'none';
     if (chkCalificar) chkCalificar.checked = yaCalificada;
 
     function actualizarVisibilidadCalif() {
@@ -2894,9 +2810,9 @@ function manejarEdicionTareaInstructor(tarea) {
             const chkEl = document.getElementById('editChkCalificar');
             if (chkEl) chkEl.checked = false;
             ocultarModalEdicion();
-            // Actualizar fila en-place; si no existe hacer reload completo
-            const actualizado = actualizarFilaTareaInstructor(tareaActualizada);
-            if (!actualizado) cargarTareasInstructor();
+            // Recargar tabla completa para que los closures tengan datos frescos
+            // (incluyendo el grade recién guardado, visible en editar y en Ver tarea)
+            cargarTareasInstructor();
             cargarDashboardInstructor();
             cargarTablaUsuariosInstructor();
             // Refrescar panel de calificación INMEDIATAMENTE (sin await)
@@ -2962,23 +2878,14 @@ function crearFilaTareaAdmin(tarea, indice) {
 
     // Botón Editar — circular con ícono, igual que en la tabla de usuarios
     const btnEditar = crearBotonIcono('pencil', 'Editar tarea', 'btn-accion--amarillo', function() {
-        manejarEdicionTareaAdmin(tarea);
+        _pendingEditarTarea = tarea;
+        ir(RUTAS.ADMIN.EDITAR_TAREA);
     });
 
     // Botón Eliminar — circular con ícono rojo
-    const btnEliminar = crearBotonIcono('trash-2', 'Eliminar tarea', 'btn-accion--rojo', async function() {
-        const confirmado = await confirmarEliminarTarea(tarea.title);
-        if (!confirmado) return;
-
-        const eliminada = await eliminarTarea(tarea.id);
-        if (eliminada) {
-            todasLasTareas = todasLasTareas.filter(t => t.id !== tarea.id);
-            actualizarDashboardLocal();
-            aplicarFiltrosAdmin();
-            await mostrarNotificacion('Tarea eliminada correctamente', 'exito');
-        } else {
-            await mostrarNotificacion('Error al eliminar la tarea', 'error');
-        }
+    const btnEliminar = crearBotonIcono('trash-2', 'Eliminar tarea', 'btn-accion--rojo', function() {
+        _pendingEliminarTarea = { tarea };
+        ir(RUTAS.ADMIN.ELIMINAR_TAREA);
     });
 
     contenedor.appendChild(btnEditar);
@@ -3402,7 +3309,11 @@ export async function abrirModalUsuario(usuario) {
 
 function cerrarModalUsuarioExistente() {
     const existing = document.getElementById('modalUsuarioOverlay');
-    if (existing) existing.remove();
+    if (existing) {
+        existing.remove();
+        const h = window.location.hash.slice(1);
+        if (h === RUTAS.ADMIN.VER_USUARIO || h === RUTAS.INSTRUCTOR.VER_ESTUDIANTE) volverDeModal();
+    }
 }
 
 // ── CARDS CONTRAÍBLES ─────────────────────────────────────────────────────────
@@ -3803,7 +3714,7 @@ async function manejarCerrarSesion() {
         overlay.addEventListener('click', function(e) { if (e.target === overlay) cerrar(false); });
     });
 
-    if (!confirmado) return;
+    if (!confirmado) { volverDeModal(); return; }
 
     // Limpiar intervalos activos
     if (window._panelCalificacionInterval) {
@@ -3814,6 +3725,7 @@ async function manejarCerrarSesion() {
     cerrarSesion();
     limpiarFormularioLogin();
     activarModoInicio();
+    resetearEstadoRouter();
 }
 
 // ── ABRIR MODAL DE REGISTRO ───────────────────────────────────────────────────
@@ -3832,6 +3744,7 @@ function cerrarModalRegistro() {
     const modal = document.getElementById('registroModal');
     if (modal) modal.classList.add('hidden');
     limpiarFormularioRegistro();
+    if (window.location.hash === '#' + RUTAS.MODAL.REGISTRO) volverDeModal();
 }
 
 // ── LIMPIAR FORMULARIO DE REGISTRO ───────────────────────────────────────────
@@ -4003,19 +3916,23 @@ function registrarListenerCambioPassword() {
     // Función auxiliar para cerrar el modal
     function cerrarModalPassword() {
         modal.classList.add('hidden');
+        if (window.location.hash === '#' + RUTAS.MODAL.CAMBIO_PASSWORD) volverDeModal();
     }
+
+    // Registrar la ruta del modal para que sea navegable via ir(RUTAS.MODAL.CAMBIO_PASSWORD)
+    registrarRuta(RUTAS.MODAL.CAMBIO_PASSWORD, abrirModalPassword);
 
     // Abrir el modal desde el botón de perfil del panel admin
     const btnPerfilAdmin = document.getElementById('btnPerfilAdmin');
-    if (btnPerfilAdmin) btnPerfilAdmin.addEventListener('click', abrirModalPassword);
+    if (btnPerfilAdmin) btnPerfilAdmin.addEventListener('click', function() { ir(RUTAS.MODAL.CAMBIO_PASSWORD); });
 
     // Abrir el modal desde el botón de perfil del panel usuario
     const btnPerfilUsuario = document.getElementById('btnPerfilUsuario');
-    if (btnPerfilUsuario) btnPerfilUsuario.addEventListener('click', abrirModalPassword);
+    if (btnPerfilUsuario) btnPerfilUsuario.addEventListener('click', function() { ir(RUTAS.MODAL.CAMBIO_PASSWORD); });
 
     // Abrir el modal desde el botón de perfil del panel instructor
     const btnPerfilInstructor = document.getElementById('btnPerfilInstructor');
-    if (btnPerfilInstructor) btnPerfilInstructor.addEventListener('click', abrirModalPassword);
+    if (btnPerfilInstructor) btnPerfilInstructor.addEventListener('click', function() { ir(RUTAS.MODAL.CAMBIO_PASSWORD); });
 
     // Cerrar el modal con el botón X
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarModalPassword);
@@ -4091,10 +4008,226 @@ function registrarListenerCambioPassword() {
     }
 }
 
+// manejarEdicionTareaUsuario — abre el modal de edición en modo usuario y registra
+// el submit handler. Equivalente a manejarEdicionTareaAdmin/Instructor pero para el rol usuario.
+// Se llama desde el route handler de RUTAS.USUARIO.EDITAR_TAREA.
+function manejarEdicionTareaUsuario(tarea) {
+    mostrarModalEdicion(tarea, true); // soloLecturaTituloDesc = true
+
+    const formularioEdicion = document.getElementById('editTaskForm');
+    const formularioClonado = formularioEdicion.cloneNode(true);
+    formularioEdicion.parentNode.replaceChild(formularioClonado, formularioEdicion);
+
+    const btnCancelClone = document.getElementById('editCancelBtn');
+    if (btnCancelClone) btnCancelClone.addEventListener('click', ocultarModalEdicion);
+    const btnCloseClone  = document.getElementById('editCloseBtn');
+    if (btnCloseClone)  btnCloseClone.addEventListener('click', ocultarModalEdicion);
+
+    const tareaId = String(tarea.id);
+
+    formularioClonado.addEventListener('submit', async function(ev) {
+        ev.preventDefault();
+
+        const nuevoEstado     = document.getElementById('editTaskStatus').value;
+        const nuevoComentario = document.getElementById('editTaskComment')
+            ? document.getElementById('editTaskComment').value.trim()
+            : '';
+
+        const { actualizarTarea } = await import('../api/tareasApi.js');
+        const tareaActualizada = await actualizarTarea(tareaId, {
+            status:  nuevoEstado,
+            comment: nuevoComentario,
+        });
+
+        if (tareaActualizada) {
+            const { actualizarFilaTarea } = await import('./tareasUI.js');
+            actualizarFilaTarea(tareaActualizada);
+            ocultarModalEdicion();
+            await mostrarNotificacion('Tarea actualizada correctamente', 'exito');
+            try {
+                const tareasAct = await obtenerTodasLasTareas();
+                crearCalendario({ contenedorId: 'instrCalendario', paleta: 'instructor', soloLectura: false, tareas: tareasAct });
+            } catch { /* calendar refresh opcional */ }
+        } else {
+            await mostrarNotificacion('Error al actualizar la tarea', 'error');
+        }
+    });
+}
+
 // ── REGISTRO DE EVENTOS DE NAVEGACIÓN ────────────────────────────────────────
 
 export function registrarEventosNavegacion() {
-    
+    iniciarRouter();
+
+    // Rutas de modales — disponibles desde el arranque, antes de activar cualquier rol.
+    registrarRuta(RUTAS.MODAL.REGISTRO,      function() { abrirModalRegistro(); });
+    registrarRuta(RUTAS.MODAL.CERRAR_SESION, function() { manejarCerrarSesion(); });
+
+    // ── VER TAREA (por rol) ───────────────────────────────────────────────────
+    [RUTAS.ADMIN.VER_TAREA, RUTAS.USUARIO.VER_TAREA, RUTAS.INSTRUCTOR.VER_TAREA].forEach(function(ruta) {
+        registrarRuta(ruta, function() {
+            if (!_pendingVerTarea) return;
+            const t = _pendingVerTarea; _pendingVerTarea = null;
+            abrirModalVerTarea(t);
+        });
+    });
+
+    // ── EDITAR TAREA (por rol) ────────────────────────────────────────────────
+    registrarRuta(RUTAS.ADMIN.EDITAR_TAREA, function() {
+        if (!_pendingEditarTarea) return;
+        const t = _pendingEditarTarea; _pendingEditarTarea = null;
+        manejarEdicionTareaAdmin(t);
+    });
+    registrarRuta(RUTAS.USUARIO.EDITAR_TAREA, function() {
+        if (!_pendingEditarTarea) return;
+        const t = _pendingEditarTarea; _pendingEditarTarea = null;
+        manejarEdicionTareaUsuario(t);
+    });
+    registrarRuta(RUTAS.INSTRUCTOR.EDITAR_TAREA, function() {
+        if (!_pendingEditarTarea) return;
+        const t = _pendingEditarTarea; _pendingEditarTarea = null;
+        manejarEdicionTareaInstructor(t);
+    });
+
+    // ── ELIMINAR TAREA (admin e instructor) ──────────────────────────────────
+    registrarRuta(RUTAS.ADMIN.ELIMINAR_TAREA, async function() {
+        if (!_pendingEliminarTarea) return;
+        const { tarea } = _pendingEliminarTarea; _pendingEliminarTarea = null;
+        const confirmado = await confirmarEliminarTarea(tarea.title);
+        volverDeModal();
+        if (!confirmado) return;
+        const eliminada = await eliminarTarea(tarea.id);
+        if (eliminada) {
+            todasLasTareas = todasLasTareas.filter(function(t) { return t.id !== tarea.id; });
+            actualizarDashboardLocal();
+            aplicarFiltrosAdmin();
+            await mostrarNotificacion('Tarea eliminada correctamente', 'exito');
+        } else {
+            await mostrarNotificacion('Error al eliminar la tarea', 'error');
+        }
+    });
+
+    registrarRuta(RUTAS.INSTRUCTOR.ELIMINAR_TAREA, async function() {
+        if (!_pendingEliminarTarea) return;
+        const { tarea } = _pendingEliminarTarea; _pendingEliminarTarea = null;
+        const confirmado = await confirmarEliminarTarea(tarea.title);
+        volverDeModal();
+        if (!confirmado) return;
+        const eliminado = await eliminarTarea(tarea.id);
+        if (eliminado) {
+            const tbody = document.getElementById('instrTasksTableBody');
+            const filaEl = tbody ? tbody.querySelector(`tr[data-id="${tarea.id}"]`) : null;
+            if (filaEl) {
+                filaEl.remove();
+                if (tbody) Array.from(tbody.querySelectorAll('tr')).forEach(function(f, i) {
+                    if (f.cells[0]) f.cells[0].textContent = i + 1;
+                });
+            } else { cargarTareasInstructor(); }
+            const contador = document.getElementById('instrTasksCount');
+            if (contador && tbody) { const n = tbody.querySelectorAll('tr').length; contador.textContent = `${n} ${n === 1 ? 'tarea' : 'tareas'}`; }
+            mostrarNotificacion('Tarea eliminada correctamente', 'exito');
+            cargarDashboardInstructor();
+            cargarTablaUsuariosInstructor();
+            registrarEvento('tarea_eliminada', `Tarea eliminada: "${tarea.title}"`);
+            renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+        } else {
+            await mostrarNotificacion('Error al eliminar la tarea', 'error');
+        }
+    });
+
+    // ── ACCIONES EN USUARIOS (admin) ──────────────────────────────────────────
+    registrarRuta(RUTAS.ADMIN.VER_USUARIO, function() {
+        if (!_pendingVerUsuario) return;
+        const u = _pendingVerUsuario; _pendingVerUsuario = null;
+        abrirModalUsuario(u);
+    });
+    registrarRuta(RUTAS.ADMIN.EDITAR_USUARIO, function() {
+        if (!_pendingEditarUsuario) return;
+        const u = _pendingEditarUsuario; _pendingEditarUsuario = null;
+        abrirModalEditarUsuario(u);
+    });
+    registrarRuta(RUTAS.ADMIN.CAMBIAR_ROL, function() {
+        if (!_pendingCambiarRol) return;
+        const { usuario, fila } = _pendingCambiarRol; _pendingCambiarRol = null;
+        abrirDropdownRol(usuario, fila);
+    });
+    registrarRuta(RUTAS.ADMIN.DESACTIVAR, async function() {
+        if (!_pendingDesactivar) return;
+        const { usuario, tdEstado } = _pendingDesactivar; _pendingDesactivar = null;
+        const resultado = await mostrarModalToggleEstado(usuario.name, 'desactivar');
+        volverDeModal();
+        if (!resultado) return;
+        while (tdEstado.firstChild) tdEstado.removeChild(tdEstado.firstChild);
+        tdEstado.appendChild(crearBadgeEstado(0));
+        registrarEvento('rol_cambiado', `${usuario.name} fue desactivado`);
+        renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+        mostrarNotificacion(`${usuario.name} fue desactivado. Motivo: ${resultado.motivo}`, 'exito');
+        desactivarUsuario(usuario.id, resultado.motivo)
+            .then(() => { cargarTablaUsuarios(); })
+            .catch(async function(error) {
+                while (tdEstado.firstChild) tdEstado.removeChild(tdEstado.firstChild);
+                tdEstado.appendChild(crearBadgeEstado(1));
+                await mostrarNotificacion(error.message || 'No se pudo desactivar', 'error');
+            });
+    });
+    registrarRuta(RUTAS.ADMIN.ACTIVAR, async function() {
+        if (!_pendingActivar) return;
+        const { usuario, tdEstado } = _pendingActivar; _pendingActivar = null;
+        const resultado = await mostrarModalToggleEstado(usuario.name, 'activar');
+        volverDeModal();
+        if (!resultado) return;
+        while (tdEstado.firstChild) tdEstado.removeChild(tdEstado.firstChild);
+        tdEstado.appendChild(crearBadgeEstado(1));
+        registrarEvento('login', `${usuario.name} fue reactivado`);
+        renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+        mostrarNotificacion(`${usuario.name} fue reactivado. Motivo: ${resultado.motivo}`, 'exito');
+        reactivarUsuario(usuario.id)
+            .then(() => { cargarTablaUsuarios(); })
+            .catch(async function(error) {
+                while (tdEstado.firstChild) tdEstado.removeChild(tdEstado.firstChild);
+                tdEstado.appendChild(crearBadgeEstado(0));
+                await mostrarNotificacion(error.message || 'No se pudo reactivar', 'error');
+            });
+    });
+    registrarRuta(RUTAS.ADMIN.ELIMINAR_USUARIO, async function() {
+        if (!_pendingEliminarUsuario) return;
+        const { usuario, fila, estaActivo } = _pendingEliminarUsuario; _pendingEliminarUsuario = null;
+        const resultado = await mostrarModalEliminarUsuario(usuario.name, estaActivo);
+        volverDeModal();
+        if (!resultado) return;
+        try {
+            if (fila && fila.parentNode) fila.parentNode.removeChild(fila);
+            const tbodyUsers = document.getElementById('usersTableBody');
+            const contadorEl = document.getElementById('adminUsersCount');
+            if (contadorEl && tbodyUsers) { const n = tbodyUsers.querySelectorAll('tr').length; contadorEl.textContent = `${n} ${n === 1 ? 'usuario' : 'usuarios'}`; }
+            mostrarNotificacion(`${usuario.name} fue eliminado correctamente`, 'exito');
+            const fn = resultado.forzoso ? forceEliminarUsuario : eliminarUsuario;
+            fn(usuario.id, resultado.motivo)
+                .then(function() {
+                    registrarEvento('usuario_eliminado', `Usuario eliminado: ${usuario.name}`);
+                    renderizarAuditoria(document.getElementById('auditoriaContenedor'));
+                    cargarTodasLasTareas();
+                    cargarDashboard();
+                })
+                .catch(async function(error) {
+                    cargarTablaUsuarios();
+                    await mostrarNotificacion(error.message || 'No se pudo eliminar el usuario', 'error');
+                });
+        } catch (error) {
+            cargarTablaUsuarios();
+            await mostrarNotificacion(error.message || 'No se pudo eliminar el usuario', 'error');
+        }
+    });
+
+    // ── VER ESTUDIANTE (instructor) ───────────────────────────────────────────
+    registrarRuta(RUTAS.INSTRUCTOR.VER_ESTUDIANTE, function() {
+        if (!_pendingVerUsuario) return;
+        const u = _pendingVerUsuario; _pendingVerUsuario = null;
+        abrirModalUsuario(u);
+    });
+
+    // Olvido y cambio de password se registran en registrarListenerOlvido/CambioPassword más abajo.
+
     // Se registra el comportamiento de toggle en las cards contraíbles del panel admin
     registrarCardsContraibles();
 
@@ -4203,18 +4336,18 @@ export function registrarEventosNavegacion() {
     // Botones volver
     const btnLogoutUsuario = document.getElementById('btnLogoutUsuario');
     if (btnLogoutUsuario) {
-        btnLogoutUsuario.addEventListener('click', manejarCerrarSesion);
+        btnLogoutUsuario.addEventListener('click', function() { ir(RUTAS.MODAL.CERRAR_SESION); });
     }
 
     const btnLogoutAdmin = document.getElementById('btnLogoutAdmin');
     if (btnLogoutAdmin) {
-        btnLogoutAdmin.addEventListener('click', manejarCerrarSesion);
+        btnLogoutAdmin.addEventListener('click', function() { ir(RUTAS.MODAL.CERRAR_SESION); });
     }
 
     // Botón de cerrar sesión del panel instructor
     const btnLogoutInstructor = document.getElementById('btnLogoutInstructor');
     if (btnLogoutInstructor) {
-        btnLogoutInstructor.addEventListener('click', manejarCerrarSesion);
+        btnLogoutInstructor.addEventListener('click', function() { ir(RUTAS.MODAL.CERRAR_SESION); });
     }
 
 
@@ -4594,7 +4727,7 @@ export function registrarEventosNavegacion() {
     // Abrir el modal al hacer clic en "Regístrate aquí"
     const btnAbrirRegistro = document.getElementById('btnAbrirRegistro');
     if (btnAbrirRegistro) {
-        btnAbrirRegistro.addEventListener('click', abrirModalRegistro);
+        btnAbrirRegistro.addEventListener('click', function() { ir(RUTAS.MODAL.REGISTRO); });
     }
 
     // Cerrar el modal al hacer clic en el botón X
@@ -4736,81 +4869,38 @@ export function registrarEventosNavegacion() {
                 // Usar obtenerTareaPorId para tener todos los datos (incluyendo assignedUsersDisplay)
                 // Reconstruir desde el DOM no tiene el nombre del usuario asignado
                 const tareaFresca = await obtenerTareaPorId(tareaId);
-                abrirModalVerTarea(tareaFresca || { id: tareaId });
+                _pendingVerTarea = tareaFresca || { id: tareaId };
+                ir(RUTAS.USUARIO.VER_TAREA);
 
             } else if (accion === 'edit') {
-                // Buscar la tarea completa en el DOM para pasarla al modal
-                // Se reconstruye el objeto desde las celdas de la fila
                 const fila        = btn.closest('tr');
                 const titulo      = fila.cells[1].textContent;
-                const descripcion = fila.cells[2].textContent === '—' ? '' : fila.cells[2].textContent;
+                const spanDesc    = fila.cells[2].querySelector('.celda-desc__texto');
+                const descripcion = spanDesc ? (spanDesc.textContent === '—' ? '' : spanDesc.textContent) : '';
                 const estado      = fila.cells[3].querySelector('.status-badge').className
                     .split(' ')
                     .find(c => c.startsWith('status-') && c !== 'status-badge')
                     ?.replace('status-', '') || '';
-                const comentario  = fila.cells[4].textContent === '—' ? '' : fila.cells[4].textContent;
 
-                // mostrarModalEdicion viene de tareasUI.js
-                // soloLecturaTituloDesc=true → modo usuario: título y desc de solo lectura
-                mostrarModalEdicion({
-                    id:          tareaId,
-                    title:       titulo,
-                    description: descripcion,
-                    status:      estado,
-                    comment:     comentario,
-                }, true);
+                // Guardia: tareas finalizadas no se pueden modificar
+                if (estado === 'completada' || estado === 'reprobada') {
+                    await mostrarNotificacion('Esta tarea ya fue calificada y no puede modificarse', 'advertencia');
+                    return;
+                }
+                const comentario = fila.cells[4].textContent === '—' ? '' : fila.cells[4].textContent;
 
-                // Registrar el submit del modal de edición para el modo usuario
-                const formularioEdicion = document.getElementById('editTaskForm');
-
-                // Clonar el form para eliminar listeners anteriores y evitar duplicados
-                const formularioClonado = formularioEdicion.cloneNode(true);
-                formularioEdicion.parentNode.replaceChild(formularioClonado, formularioEdicion);
-
-                // Re-registrar Cancelar y X en el form clonado (cloneNode pierde los listeners)
-                const btnCancelClone = document.getElementById('editCancelBtn');
-                if (btnCancelClone) btnCancelClone.addEventListener('click', ocultarModalEdicion);
-                const btnCloseClone  = document.getElementById('editCloseBtn');
-                if (btnCloseClone)  btnCloseClone.addEventListener('click', ocultarModalEdicion);
-
-                formularioClonado.addEventListener('submit', async function(ev) {
-                    ev.preventDefault();
-
-                    const nuevoEstado   = document.getElementById('editTaskStatus').value;
-                    const nuevoComentario = document.getElementById('editTaskComment')
-                        ? document.getElementById('editTaskComment').value.trim()
-                        : '';
-
-                    // Solo se envía el estado y el comentario — título y desc son solo lectura
-                    const { actualizarTarea } = await import('../api/tareasApi.js');
-                    const tareaActualizada = await actualizarTarea(tareaId, {
-                        status:  nuevoEstado,
-                        comment: nuevoComentario,
-                    });
-
-                    if (tareaActualizada) {
-                        // Actualizar la fila en el DOM sin recargar toda la tabla
-                        const { actualizarFilaTarea } = await import('./tareasUI.js');
-                        actualizarFilaTarea(tareaActualizada);
-                        ocultarModalEdicion();
-                        await mostrarNotificacion('Tarea actualizada correctamente', 'exito');
-                        try {
-                            const tareasAct = await obtenerTodasLasTareas();
-                            crearCalendario({ contenedorId: 'instrCalendario', paleta: 'instructor', soloLectura: false, tareas: tareasAct });
-                        } catch { /* calendar refresh opcional */ }
-                    } else {
-                        await mostrarNotificacion('Error al actualizar la tarea', 'error');
-                    }
-                });
+                _pendingEditarTarea = { id: tareaId, title: titulo, description: descripcion, status: estado, comment: comentario };
+                ir(RUTAS.USUARIO.EDITAR_TAREA);
 
             } else if (accion === 'export') {
                 // Exportar solo esta tarea como JSON
                 // Se reconstruye el objeto mínimo necesario para la exportación
                 const fila = btn.closest('tr');
+                const spanDescExp = fila.cells[2].querySelector('.celda-desc__texto');
                 const tareaExportar = {
                     id:          tareaId,
                     title:       fila.cells[1].textContent,
-                    description: fila.cells[2].textContent === '—' ? '' : fila.cells[2].textContent,
+                    description: spanDescExp ? (spanDescExp.textContent === '—' ? '' : spanDescExp.textContent) : '',
                     status:      fila.cells[3].querySelector('.status-badge').textContent,
                     comment:     fila.cells[4].textContent === '—' ? '' : fila.cells[4].textContent,
                 };
@@ -4833,7 +4923,11 @@ export function registrarEventosNavegacion() {
     const verTareaModal = document.getElementById('verTareaModal');
     const verTareaClose = document.getElementById('verTareaClose');
     const verTareaCerrar = document.getElementById('verTareaCerrar');
-    function cerrarVerTarea() { if (verTareaModal) verTareaModal.classList.add('hidden'); }
+    function cerrarVerTarea() {
+        if (verTareaModal) verTareaModal.classList.add('hidden');
+        const h = window.location.hash.slice(1);
+        if (h === RUTAS.ADMIN.VER_TAREA || h === RUTAS.USUARIO.VER_TAREA || h === RUTAS.INSTRUCTOR.VER_TAREA) volverDeModal();
+    }
     if (verTareaClose)  verTareaClose.addEventListener('click', cerrarVerTarea);
     if (verTareaCerrar) verTareaCerrar.addEventListener('click', cerrarVerTarea);
     if (verTareaModal)  verTareaModal.addEventListener('click', function(e) { if (e.target === verTareaModal) cerrarVerTarea(); });
@@ -4913,10 +5007,14 @@ function registrarListenerOlvidoPassword() {
     function cerrarModalOlvido() {
         modal.classList.add('hidden');
         emailRecuperacion = '';
+        if (window.location.hash === '#' + RUTAS.MODAL.OLVIDO_PASSWORD) volverDeModal();
     }
 
+    // Registrar la ruta del modal para que sea navegable via ir(RUTAS.MODAL.OLVIDO_PASSWORD)
+    registrarRuta(RUTAS.MODAL.OLVIDO_PASSWORD, abrirModalOlvido);
+
     // Abrir el modal al hacer clic en el enlace
-    if (btnAbrir) btnAbrir.addEventListener('click', abrirModalOlvido);
+    if (btnAbrir) btnAbrir.addEventListener('click', function() { ir(RUTAS.MODAL.OLVIDO_PASSWORD); });
 
     // Cerrar con el botón X
     if (btnCerrar) btnCerrar.addEventListener('click', cerrarModalOlvido);

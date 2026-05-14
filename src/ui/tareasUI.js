@@ -11,6 +11,8 @@
 //   NO puede importar de api/ ni de services/
 
 import { limpiarError } from '../utils/validaciones.js';
+import { volverDeModal } from '../router.js';
+import { RUTAS } from '../rutas.js';
 
 // ── REFERENCIAS AL DOM ────────────────────────────────────────────────────────
 
@@ -133,7 +135,7 @@ export function crearFilaTarea(tarea, indice) {
     const contenedor = document.createElement('div');
     contenedor.classList.add('task-actions');
 
-    // Botón Editar — circular con ícono lapicero
+    // Botón Editar — siempre visible; el handler bloquea la acción si la tarea está bloqueada
     const btnEditar = crearBotonIconoUsuario('pencil', 'Editar tarea', 'btn-accion--amarillo', null);
     btnEditar.dataset.id     = tarea.id;
     btnEditar.dataset.action = 'edit';
@@ -299,14 +301,27 @@ export function mostrarModalEdicion(tarea, soloLecturaTituloDesc = false, modoEd
         chkCalifGrupo.style.display = modo === 'usuario' ? 'none' : '';
     }
 
+    // Para el modo usuario, ocultar y limpiar los campos de calificación del instructor
+    // Estos campos pueden quedar visibles y con valores si el instructor los usó antes
+    if (modo === 'usuario') {
+        const gradeGrupo       = document.getElementById('editGradeGrupo');
+        const gradeReasonGrupo = document.getElementById('editGradeReasonGrupo');
+        const gradeInput       = document.getElementById('editTaskGrade');
+        const gradeReasonInput = document.getElementById('editTaskGradeReason');
+        if (gradeGrupo)       gradeGrupo.style.display       = 'none';
+        if (gradeReasonGrupo) gradeReasonGrupo.style.display = 'none';
+        if (gradeInput)       gradeInput.value               = '';
+        if (gradeReasonInput) gradeReasonInput.value         = '';
+    }
+
     const editModal = document.getElementById('editModal');
     editModal.classList.remove('hidden');
 
     // Cerrar al hacer click fuera del panel (en el overlay)
     function cerrarAlClickOverlay(e) {
         if (e.target === editModal) {
-            editModal.classList.add('hidden');
             editModal.removeEventListener('click', cerrarAlClickOverlay);
+            ocultarModalEdicion();
         }
     }
     editModal.removeEventListener('click', cerrarAlClickOverlay);
@@ -322,6 +337,16 @@ export function ocultarModalEdicion() {
 
     const comentEl = document.getElementById('editTaskComment');
     if (comentEl) comentEl.value = '';
+
+    // Limpiar y ocultar campos de calificación del instructor al cerrar
+    const gradeGrupoC       = document.getElementById('editGradeGrupo');
+    const gradeReasonGrupoC = document.getElementById('editGradeReasonGrupo');
+    const gradeInputC       = document.getElementById('editTaskGrade');
+    const gradeReasonInputC = document.getElementById('editTaskGradeReason');
+    if (gradeGrupoC)       gradeGrupoC.style.display       = 'none';
+    if (gradeReasonGrupoC) gradeReasonGrupoC.style.display = 'none';
+    if (gradeInputC)       gradeInputC.value               = '';
+    if (gradeReasonInputC) gradeReasonInputC.value         = '';
 
     // Limpiar errores de validación al cerrar
     const formEl = document.getElementById('editTaskForm');
@@ -345,4 +370,16 @@ export function ocultarModalEdicion() {
         inputDesc.style.opacity = '';
         inputDesc.style.cursor  = '';
     }
+
+    // Re-habilitar el select de estado (puede haber sido deshabilitado en modo admin para tarea calificada)
+    const selectEstadoEl = document.getElementById('editTaskStatus');
+    if (selectEstadoEl) {
+        selectEstadoEl.disabled     = false;
+        selectEstadoEl.style.opacity = '';
+        selectEstadoEl.style.cursor  = '';
+    }
+
+    // Limpiar el hash del router si el modal fue abierto via ruta
+    const _h = window.location.hash.slice(1);
+    if (_h === RUTAS.ADMIN.EDITAR_TAREA || _h === RUTAS.USUARIO.EDITAR_TAREA || _h === RUTAS.INSTRUCTOR.EDITAR_TAREA) volverDeModal();
 }

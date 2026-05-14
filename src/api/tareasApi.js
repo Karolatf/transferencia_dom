@@ -74,7 +74,7 @@ export async function obtenerTareasDeUsuario(userId) {
 export async function obtenerTareaPorId(id) {
     try {
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${id}`;
-        const response = await fetchConAuth(url);
+        const response = await fetchConAuth(url, { cache: 'no-store' });
         const json = await response.json();
         if (!response.ok) throw new Error(json.message || `Tarea ${id} no encontrada`);
         return json.data;
