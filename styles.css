@@ -1286,6 +1286,29 @@ body[data-modo="admin"]   {
     .modal-v2__cuerpo  { flex-direction: column; overflow-y: auto; }
     .modal-v2__col--tareas { flex: none; border-right: none; border-bottom: 1px solid var(--borde-suave); max-height: 240px; }
     .modal-v2__col--form   { flex: none; }
+
+    .modal-v2__header {
+        flex-wrap: wrap;
+        gap: var(--espacio-sm);
+        padding: var(--espacio-md);
+    }
+    .modal-v2__titulo {
+        font-size: 1rem;
+        white-space: normal;
+    }
+    .modal-v2__meta {
+        gap: 4px;
+    }
+    .modal-v2__chip {
+        font-size: 0.68rem;
+        padding: 2px 8px;
+    }
+    .modal-v2__cerrar {
+        position: absolute;
+        top: var(--espacio-sm);
+        right: var(--espacio-sm);
+    }
+    .modal-v2__header { position: relative; }
 }
 
 
@@ -1740,10 +1763,27 @@ body[data-modo="admin"]   {
 /* Responsividad: en móvil las dos columnas pasan a una */
 @media (max-width: 480px) {
     .modal--registro-v2__fila {
-        grid-template-columns: 1fr;    /* Una sola columna en pantallas pequeñas */
+        grid-template-columns: 1fr;
     }
     .modal--registro-v2 {
         max-width: 100%;
+        border-radius: 18px;
+    }
+    #registroModal {
+        align-items: flex-start;
+        padding: 16px 12px;
+        overflow-y: auto;
+    }
+    .modal--registro {
+        max-height: none;
+        overflow-y: visible;
+        margin: 0 auto;
+    }
+    .modal--registro-v2__header {
+        padding: var(--espacio-md);
+    }
+    .modal--registro-v2__form {
+        padding: var(--espacio-md) !important;
     }
 }
 
@@ -2221,9 +2261,24 @@ body[data-modo="admin"]   {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .pantalla-inicio { flex-direction: column; }
-    .inicio__columna-panel { min-height: 100vh; padding: var(--espacio-lg); }
-    .inicio__glass-card { padding: 36px 26px 28px; }
+    .pantalla-inicio {
+        flex-direction: column;
+        overflow-x: hidden;
+        overflow-y: auto;
+        align-items: center;
+        padding: 20px 16px;
+    }
+    .inicio__columna-panel { min-height: auto; padding: 0; width: 100%; }
+    .inicio__glass-card { padding: 32px 22px 26px; }
+}
+@media (max-width: 480px) {
+    .pantalla-inicio { padding: 16px 12px; }
+    .inicio__glass-card {
+        padding: 24px 16px 20px;
+        border-radius: 20px;
+        gap: var(--espacio-sm);
+    }
+    .inicio__glass-card .inicio__titulo { font-size: 1.45rem; }
 }
 /* DASHBOARD DE ESTADÍSTICAS (panel admin)
    GET /api/tasks/dashboard → { total, pendientes, enProgreso, completadas } */
@@ -3329,6 +3384,15 @@ body[data-modo="instructor"] {
 }
 @keyframes cal2-popover-in {
     from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 600px) {
+    .cal2__popover {
+        animation: cal2-popover-slide-up 0.22s ease;
+    }
+}
+@keyframes cal2-popover-slide-up {
+    from { opacity: 0; transform: translateY(40px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 .cal2__popover-titulo {
@@ -5483,3 +5547,214 @@ body[data-modo="usuario"] .btn-hamburguesa__linea {
     align-items: center;
     gap: 0.5rem;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE MÓVIL — correcciones quirúrgicas
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Hamburguesa + sidebar ───────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    /* Anclar hamburguesa a top-left. La base tiene top:50%/transform:-50% que en
+       móvil (header columnar y alto) la pone en el centro visual del header. */
+    .header__nav {
+        top:       14px;
+        left:      14px;
+        transform: none;
+    }
+
+    /* Espacio para que el título no quede debajo del botón hamburguesa */
+    .header--admin,
+    .header--usuario,
+    .header--instructor {
+        position:    relative;
+        padding-top: 4.25rem;
+    }
+
+    /* Sidebar: usar altura dinámica para no quedar cortado por la chrome de Safari */
+    .sidebar {
+        height: 100dvh;
+    }
+}
+
+/* ── Login: reducir espacio entre campos ─────────────────────────────────────── */
+@media (max-width: 480px) {
+    .inicio__glass-card {
+        gap: 0.75rem;
+        padding: 28px 20px 22px;
+    }
+    .inicio__glass-card .form__group {
+        margin-bottom: 0.65rem;
+    }
+}
+
+/* ── Registro: que el overlay oscuro sea visible a los lados ─────────────────── */
+/* La regla previa (l. 1764) deja max-width:100% y padding:12px → borde invisible */
+@media (max-width: 480px) {
+    #registroModal {
+        padding: 24px 20px;
+    }
+    .modal--registro-v2 {
+        width:     calc(100vw - 40px);
+        max-width: calc(100vw - 40px);
+    }
+}
+
+/* ── Modal "olvidó contraseña": ambos botones del mismo ancho ────────────────── */
+/* btn--admin-primary tiene width:auto que gana sobre .modal__actions .btn regla */
+@media (max-width: 480px) {
+    #olvidoPasswordModal .btn--cancelar,
+    #olvidoPasswordModal .btn--admin-primary {
+        width:       100%;
+        text-align:  center;
+        justify-content: center;
+    }
+    #olvidoPasswordModal .modal__actions {
+        gap:        var(--espacio-sm);
+        margin-top: var(--espacio-sm);
+    }
+}
+
+/* ── Contenido: reducir el padding enorme (32px) del contenedor principal ────── */
+/* Sin esto, en un iPhone 393px quedan sólo ~265px para las tablas               */
+@media (max-width: 768px) {
+    .contenido-vista {
+        padding: var(--espacio-md) var(--espacio-sm);
+    }
+}
+
+/* ── Tablas: scroll táctil iOS + card padding reducido ───────────────────────── */
+@media (max-width: 600px) {
+    .tasks-table-container {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-card {
+        padding: var(--espacio-md);
+    }
+
+    /* #cuerpoUsuarios y #cuerpoTareas tienen overflow-x:visible hardcodeado
+       (diseño desktop tabla fija). En móvil lo sobreescribimos a scroll para
+       que las 7 columnas sean alcanzables deslizando.                          */
+    #cuerpoUsuarios .tasks-table-container,
+    #cuerpoTareas   .tasks-table-container {
+        overflow-x: scroll;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-x;
+    }
+
+    /* Filtros en 2 columnas compactas en lugar de lista vertical */
+    .tasks-controls {
+        display:               grid;
+        grid-template-columns: 1fr 1fr;
+        padding:               var(--espacio-md);
+        gap:                   var(--espacio-sm);
+        align-items:           start;
+    }
+    /* La fila de acciones ocupa todo el ancho */
+    .tasks-controls__grupo--acciones-bar {
+        grid-column: 1 / -1;
+    }
+    /* Input de usuario ocupa su celda completa */
+    .tasks-controls__input {
+        width: 100%;
+    }
+}
+
+/* ── Dashboard stats: 2 columnas ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ── Vista usuario: datos 1 columna + calendario ancho completo ──────────────── */
+@media (max-width: 600px) {
+    /* La cuadrícula 2 columnas de nombre/promedio se aplana a 1 */
+    .card--usuario-info .user-info {
+        grid-template-columns: 1fr;
+    }
+    /* La columna del calendario tiene ancho fijo 280px — al apilar hay que soltarla */
+    .usuario-calendario-col {
+        width: 100%;
+    }
+    #usuarioCalendario.seccion-calendario {
+        width: 100%;
+    }
+}
+
+/* ── Admin "Usuarios del Sistema": espacio para 5 botones de acción ──────────── */
+/* Col-acciones = 21% de 600px = 126px; 5 botones × 30px = 150px → no caben.
+   Con min-width 720px: col-acciones = 151px; botones reducidos a 26px = 146px ✓
+   Col # (3% = 21.6px) tiene padding 16px×2 = 32px que excede la columna:
+   reducir a 4px/lado para que "#" y los números sean visibles.               */
+@media (max-width: 600px) {
+    #cuerpoUsuarios .tasks-table {
+        min-width: 720px;
+    }
+    #cuerpoUsuarios .btn-accion-icono {
+        width:  26px;
+        height: 26px;
+    }
+    #cuerpoUsuarios .tasks-table__head th.col-num,
+    #cuerpoUsuarios .tasks-table tbody tr td:first-child {
+        padding-left:  4px;
+        padding-right: 4px;
+    }
+}
+
+/* ── Admin "Todas las Tareas": columnas reajustadas para badge + acciones ─────── */
+/* Columnas originales sumaban 98%. Con min-width 660px Estado (13%=85px) era
+   demasiado estrecho para el badge "Completada" (~90px + 24px padding = 114px).
+   Nueva distribución a 760px: 6+14+16+17+22+12+13 = 100% ✓
+   Estado 17% × 760 = 129px → badge cabe con margen.
+   Creación baja 16→12% (fecha con ellipsis); Acciones sube 11→13%.          */
+@media (max-width: 600px) {
+    #cuerpoTareas .tasks-table {
+        min-width: 760px;
+    }
+    #cuerpoTareas .tasks-table th:nth-child(4),
+    #cuerpoTareas .tasks-table td:nth-child(4) { width: 17%; }
+    #cuerpoTareas .tasks-table th:nth-child(6),
+    #cuerpoTareas .tasks-table td:nth-child(6) { width: 12%; }
+    #cuerpoTareas .tasks-table th:nth-child(7),
+    #cuerpoTareas .tasks-table td:nth-child(7) { width: 13%; }
+}
+
+/* ── Admin "Usuarios": columnas Rol/Estado más anchas para que los badges quepan  */
+/* col-rol y col-estado = 11% × 720px = 79px; badge "Estudiante" ~83px + 32px
+   padding de celda = 115px → overflow:visible los hacía chocar entre sí.
+   Nueva distribución: 3+15+14+17+16+14+21 = 100% a 720px:
+     col-rol   = 16% = 115px → badge 83px + 16px padding c/lado = 115px ✓
+     col-estado = 14% = 101px → badge 64px + 16px padding c/lado ✓
+   Se toma el espacio de col-nombre (18→15) y col-correo (22→17).              */
+@media (max-width: 600px) {
+    #cuerpoUsuarios .tasks-table .col-nombre { width: 15%; }
+    #cuerpoUsuarios .tasks-table .col-correo { width: 17%; }
+    #cuerpoUsuarios .tasks-table .col-rol    { width: 16%; }
+    #cuerpoUsuarios .tasks-table .col-estado { width: 14%; }
+
+    /* Reducir padding lateral de las celdas de badge para dar margen cómodo */
+    #cuerpoUsuarios .tasks-table__head th.col-rol,
+    #cuerpoUsuarios .tasks-table__head th.col-estado,
+    #cuerpoUsuarios .tasks-table td.col-rol,
+    #cuerpoUsuarios .tasks-table td.col-estado {
+        padding-left:  8px;
+        padding-right: 8px;
+    }
+}
+
+/* ── Modal "Cambiar rol": el chip "Actual" no se sale del borde ──────────────── */
+/* Modal = 92vw ≈ 362px; cuerpo con padding 32px deja 298px; opción con gap 16px
+   y flex-shrink:0 en el chip puede empujar más allá del borde de la tarjeta.
+   Reducir padding y activar wrap garantiza que el chip siempre quede adentro.  */
+@media (max-width: 480px) {
+    .modal-rol__cuerpo {
+        padding: var(--espacio-md);
+    }
+    .modal-rol__opcion {
+        flex-wrap: wrap;
+        gap:       var(--espacio-sm);
+        padding:   10px 12px;
+    }
+}
+
