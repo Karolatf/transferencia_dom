@@ -526,30 +526,43 @@ function abrirPopover({
     // Con position:fixed calculamos la posición desde getBoundingClientRect.
     document.body.appendChild(pop);
 
-    // Calcular posición centrada debajo de la celda
-    const rect = celdaEl.getBoundingClientRect();
-    const popW = 260; // min-width del popover
-    let left = rect.left + rect.width / 2 - popW / 2 + window.scrollX;
-    let top  = rect.bottom + 6 + window.scrollY;
+    const rect   = celdaEl.getBoundingClientRect();
+    const isMobile = window.innerWidth <= 600;
 
-    // Evitar que se salga por la derecha
-    if (left + popW > window.innerWidth - 8) {
-        left = window.innerWidth - popW - 8;
-    }
-    // Evitar que se salga por la izquierda
-    if (left < 8) left = 8;
+    if (isMobile) {
+        // En mobile: bottom sheet anclado al fondo, ancho completo y scrolleable
+        pop.style.cssText = [
+            'position:fixed',
+            'left:0',
+            'right:0',
+            'bottom:0',
+            'width:100%',
+            'max-width:100%',
+            'max-height:75vh',
+            'border-radius:18px 18px 0 0',
+            'overflow-y:auto',
+            'z-index:9999',
+            'padding:16px',
+            'box-shadow:0 -4px 24px rgba(0,0,0,0.18)',
+        ].join(';');
+    } else {
+        // Desktop: flota debajo (o arriba si no hay espacio) de la celda
+        const popW  = 260;
+        let left    = rect.left + rect.width / 2 - popW / 2;
+        const spaceBelow = window.innerHeight - rect.bottom - 6;
+        const popH  = Math.min(420, pop.scrollHeight || 320);
+        const top   = spaceBelow >= popH
+            ? rect.bottom + 6
+            : Math.max(8, rect.top - popH - 6);
 
-    pop.style.position = 'fixed';
-    pop.style.left     = `${rect.left + rect.width / 2 - popW / 2}px`;
-    pop.style.top      = `${rect.bottom + 6}px`;
-    pop.style.width    = `${popW}px`;
-    // Corregir si se sale por la derecha o izquierda
-    const popRect = pop.getBoundingClientRect();
-    if (popRect.right > window.innerWidth - 8) {
-        pop.style.left = `${window.innerWidth - popW - 8}px`;
-    }
-    if (popRect.left < 8) {
-        pop.style.left = '8px';
+        pop.style.position = 'fixed';
+        pop.style.top      = `${top}px`;
+        pop.style.width    = `${popW}px`;
+
+        // Evitar que se salga por los lados
+        if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
+        if (left < 8) left = 8;
+        pop.style.left = `${left}px`;
     }
 
     // Cerrar al click fuera

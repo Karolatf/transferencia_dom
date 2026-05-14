@@ -1624,10 +1624,9 @@ async function abrirModalVerTarea(tareaInicial) {
         badgeNota.textContent = `${nota} / 100`;
         califEl.appendChild(badgeNota);
 
-        // Badge de rendimiento
+        // Texto de rendimiento (sin óvalo, solo color)
         const badgeRend = document.createElement('span');
-        badgeRend.className = 'status-badge';
-        badgeRend.style.cssText = `background:${r.bg};color:${r.color};font-weight:600;`;
+        badgeRend.style.cssText = `color:${r.color};font-weight:600;font-size:0.8rem;display:block;margin-top:2px;`;
         badgeRend.textContent = `${r.icono} ${r.rendimiento} · ${r.label}`;
         califEl.appendChild(badgeRend);
 
