@@ -60,7 +60,7 @@ import { PERMISOS_POR_ROL, METADATOS_ROL } from '../utils/rolesPermisos.js';
 
 import { crearCalendario } from '../utils/eventosCalendario.js';
 import { obtenerNotas, crearNota as crearNotaApi, eliminarNota as eliminarNotaApi } from '../api/notesApi.js';
-import { registrarRuta, registrarRutas, iniciarRouter, ir, navegarA, irAModal, volverDeModal, limpiarHashActual, resetearEstadoRouter } from '../router.js';
+import { registrarRuta, registrarRutas, iniciarRouter, ir, navegarA, irAModal, volverDeModal, limpiarHashActual, resetearEstadoRouter, rutaAnterior } from '../router.js';
 import { RUTAS, SECCIONES_USUARIO, SECCIONES_ADMIN, SECCIONES_INSTRUCTOR } from '../rutas.js';
 
 // Estado pendiente para modales con datos — se setea antes de ir(RUTAS.X.Y)
@@ -73,6 +73,10 @@ let _pendingDesactivar      = null;
 let _pendingActivar         = null;
 let _pendingEliminarUsuario = null;
 let _pendingEliminarTarea   = null;
+
+// Handler activo del formulario de edición — se remueve antes de agregar uno nuevo
+// para evitar que listeners de modales anteriores no cerrados se acumulen
+let _activeEditHandler      = null;
 
 // crearIconoLucide — función privada reutilizable para crear íconos Lucide en el DOM
 // Parámetro: nombreIcono — string con el nombre del ícono según la librería Lucide
@@ -143,6 +147,12 @@ function _mostrarSeccion(vistaId, sidebarId, sufijo, nombre, mapaExpandir) {
     const cuerpoId = mapaExpandir[nombre];
     if (cuerpoId) _expandirCard(cuerpoId);
 
+    // Si la navegación viene de un modal (volverDeModal), el sidebar no debe cerrarse.
+    // Solo cerrarlo cuando el usuario navega directamente por los links del sidebar.
+    const anterior = rutaAnterior();
+    const vieneDeMModal = anterior && anterior.startsWith('modal/');
+    if (!vieneDeMModal) cerrarSidebar(sufijo);
+
     // Limpiar formularios y filtros al volver a una sección
     if (nombre === 'crear-tarea') {
         ['createTaskForm', 'instrCreateTaskForm'].forEach(function(id) {
@@ -180,8 +190,6 @@ function _mostrarSeccion(vistaId, sidebarId, sufijo, nombre, mapaExpandir) {
         if (vistaId === 'vistaAdmin') cargarTodasLasTareas();
         else if (vistaId === 'vistaInstructor') cargarTareasInstructor();
     }
-
-    cerrarSidebar(sufijo);
 }
 
 function mostrarSeccionUsuario(nombre) {
@@ -1365,7 +1373,7 @@ async function cargarTablaUsuariosInstructor() {
         const fila = document.createElement('tr');
 
         const celdaNum = document.createElement('td');
-        celdaNum.textContent = indice + 1;
+        celdaNum.textContent = usuario.id;
 
         const celdaDoc = document.createElement('td');
         celdaDoc.textContent = usuario.documento;
@@ -1419,7 +1427,7 @@ async function cargarTablaUsuariosInstructor() {
         btnVer.appendChild(document.createTextNode(' Ver'));
         btnVer.addEventListener('click', function() {
             _pendingVerUsuario = usuario;
-            ir(RUTAS.INSTRUCTOR.VER_ESTUDIANTE);
+            ir(RUTAS.INSTRUCTOR.VER_ESTUDIANTE + '/' + usuario.id);
         });
 
         contenedor.appendChild(btnVer);
@@ -1562,9 +1570,9 @@ function crearCeldaDescripcion(tarea) {
     btn.addEventListener('click', function() {
         _pendingVerTarea = tarea;
         const modo = document.body.dataset.modo;
-        if (modo === 'admin') ir(RUTAS.ADMIN.VER_TAREA);
-        else if (modo === 'instructor') ir(RUTAS.INSTRUCTOR.VER_TAREA);
-        else ir(RUTAS.USUARIO.VER_TAREA);
+        if (modo === 'admin') ir(RUTAS.ADMIN.VER_TAREA + '/' + tarea.id);
+        else if (modo === 'instructor') ir(RUTAS.INSTRUCTOR.VER_TAREA + '/' + tarea.id);
+        else ir(RUTAS.USUARIO.VER_TAREA + '/' + tarea.id);
     });
     celda.appendChild(btn);
 
@@ -1646,7 +1654,7 @@ function crearFilaTareaInstructor(tarea, indice) {
     fila.dataset.id = tarea.id;
 
     const celdaNum = document.createElement('td');
-    celdaNum.textContent = indice + 1;
+    celdaNum.textContent = tarea.id;
 
     const celdaTitulo = document.createElement('td');
     celdaTitulo.textContent = tarea.title;
@@ -1675,13 +1683,13 @@ function crearFilaTareaInstructor(tarea, indice) {
     // Botón Editar — circular con ícono, igual que en la tabla de usuarios
     const btnEditar = crearBotonIcono('pencil', 'Editar tarea', 'btn-accion--amarillo', function() {
         _pendingEditarTarea = tarea;
-        ir(RUTAS.INSTRUCTOR.EDITAR_TAREA);
+        ir(RUTAS.INSTRUCTOR.EDITAR_TAREA + '/' + tarea.id);
     });
 
     // Botón Eliminar — circular con ícono rojo
     const btnEliminar = crearBotonIcono('trash-2', 'Eliminar tarea', 'btn-accion--rojo', function() {
         _pendingEliminarTarea = { tarea };
-        ir(RUTAS.INSTRUCTOR.ELIMINAR_TAREA);
+        ir(RUTAS.INSTRUCTOR.ELIMINAR_TAREA + '/' + tarea.id);
     });
 
     contenedor.appendChild(btnEditar);
@@ -2048,7 +2056,7 @@ function crearFilaUsuario(usuario, indice) {
 
     // Columna #
     const tdNum = document.createElement('td');
-    tdNum.textContent = indice + 1;
+    tdNum.textContent = usuario.id;
     fila.appendChild(tdNum);
 
     // Columna Nombre
@@ -2084,27 +2092,27 @@ function crearFilaUsuario(usuario, indice) {
 
     // Botón Ver / Asignar
     tdAcciones.appendChild(crearBotonIcono('eye', 'Ver y asignar tareas', 'btn-accion--azul',
-        function() { _pendingVerUsuario = usuario; ir(RUTAS.ADMIN.VER_USUARIO); }
+        function() { _pendingVerUsuario = usuario; ir(RUTAS.ADMIN.VER_USUARIO + '/' + usuario.id); }
     ));
 
     // Botón Editar datos
     tdAcciones.appendChild(crearBotonIcono('pencil', 'Editar usuario', 'btn-accion--amarillo',
-        function() { _pendingEditarUsuario = usuario; ir(RUTAS.ADMIN.EDITAR_USUARIO); }
+        function() { _pendingEditarUsuario = usuario; ir(RUTAS.ADMIN.EDITAR_USUARIO + '/' + usuario.id); }
     ));
 
     // Botón Cambiar rol (mini-dropdown)
     tdAcciones.appendChild(crearBotonIcono('user-check', 'Cambiar rol', 'btn-accion--azul',
-        function() { _pendingCambiarRol = { usuario, fila }; ir(RUTAS.ADMIN.CAMBIAR_ROL); }
+        function() { _pendingCambiarRol = { usuario, fila }; ir(RUTAS.ADMIN.CAMBIAR_ROL + '/' + usuario.id); }
     ));
 
     // Botón Desactivar o Activar según estado actual — modal mejorado con motivo obligatorio
     if (usuario.is_active === 1 || usuario.is_active === true) {
         tdAcciones.appendChild(crearBotonIcono('user-x', 'Desactivar usuario', 'btn-accion--gris',
-            function() { _pendingDesactivar = { usuario, tdEstado }; ir(RUTAS.ADMIN.DESACTIVAR); }
+            function() { _pendingDesactivar = { usuario, tdEstado }; ir(RUTAS.ADMIN.DESACTIVAR + '/' + usuario.id); }
         ));
     } else {
         tdAcciones.appendChild(crearBotonIcono('user-check', 'Activar usuario', 'btn-accion--verde',
-            function() { _pendingActivar = { usuario, tdEstado }; ir(RUTAS.ADMIN.ACTIVAR); }
+            function() { _pendingActivar = { usuario, tdEstado }; ir(RUTAS.ADMIN.ACTIVAR + '/' + usuario.id); }
         ));
     }
 
@@ -2113,7 +2121,7 @@ function crearFilaUsuario(usuario, indice) {
         function() {
             const estaActivo = usuario.is_active === 1 || usuario.is_active === true;
             _pendingEliminarUsuario = { usuario, fila, estaActivo };
-            ir(RUTAS.ADMIN.ELIMINAR_USUARIO);
+            ir(RUTAS.ADMIN.ELIMINAR_USUARIO + '/' + usuario.id);
         }
     ));
 
@@ -2165,7 +2173,7 @@ function abrirDropdownRol(usuario, filaEl) {
     btnCerrar.appendChild(crearIconoLucide('x'));
     btnCerrar.addEventListener('click', function() {
         overlay.remove();
-        if (window.location.hash === '#' + RUTAS.ADMIN.CAMBIAR_ROL) volverDeModal();
+        if (window.location.hash.slice(1).startsWith(RUTAS.ADMIN.CAMBIAR_ROL)) volverDeModal();
     });
 
     header.appendChild(iconoBadge);
@@ -2247,7 +2255,7 @@ function abrirDropdownRol(usuario, filaEl) {
             card.appendChild(textoWrap);
             card.addEventListener('click', async function() {
                 overlay.remove();
-                if (window.location.hash === '#' + RUTAS.ADMIN.CAMBIAR_ROL) volverDeModal();
+                if (window.location.hash.slice(1).startsWith(RUTAS.ADMIN.CAMBIAR_ROL)) volverDeModal();
                 try {
                     await cambiarRolUsuario(usuario.id, rol.valor);
                     await mostrarNotificacion(`Rol de ${usuario.name} → ${rol.texto}`, 'exito');
@@ -2273,7 +2281,7 @@ function abrirDropdownRol(usuario, filaEl) {
     overlay.addEventListener('click', function(event) {
         if (event.target === overlay) {
             overlay.remove();
-            if (window.location.hash === '#' + RUTAS.ADMIN.CAMBIAR_ROL) volverDeModal();
+            if (window.location.hash.slice(1).startsWith(RUTAS.ADMIN.CAMBIAR_ROL)) volverDeModal();
         }
     });
 }
@@ -2425,7 +2433,7 @@ function cerrarModalEditarUsuarioExistente() {
     const existing = document.getElementById('modalEditarUsuarioOverlay');
     if (existing) {
         existing.remove();
-        if (window.location.hash === '#' + RUTAS.ADMIN.EDITAR_USUARIO) volverDeModal();
+        if (window.location.hash.slice(1).startsWith(RUTAS.ADMIN.EDITAR_USUARIO)) volverDeModal();
     }
 }
 
@@ -2653,11 +2661,13 @@ function manejarEdicionTareaAdmin(tarea) {
                 'error'
             );
         } finally {
-            // Siempre se remueve el listener al finalizar, sin importar el resultado
             formulario.removeEventListener('submit', guardarCambiosAdmin);
+            _activeEditHandler = null;
         }
     }
 
+    if (_activeEditHandler) formulario.removeEventListener('submit', _activeEditHandler);
+    _activeEditHandler = guardarCambiosAdmin;
     formulario.addEventListener('submit', guardarCambiosAdmin);
 }
 // manejarEdicionTareaInstructor — abre el modal compartido de edición para el instructor.
@@ -2769,9 +2779,12 @@ function manejarEdicionTareaInstructor(tarea) {
                     if (gradeError) gradeError.textContent = '';
                 }
             }
-            // Motivo obligatorio (mín 10 caracteres)
+            // Motivo obligatorio (mín 10 caracteres y al menos una letra)
             if (gradeReason.length < 10) {
                 if (gradeReasonError) gradeReasonError.textContent = 'El motivo es obligatorio (mín. 10 caracteres).';
+                hayErrores = true;
+            } else if (!/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]/.test(gradeReason)) {
+                if (gradeReasonError) gradeReasonError.textContent = 'El motivo debe contener al menos una letra.';
                 hayErrores = true;
             } else {
                 if (gradeReasonError) gradeReasonError.textContent = '';
@@ -2827,16 +2840,19 @@ function manejarEdicionTareaInstructor(tarea) {
         }
 
         formulario.removeEventListener('submit', guardarCambiosInstructor);
+        _activeEditHandler = null;
     }
 
+    if (_activeEditHandler) formulario.removeEventListener('submit', _activeEditHandler);
+    _activeEditHandler = guardarCambiosInstructor;
     formulario.addEventListener('submit', guardarCambiosInstructor);
-}           
+}
 
 function crearFilaTareaAdmin(tarea, indice) {
     const fila = document.createElement('tr');
 
     const celdaNum = document.createElement('td');
-    celdaNum.textContent = indice + 1;
+    celdaNum.textContent = tarea.id;
 
     const celdaTitulo = document.createElement('td');
     celdaTitulo.textContent = tarea.title;
@@ -2878,13 +2894,13 @@ function crearFilaTareaAdmin(tarea, indice) {
     // Botón Editar — circular con ícono, igual que en la tabla de usuarios
     const btnEditar = crearBotonIcono('pencil', 'Editar tarea', 'btn-accion--amarillo', function() {
         _pendingEditarTarea = tarea;
-        ir(RUTAS.ADMIN.EDITAR_TAREA);
+        ir(RUTAS.ADMIN.EDITAR_TAREA + '/' + tarea.id);
     });
 
     // Botón Eliminar — circular con ícono rojo
     const btnEliminar = crearBotonIcono('trash-2', 'Eliminar tarea', 'btn-accion--rojo', function() {
         _pendingEliminarTarea = { tarea };
-        ir(RUTAS.ADMIN.ELIMINAR_TAREA);
+        ir(RUTAS.ADMIN.ELIMINAR_TAREA + '/' + tarea.id);
     });
 
     contenedor.appendChild(btnEditar);
@@ -3311,7 +3327,7 @@ function cerrarModalUsuarioExistente() {
     if (existing) {
         existing.remove();
         const h = window.location.hash.slice(1);
-        if (h === RUTAS.ADMIN.VER_USUARIO || h === RUTAS.INSTRUCTOR.VER_ESTUDIANTE) volverDeModal();
+        if (h.startsWith(RUTAS.ADMIN.VER_USUARIO) || h.startsWith(RUTAS.INSTRUCTOR.VER_ESTUDIANTE)) volverDeModal();
     }
 }
 
@@ -4013,18 +4029,12 @@ function registrarListenerCambioPassword() {
 function manejarEdicionTareaUsuario(tarea) {
     mostrarModalEdicion(tarea, true); // soloLecturaTituloDesc = true
 
-    const formularioEdicion = document.getElementById('editTaskForm');
-    const formularioClonado = formularioEdicion.cloneNode(true);
-    formularioEdicion.parentNode.replaceChild(formularioClonado, formularioEdicion);
-
-    const btnCancelClone = document.getElementById('editCancelBtn');
-    if (btnCancelClone) btnCancelClone.addEventListener('click', ocultarModalEdicion);
-    const btnCloseClone  = document.getElementById('editCloseBtn');
-    if (btnCloseClone)  btnCloseClone.addEventListener('click', ocultarModalEdicion);
+    const formulario = document.getElementById('editTaskForm');
+    if (!formulario) return;
 
     const tareaId = String(tarea.id);
 
-    formularioClonado.addEventListener('submit', async function(ev) {
+    async function guardarCambiosUsuario(ev) {
         ev.preventDefault();
 
         const nuevoEstado     = document.getElementById('editTaskStatus').value;
@@ -4050,7 +4060,14 @@ function manejarEdicionTareaUsuario(tarea) {
         } else {
             await mostrarNotificacion('Error al actualizar la tarea', 'error');
         }
-    });
+
+        formulario.removeEventListener('submit', guardarCambiosUsuario);
+        _activeEditHandler = null;
+    }
+
+    if (_activeEditHandler) formulario.removeEventListener('submit', _activeEditHandler);
+    _activeEditHandler = guardarCambiosUsuario;
+    formulario.addEventListener('submit', guardarCambiosUsuario);
 }
 
 // ── REGISTRO DE EVENTOS DE NAVEGACIÓN ────────────────────────────────────────
@@ -4502,7 +4519,8 @@ export function registrarEventosNavegacion() {
             }
 
             input.value = '';
-            abrirModalUsuario(encontrado);
+            _pendingVerUsuario = encontrado;
+            ir(RUTAS.ADMIN.VER_USUARIO + '/' + encontrado.id);
         });
     }
 
@@ -4520,12 +4538,13 @@ export function registrarEventosNavegacion() {
                 const usuarios  = await obtenerTodosLosUsuarios();
                 const encontrado = usuarios ? usuarios.find(function(u) {
                     return u.id.toString() === termino
-                        || (u.documento && u.documento.toString().includes(termino))
+                        || (u.documento && u.documento.toString() === termino)
                         || u.name.toLowerCase().includes(termino);
                 }) : null;
                 if (encontrado) {
                     if (inputInstr) inputInstr.value = '';
-                    abrirModalUsuario(encontrado);
+                    _pendingVerUsuario = encontrado;
+                    ir(RUTAS.INSTRUCTOR.VER_ESTUDIANTE + '/' + encontrado.id);
                 } else {
                     await mostrarNotificacion(
                         `No se encontró ningún usuario con: "${inputInstr ? inputInstr.value.trim() : termino}"`,
@@ -4646,10 +4665,9 @@ export function registrarEventosNavegacion() {
             // Leer los valores de los campos
             const titulo    = tituloInput   ? tituloInput.value.trim()   : '';
             const estado    = estadoInput   ? estadoInput.value          : '';
-            // Comentario: null si está vacío (el backend lo acepta así)
             const comentario = instrComentEl && instrComentEl.value.trim() !== ''
                 ? instrComentEl.value.trim()
-                : null;
+                : undefined;
 
             // Variable para controlar si el formulario es válido
             let esValido = true;
@@ -4698,26 +4716,29 @@ export function registrarEventosNavegacion() {
                 assignedUsers: usuariosSeleccionados,
             };
 
-            const tareaCreada = await registrarTarea(datosTarea);
-            if (tareaCreada) {
-                // Limpiar el formulario y el dropdown tras crear la tarea exitosamente
-                instrCreateTaskForm.reset();
-                document.querySelectorAll('#instrUsuariosDropdownPanel input').forEach(function(cb) {
-                    cb.checked = false;
-                });
-                const textoDropdown = document.getElementById('instrUsuariosDropdownTexto');
-                if (textoDropdown) textoDropdown.textContent = 'Seleccionar usuarios...';
+            try {
+                const tareaCreada = await registrarTarea(datosTarea);
+                if (tareaCreada) {
+                    // Limpiar el formulario y el dropdown tras crear la tarea exitosamente
+                    instrCreateTaskForm.reset();
+                    document.querySelectorAll('#instrUsuariosDropdownPanel input').forEach(function(cb) {
+                        cb.checked = false;
+                    });
+                    const textoDropdown = document.getElementById('instrUsuariosDropdownTexto');
+                    if (textoDropdown) textoDropdown.textContent = 'Seleccionar usuarios...';
 
-                // Recargar las tablas del instructor para mostrar la nueva tarea
-                cargarTareasInstructor();
-                cargarDashboardInstructor();
-                // Refrescar calendario al crear nueva tarea
-                obtenerTodasLasTareas().then(function(t) {
-                    if (t) crearCalendario({ contenedorId: 'instrCalendario', paleta: 'instructor', soloLectura: false, tareas: t });
-                }).catch(function() {});
-                await mostrarNotificacion(`Tarea "${datosTarea.title}" creada correctamente`, 'exito');
-            } else {
-                await mostrarNotificacion('Error al crear la tarea', 'error');
+                    // Recargar las tablas del instructor para mostrar la nueva tarea
+                    cargarTareasInstructor();
+                    cargarDashboardInstructor();
+                    // Refrescar calendario al crear nueva tarea
+                    obtenerTodasLasTareas().then(function(t) {
+                        if (t) crearCalendario({ contenedorId: 'instrCalendario', paleta: 'instructor', soloLectura: false, tareas: t });
+                    }).catch(function() {});
+                    await mostrarNotificacion(`Tarea "${datosTarea.title}" creada correctamente`, 'exito');
+                }
+            } catch (error) {
+                const msg = error.message || 'Error al crear la tarea';
+                await mostrarNotificacion(msg, 'error');
             }
         });
     }
@@ -4869,7 +4890,7 @@ export function registrarEventosNavegacion() {
                 // Reconstruir desde el DOM no tiene el nombre del usuario asignado
                 const tareaFresca = await obtenerTareaPorId(tareaId);
                 _pendingVerTarea = tareaFresca || { id: tareaId };
-                ir(RUTAS.USUARIO.VER_TAREA);
+                ir(RUTAS.USUARIO.VER_TAREA + '/' + tareaId);
 
             } else if (accion === 'edit') {
                 const fila        = btn.closest('tr');
@@ -4889,7 +4910,7 @@ export function registrarEventosNavegacion() {
                 const comentario = fila.cells[4].textContent === '—' ? '' : fila.cells[4].textContent;
 
                 _pendingEditarTarea = { id: tareaId, title: titulo, description: descripcion, status: estado, comment: comentario };
-                ir(RUTAS.USUARIO.EDITAR_TAREA);
+                ir(RUTAS.USUARIO.EDITAR_TAREA + '/' + tareaId);
 
             } else if (accion === 'export') {
                 // Exportar solo esta tarea como JSON
@@ -4925,7 +4946,7 @@ export function registrarEventosNavegacion() {
     function cerrarVerTarea() {
         if (verTareaModal) verTareaModal.classList.add('hidden');
         const h = window.location.hash.slice(1);
-        if (h === RUTAS.ADMIN.VER_TAREA || h === RUTAS.USUARIO.VER_TAREA || h === RUTAS.INSTRUCTOR.VER_TAREA) volverDeModal();
+        if (h.startsWith(RUTAS.ADMIN.VER_TAREA) || h.startsWith(RUTAS.USUARIO.VER_TAREA) || h.startsWith(RUTAS.INSTRUCTOR.VER_TAREA)) volverDeModal();
     }
     if (verTareaClose)  verTareaClose.addEventListener('click', cerrarVerTarea);
     if (verTareaCerrar) verTareaCerrar.addEventListener('click', cerrarVerTarea);

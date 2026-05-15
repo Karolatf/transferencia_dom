@@ -19,6 +19,17 @@ let _hashActual  = null;
 let _hashAnterior = null;
 let _escuchando  = false;
 
+// ── Resolver handler (exacto o por prefijo con ID) ───────────────────────────
+function _resolverHandler(hash) {
+    const exacto = _rutas.get(hash);
+    if (typeof exacto === 'function') return exacto;
+    // Soporte para rutas con ID al final: "base/ruta/123"
+    for (const [ruta, handler] of _rutas) {
+        if (hash.startsWith(ruta + '/')) return handler;
+    }
+    return null;
+}
+
 // ── Despachador interno ───────────────────────────────────────────────────────
 function _despachar() {
     const hash = window.location.hash.slice(1) || '';
@@ -26,7 +37,7 @@ function _despachar() {
     _hashAnterior = _hashActual;
     _hashActual   = hash;
 
-    const handler = _rutas.get(hash);
+    const handler = _resolverHandler(hash);
 
     if (typeof handler !== 'function') {
         if (hash) console.warn(`[Router] Ruta no registrada: "${hash}"`);
@@ -47,7 +58,7 @@ function _despacharForzado() {
     _hashAnterior = _hashActual;
     _hashActual   = hash;
 
-    const handler = _rutas.get(hash);
+    const handler = _resolverHandler(hash);
     if (typeof handler === 'function') {
         try { handler(); } catch (err) { console.error(`[Router] Error en ruta "${hash}":`, err); }
     }

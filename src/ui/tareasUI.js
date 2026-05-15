@@ -101,7 +101,7 @@ export function crearFilaTarea(tarea, indice) {
     fila.dataset.id = tarea.id;
 
     const celdaNum = document.createElement('td');
-    celdaNum.textContent = indice + 1;
+    celdaNum.textContent = tarea.id;
 
     const celdaTitulo = document.createElement('td');
     celdaTitulo.textContent = tarea.title;
@@ -381,5 +381,5 @@ export function ocultarModalEdicion() {
 
     // Limpiar el hash del router si el modal fue abierto via ruta
     const _h = window.location.hash.slice(1);
-    if (_h === RUTAS.ADMIN.EDITAR_TAREA || _h === RUTAS.USUARIO.EDITAR_TAREA || _h === RUTAS.INSTRUCTOR.EDITAR_TAREA) volverDeModal();
+    if (_h.startsWith(RUTAS.ADMIN.EDITAR_TAREA) || _h.startsWith(RUTAS.USUARIO.EDITAR_TAREA) || _h.startsWith(RUTAS.INSTRUCTOR.EDITAR_TAREA)) volverDeModal();
 }
