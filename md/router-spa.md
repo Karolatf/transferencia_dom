@@ -59,7 +59,11 @@ Funciones clave que exporta:
 | `iniciarRouter()` | Arranca el router — activa el listener de hashchange |
 | `volverDeModal()` | Cierra un modal y regresa a la ruta anterior |
 | `rutaActual()` | Devuelve el hash activo en este momento |
+| `rutaAnterior()` | Devuelve el hash de la ruta anterior (útil para detectar si se viene de un modal) |
 | `resetearEstadoRouter()` | Limpia el historial interno al hacer logout |
+
+**Resolución de rutas con ID dinámico:**  
+El router soporta rutas que incluyen el ID de la entidad al final. Si el hash es `admin/usuarios/ver-usuario/3`, busca primero una coincidencia exacta y, si no la encuentra, busca el prefijo registrado `admin/usuarios/ver-usuario`. Esto permite que la URL refleje el ID real de la base de datos sin registrar una ruta por cada ID posible.
 
 ---
 
@@ -127,15 +131,15 @@ Usuario hace clic en botón "Ver"
         ↓
 Se guarda el dato del usuario en _pendingVerUsuario
         ↓
-Se llama ir(RUTAS.ADMIN.VER_USUARIO)
+Se llama ir(RUTAS.ADMIN.VER_USUARIO + '/' + usuario.id)
         ↓
-Cambia el hash de la URL → #admin/usuarios/ver-usuario
+Cambia el hash de la URL → #admin/usuarios/ver-usuario/3
         ↓
 El navegador dispara el evento hashchange
         ↓
-router.js lo escucha y busca en su mapa interno
+router.js lo escucha y busca coincidencia exacta → no hay
         ↓
-Encuentra la función registrada para esa ruta
+Busca por prefijo: "admin/usuarios/ver-usuario" → coincide
         ↓
 Ejecuta: abrirModalUsuario(_pendingVerUsuario)
         ↓
@@ -172,9 +176,11 @@ Las rutas siguen esta lógica: `#[rol]/[sección]/[acción]`
 |---|---|
 | Entra a su inicio | `#usuario/inicio` |
 | Ve sus tareas | `#usuario/tareas` |
-| Hace clic en "Ver tarea" | `#usuario/tareas/ver-tarea` |
-| Hace clic en "Editar tarea" | `#usuario/tareas/editar-tarea` |
+| Hace clic en "Ver tarea" | `#usuario/tareas/ver-tarea/4` |
+| Hace clic en "Editar tarea" | `#usuario/tareas/editar-tarea/4` |
 | Ve sus notas | `#usuario/notas` |
+
+> El número al final es el **ID real de la base de datos**. La tarea ID 4 en la BD siempre aparece como `/4`.
 
 ### Vista de Administrador
 
@@ -183,14 +189,15 @@ Las rutas siguen esta lógica: `#[rol]/[sección]/[acción]`
 | Entra a su inicio | `#admin/inicio` |
 | Sección usuarios | `#admin/usuarios` |
 | Sección tareas | `#admin/tareas` |
-| Clic en "Ver" (usuario) | `#admin/usuarios/ver-usuario` |
-| Clic en "Editar" (usuario) | `#admin/usuarios/editar-usuario` |
-| Clic en "Cambiar rol" | `#admin/usuarios/cambiar-rol` |
-| Clic en "Desactivar" | `#admin/usuarios/desactivar-usuario` |
-| Clic en "Activar" | `#admin/usuarios/activar-usuario` |
-| Clic en "Eliminar" (usuario) | `#admin/usuarios/eliminar-usuario` |
-| Clic en "Editar" (tarea) | `#admin/tareas/editar-tarea` |
-| Clic en "Eliminar" (tarea) | `#admin/tareas/eliminar-tarea` |
+| Clic en "Ver" (usuario ID 3) | `#admin/usuarios/ver-usuario/3` |
+| Clic en "Editar" (usuario ID 3) | `#admin/usuarios/editar-usuario/3` |
+| Clic en "Cambiar rol" (usuario ID 3) | `#admin/usuarios/cambiar-rol/3` |
+| Clic en "Desactivar" (usuario ID 3) | `#admin/usuarios/desactivar-usuario/3` |
+| Clic en "Activar" (usuario ID 3) | `#admin/usuarios/activar-usuario/3` |
+| Clic en "Eliminar" (usuario ID 3) | `#admin/usuarios/eliminar-usuario/3` |
+| Clic en "Ver" (tarea ID 15) | `#admin/tareas/ver-tarea/15` |
+| Clic en "Editar" (tarea ID 15) | `#admin/tareas/editar-tarea/15` |
+| Clic en "Eliminar" (tarea ID 15) | `#admin/tareas/eliminar-tarea/15` |
 
 ### Vista de Instructor
 
@@ -199,9 +206,10 @@ Las rutas siguen esta lógica: `#[rol]/[sección]/[acción]`
 | Entra a su inicio | `#instructor/inicio` |
 | Sección estudiantes | `#instructor/estudiantes` |
 | Sección tareas | `#instructor/tareas` |
-| Clic en "Ver estudiante" | `#instructor/estudiantes/ver-estudiante` |
-| Clic en "Editar tarea" | `#instructor/tareas/editar-tarea` |
-| Clic en "Eliminar tarea" | `#instructor/tareas/eliminar-tarea` |
+| Clic en "Ver estudiante" (ID 7) | `#instructor/estudiantes/ver-estudiante/7` |
+| Clic en "Ver tarea" (ID 22) | `#instructor/tareas/ver-tarea/22` |
+| Clic en "Editar tarea" (ID 22) | `#instructor/tareas/editar-tarea/22` |
+| Clic en "Eliminar tarea" (ID 22) | `#instructor/tareas/eliminar-tarea/22` |
 
 ### Modales globales (disponibles en cualquier rol)
 
@@ -236,14 +244,15 @@ Esto le dice al router: "si el hash es `admin/usuarios`, ejecuta `mostrarSeccion
 
 ### Ejemplo 2 — Ruta de modal con datos (patrón "pending")
 
-Los modales necesitan datos (¿a qué usuario o tarea abrir?). Usamos una variable temporal llamada **pending**:
+Los modales necesitan datos (¿a qué usuario o tarea abrir?). Usamos una variable temporal llamada **pending**, y la URL incluye el ID real de la base de datos:
 
 ```js
-// 1. El botón guarda los datos y navega
+// 1. El botón guarda los datos y navega (con ID en la URL)
 function() {
-    _pendingVerUsuario = usuario;          // guardo los datos
-    ir(RUTAS.ADMIN.VER_USUARIO);           // navego a la ruta
+    _pendingVerUsuario = usuario;                              // guardo los datos
+    ir(RUTAS.ADMIN.VER_USUARIO + '/' + usuario.id);           // navego con ID
 }
+// → URL resultante: #admin/usuarios/ver-usuario/3
 
 // 2. El route handler toma los datos y abre el modal
 registrarRuta(RUTAS.ADMIN.VER_USUARIO, function() {
@@ -252,9 +261,11 @@ registrarRuta(RUTAS.ADMIN.VER_USUARIO, function() {
     _pendingVerUsuario = null;             // limpio el pending
     abrirModalUsuario(u);                  // abro el modal con los datos
 });
+// El router resuelve "admin/usuarios/ver-usuario/3" por prefijo
+// → encuentra el handler registrado para "admin/usuarios/ver-usuario"
 ```
 
-> **Para la expo:** "No podemos poner los datos en la URL porque sería un problema de seguridad y haría la URL muy larga. En cambio, guardamos el objeto del usuario en una variable temporal justo antes de navegar, y el handler lo toma al instante."
+> **Para la expo:** "El ID en la URL sirve para que si compartes el link o refrescas la página se pueda ver qué estabas mirando. El objeto completo con todos los datos del usuario viaja en la variable `_pending` (en memoria), no en la URL — eso sería inseguro y muy largo."
 
 ### Ejemplo 3 — Ruta de acción asíncrona (confirmar y ejecutar)
 
@@ -329,6 +340,12 @@ El proyecto está hecho en Vanilla JavaScript sin frameworks. Este router propio
 **¿Qué es el patrón "pending state"?**  
 Es la forma de pasarle datos a un modal que se abre por ruta. Antes de navegar, guardas el objeto (usuario, tarea, etc.) en una variable global temporal. Cuando el handler del router ejecuta, toma ese objeto y lo consume. La variable queda en `null` después para que no quede basura.
 
+**¿Cómo sabe el router qué ruta usar cuando la URL tiene un ID al final?**  
+El router tiene resolución por prefijo: si recibe `admin/usuarios/ver-usuario/3` y no hay ninguna ruta registrada exactamente con ese texto, busca si alguna ruta registrada es un prefijo de ese hash (es decir, que el hash empiece por `"ruta/"` + algo). Así `admin/usuarios/ver-usuario` coincide con `admin/usuarios/ver-usuario/3`, y el handler correcto se ejecuta sin necesidad de registrar una ruta por cada ID posible.
+
+**¿Por qué mostrar el ID en la URL si los datos viajan en la variable `_pending`?**  
+Principalmente para transparencia y para que el inspector de red / la barra de direcciones confirme visualmente sobre qué entidad se está actuando. También facilita el debugging: si el QA reporta un bug "en el usuario 7", puedes reproducirlo sabiendo exactamente qué ID revisar en la BD.
+
 **¿Cómo sabe el router si está abriendo un modal del admin o del usuario?**  
 El `<body>` tiene el atributo `data-modo` que siempre refleja el rol activo (`admin`, `usuario`, `instructor`). Los handlers pueden leer `document.body.dataset.modo` para decidir qué acción tomar.
 
@@ -356,8 +373,8 @@ Usuario navega por el sidebar
     ↓
 Usuario hace clic en un botón de acción
     → _pendingX = datos
-    → ir(RUTAS.ROL.ACCION)
-    → hashchange → handler → abre modal
+    → ir(RUTAS.ROL.ACCION + '/' + entidad.id)
+    → hashchange → router resuelve por prefijo → handler → abre modal
     ↓
 Usuario cierra el modal
     → volverDeModal() → ir(rutaAnterior)
