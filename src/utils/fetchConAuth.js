@@ -1,176 +1,143 @@
-// MÓDULO: utils/fetchConAuth.js
-// CAPA: Utils
+// Archivo: utils/fetchConAuth.js
+// Este archivo contiene la función principal para hacer peticiones HTTP al backend.
+// Es un "envoltorio" de la función nativa fetch() del navegador que agrega automáticamente
+// el token de autenticación (JWT) en cada petición.
 //
-// Responsabilidad única: realizar peticiones HTTP autenticadas con JWT.
-//
-// Si el servidor responde 401 (token expirado), este módulo:
-//   1. Pide automáticamente un nuevo accessToken usando el refreshToken.
-//   2. Guarda el nuevo accessToken en localStorage.
+// Si el servidor responde con el código 401 (token expirado), este archivo:
+//   1. Pide automáticamente un nuevo token de acceso usando el token de renovación.
+//   2. Guarda el nuevo token en el navegador.
 //   3. Reintenta la petición original con el nuevo token.
-// Todo esto sin que el usuario note ninguna interrupción. Se llama "Silent Refresh".
-//
-// USO en tareasApi.js o usuariosApi.js:
-//   import { fetchConAuth } from '../utils/fetchConAuth.js';
-//   const response = await fetchConAuth(url, { method: 'GET' });
-//
-// fetchConAuth tiene exactamente la misma firma que el fetch() nativo.
+// Todo esto ocurre de forma invisible para el usuario — se llama "Silent Refresh".
 
-// renovarToken llama a POST /api/auth/refresh en el backend para obtener un nuevo accessToken
-// Es la única función que NO usa fetchConAuth — la llama directamente con fetch para evitar
-// un bucle infinito (fetchConAuth llama a renovarToken que llama a fetchConAuth...)
+// Importamos la función que llama al backend para renovar el token de acceso
 import { renovarToken }         from '../api/authApi.js';
 
-// obtenerAccessToken lee el accessToken del localStorage (guardado por guardarSesion)
-// obtenerRefreshToken lee el refreshToken del localStorage (token de larga duración)
-// actualizarAccessToken guarda el nuevo accessToken después del Silent Refresh
-// cerrarSesion elimina ambos tokens del localStorage al expirar la sesión
+// Importamos las funciones de sesion.js para leer y actualizar los tokens del navegador
 import {
-    obtenerAccessToken,
-    obtenerRefreshToken,
-    actualizarAccessToken,
-    cerrarSesion,
+    obtenerAccessToken,     // lee el token de acceso del navegador
+    obtenerRefreshToken,    // lee el token de renovación del navegador
+    actualizarAccessToken,  // guarda el nuevo token de acceso en el navegador
+    cerrarSesion,           // borra todos los datos de sesión del navegador
 }                               from './sesion.js';
 
-// activarModoInicio redirige al usuario a la pantalla de login después de cerrar sesión
+// Importamos la función que muestra la pantalla de login cuando la sesión expira
 import { activarModoInicio }    from '../ui/modoUI.js';
 
-// mostrarNotificacion muestra el toast de "sesión expirada" al usuario
+// Importamos la función que muestra mensajes emergentes (toasts) al usuario
 import { mostrarNotificacion }  from './notificaciones.js';
 
-// _refrescando — flag booleano que indica si ya hay un Silent Refresh en curso
-// Evita que múltiples peticiones que fallen con 401 al mismo tiempo
-// lancen múltiples llamadas simultáneas al endpoint de refresh
+// Variable que indica si ya hay una renovación de token en curso
+// Evita que varias peticiones fallidas con 401 lancen múltiples llamadas simultáneas al servidor
 let _refrescando      = false;
 
-// _esperandoRefresh — cola de peticiones que llegaron con 401 mientras ya había
-// un refresh en curso. Se resuelven todas con el nuevo token una vez que termina
+// Arreglo (cola) que guarda las peticiones que llegaron mientras ya había una renovación en curso
+// Se resuelven todas juntas con el nuevo token cuando la renovación termina
 let _esperandoRefresh = [];
 
-// fetchConAuth — wrapper de fetch que agrega el token JWT automáticamente
-// y maneja el Silent Refresh cuando el accessToken expira
-//
-// Parámetros:
-//   url      — URL completa del endpoint (ej: http://localhost:3000/api/tasks)
-//   opciones — mismo objeto de opciones que fetch() nativo (method, body, headers…)
-//
-// Retorna: Promise<Response> — la respuesta del servidor, igual que fetch nativo
+// Exportamos la función fetchConAuth que tiene exactamente la misma forma de uso que fetch() del navegador
+// Recibe la URL del endpoint y un objeto opcional con las opciones de la petición (método, body, etc.)
 export async function fetchConAuth(url, opciones = {}) {
-    // Leer el accessToken del localStorage — lo guarda sesion.js después del login
+    // Leemos el token de acceso guardado en el navegador (lo guardó sesion.js al hacer login)
     const token = obtenerAccessToken();
 
-    // Construir el objeto de opciones combinando las del llamador con los headers de auth
-    // El spread operator (...) copia todas las propiedades sin mutar el objeto original
+    // Construimos el objeto de opciones combinando los del llamador con los headers de autenticación
     const opcionesConAuth = {
-        // Copiar todas las opciones del llamador (method, body, cache, etc.)
+        // Copiamos todas las opciones que el llamador pasó (método HTTP, body, etc.)
         ...opciones,
         headers: {
-            // Content-Type: application/json es necesario para que el backend
-            // interprete el body como JSON en peticiones POST, PUT y PATCH
+            // Este encabezado le dice al backend que el cuerpo de la petición está en formato JSON
             'Content-Type': 'application/json',
-            // Copiar headers adicionales que el llamador pudo haber pasado
-            // (ej: headers personalizados de alguna petición específica)
+            // Copiamos cualquier encabezado adicional que el llamador haya incluido
             ...opciones.headers,
-            // Agregar el header Authorization solo si hay un token disponible
-            // Si no hay token (usuario no logueado) el header no se agrega
-            // El formato "Bearer TOKEN" es el estándar RFC 6750 para JWT en HTTP
+            // Agregamos el encabezado de autorización solo si hay un token disponible
+            // El formato "Bearer TOKEN" es el estándar para enviar tokens JWT en HTTP
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
     };
 
-    // Ejecutar la petición al backend con todos los headers construidos
+    // Ejecutamos la petición al backend con todos los encabezados construidos
     const respuesta = await fetch(url, opcionesConAuth);
 
-    // Si el servidor respondió con cualquier código diferente a 401
-    // (200 OK, 400 Bad Request, 404 Not Found, 500 Server Error, etc.)
-    // retornamos la respuesta directamente sin intentar el Silent Refresh
+    // Si el servidor respondió con cualquier código diferente a 401, retornamos la respuesta directamente
+    // (200 OK, 400 Error, 404 No encontrado, 500 Error del servidor, etc.)
     if (respuesta.status !== 401) return respuesta;
 
-    // ── SILENT REFRESH ────────────────────────────────────────────────────────
-    // Solo llegamos aquí si el servidor respondió 401 Unauthorized
-    // Esto significa que el accessToken expiró (duración: 1h configurada en .env)
+    // ── RENOVACIÓN AUTOMÁTICA DE TOKEN (SILENT REFRESH) ───────────────────────
+    // Solo llegamos aquí si el servidor respondió con 401, lo que significa que el token de acceso expiró
 
-    // Si ya hay otro refresh en curso, agregar esta petición a la cola de espera
-    // y retornar una Promise que se resolverá cuando el refresh termine
-    // Esto evita lanzar múltiples llamadas a POST /api/auth/refresh simultáneas
+    // Si ya hay otra renovación en curso, ponemos esta petición en la cola de espera
+    // y retornamos una promesa que se resolverá cuando la renovación termine
     if (_refrescando) {
         return new Promise((resolve, reject) => {
-            // Guardamos resolve, reject y los datos de la petición original
-            // para poder reintentarla con el nuevo token cuando el refresh termine
+            // Guardamos la promesa y los datos de la petición para reintentarla con el nuevo token
             _esperandoRefresh.push({ resolve, reject, url, opciones });
         });
     }
 
-    // Marcar que hay un refresh en curso para que las demás peticiones esperen
+    // Marcamos que hay una renovación en curso para que las siguientes peticiones esperen
     _refrescando = true;
 
-    // Leer el refreshToken del localStorage — token de larga duración (7 días)
-    // Se usa exclusivamente para obtener un nuevo accessToken, no para otras peticiones
+    // Leemos el token de renovación del navegador (tiene una duración de 7 días)
     const refreshToken = obtenerRefreshToken();
 
-    // Si no hay refreshToken guardado, no hay forma de renovar la sesión
-    // Esto pasa cuando el usuario cerró sesión manualmente o el refreshToken también expiró
+    // Si no hay token de renovación, no podemos recuperar la sesión — el usuario debe hacer login de nuevo
     if (!refreshToken) {
-        // Liberar el flag antes de salir para no bloquear futuras peticiones
+        // Liberamos el indicador de renovación antes de salir
         _refrescando = false;
-        // Cerrar sesión y redirigir al login — el usuario debe autenticarse de nuevo
+        // Cerramos la sesión y redirigimos al login
         _cerrarSesionYRedirigir();
-        // Retornar la respuesta 401 original para que el llamador pueda manejarla
+        // Retornamos la respuesta 401 original
         return respuesta;
     }
 
     try {
-        // Llamar al endpoint de refresh: POST /api/auth/refresh con el refreshToken
-        // renovarToken usa fetch directamente (no fetchConAuth) para evitar bucle infinito
-        // Si el refreshToken es válido, el backend responde con un nuevo accessToken
+        // Llamamos al endpoint del backend para obtener un nuevo token de acceso
+        // Esta llamada usa fetch() directamente (no fetchConAuth) para evitar un bucle infinito
         const { accessToken: nuevoToken } = await renovarToken(refreshToken);
 
-        // Guardar el nuevo accessToken en localStorage para las próximas peticiones
-        // actualizarAccessToken solo actualiza el accessToken, el refreshToken no cambia
+        // Guardamos el nuevo token de acceso en el navegador para las próximas peticiones
         actualizarAccessToken(nuevoToken);
 
-        // Resolver todas las peticiones que estaban esperando en la cola
-        // Cada una se reintenta ahora con el nuevo token guardado en localStorage
+        // Resolvemos todas las peticiones que estaban esperando en la cola,
+        // reintentándolas ahora con el nuevo token guardado en el navegador
         _esperandoRefresh.forEach(({ resolve, url: u, opciones: o }) => {
-            // Al llamar fetchConAuth de nuevo, obtenerAccessToken ya retorna el nuevo token
             resolve(fetchConAuth(u, o));
         });
-        // Vaciar la cola después de resolver todas las peticiones en espera
+        // Vaciamos la cola después de resolver todas las peticiones
         _esperandoRefresh = [];
 
-        // Reintentar la petición original que disparó el Silent Refresh
-        // Esta vez fetchConAuth leerá el nuevo accessToken del localStorage
+        // Reintentamos la petición original que disparó la renovación, ahora con el nuevo token
         return fetchConAuth(url, opciones);
 
     } catch (_error) {
-        // El refresh también falló — el refreshToken expiró o el backend rechazó la petición
-        // En este caso no hay nada más que hacer — el usuario debe hacer login de nuevo
+        // La renovación falló — el token de renovación también expiró o el servidor rechazó la petición
+        // No hay más opciones: el usuario debe hacer login de nuevo
 
-        // Rechazar todas las peticiones en cola con un error descriptivo
+        // Rechazamos todas las peticiones que estaban en la cola con un mensaje de error
         _esperandoRefresh.forEach(({ reject }) => reject(new Error('Sesión expirada')));
-        // Vaciar la cola después de rechazar todas
+        // Vaciamos la cola después de rechazarlas todas
         _esperandoRefresh = [];
 
-        // Cerrar sesión completa y redirigir al login
+        // Cerramos la sesión completamente y redirigimos al login
         _cerrarSesionYRedirigir();
 
-        // Retornar la respuesta 401 original
+        // Retornamos la respuesta 401 original
         return respuesta;
 
     } finally {
-        // El bloque finally se ejecuta SIEMPRE, haya error o no
-        // Liberar el flag _refrescando para que futuras peticiones no queden bloqueadas
+        // El bloque finally se ejecuta siempre, haya error o no
+        // Liberamos el indicador de renovación para que futuras peticiones no queden bloqueadas
         _refrescando = false;
     }
 }
 
-// _cerrarSesionYRedirigir — limpia la sesión del usuario y lo lleva al login
-// Se llama cuando el refreshToken también expiró y no hay forma de renovar la sesión
-// El guión bajo al inicio indica que es una función privada de este módulo
+// Función privada del módulo que cierra la sesión del usuario y lo lleva a la pantalla de login
+// El guion bajo al inicio del nombre indica que esta función no debe usarse fuera de este archivo
 function _cerrarSesionYRedirigir() {
-    // cerrarSesion elimina accessToken y refreshToken del localStorage
+    // Borramos el token de acceso y el token de renovación del navegador
     cerrarSesion();
-    // Mostrar un toast informativo antes de redirigir al login
+    // Mostramos un mensaje informativo avisando que la sesión expiró
     mostrarNotificacion('Tu sesión expiró. Por favor inicia sesión de nuevo.', 'advertencia');
-    // activarModoInicio muestra la pantalla de login ocultando los paneles
+    // Mostramos la pantalla de login ocultando los paneles del sistema
     activarModoInicio();
 }

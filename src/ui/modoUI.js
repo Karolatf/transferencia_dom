@@ -1,12 +1,9 @@
-// MÓDULO: ui/modoUI.js
-// CAPA:   UI
+// Este archivo es el corazón de la interfaz: decide qué pantalla se muestra
+// (inicio/login, panel de usuario, panel de admin o panel de instructor),
+// construye todas las tablas, modales y formularios dinámicamente,
+// y conecta los eventos del usuario (clics, envíos de formulario) con el backend.
 
-// Responsabilidad: gestionar qué vista está activa (inicio, usuario, admin),
-// el modal dinámico de usuario del panel admin, filtros y ordenamiento.
-//
-// Toda petición HTTP pasa por los módulos de api/.
-// Toda notificación pasa por notificaciones.js.
-
+// Importamos las funciones que se comunican con el servidor para manejar tareas
 import {
     obtenerTodasLasTareas,
     obtenerTareasDeUsuario,
@@ -17,6 +14,7 @@ import {
     actualizarTarea,
 } from '../api/tareasApi.js';
 
+// Importamos las funciones que se comunican con el servidor para manejar usuarios
 import {
     obtenerTodosLosUsuarios,
     eliminarUsuario,
@@ -28,6 +26,7 @@ import {
     reactivarUsuario,
 } from '../api/usuariosApi.js';
 
+// Importamos las funciones para mostrar mensajes emergentes y modales de confirmación
 import {
     mostrarNotificacion,
     mostrarConfirmacion,
@@ -35,56 +34,67 @@ import {
     mostrarModalEliminarUsuario,
 } from '../utils/notificaciones.js';
 
+// Importamos la función que filtra tareas por estado y por nombre de usuario
 import { filtrarTareas }  from '../utils/filtros.js';
 
+// Importamos las funciones que crean y ocultan el modal de edición de tareas
 import { mostrarModalEdicion, ocultarModalEdicion, agregarTareaATabla } from './tareasUI.js';
 
+// Importamos la función que ordena tareas según el criterio seleccionado
 import { ordenarTareas }  from '../utils/ordenamiento.js';
 
-// Se importan las dos funciones de exportación — la específica de tareas y la genérica
-// exportarListaJSON es la nueva función para exportar usuarios y cualquier otro recurso
+// Importamos las dos funciones de exportación: una específica para tareas y otra genérica
 import { exportarTareasJSON, exportarListaJSON } from '../utils/exportacion.js';
 
-// Se agrega validarFormularioRegistro a los imports de validaciones
-// Este import conecta modoUI.js con la nueva función que valida los 5 campos del modal
+// Importamos las funciones de validación de formularios de todo el sistema
 import { validarFormularioUsuario, validarFormularioTarea, validarFormularioLogin, validarFormularioRegistro } from '../utils/validaciones.js';
 
-// Agregar junto a los otros imports al inicio de modoUI.js:
+// Importamos las funciones que se comunican con el servidor para manejar autenticación
 import { loginUsuario, registrarUsuario, forgotPassword, verifyResetCode, resetPassword } from '../api/authApi.js';
 
+// Importamos las funciones que guardan y leen los tokens del almacenamiento local del navegador
 import { guardarSesion, cerrarSesion, obtenerUsuarioSesion } from '../utils/sesion.js';
 
+// Importamos las funciones del registro de auditoría (log de acciones importantes)
 import { registrarEvento, renderizarAuditoria } from '../utils/auditoria.js';
 
+// Importamos el diccionario de permisos y metadatos de cada rol del sistema
 import { PERMISOS_POR_ROL, METADATOS_ROL } from '../utils/rolesPermisos.js';
 
+// Importamos la función que monta el calendario interactivo con eventos y tareas
 import { crearCalendario } from '../utils/eventosCalendario.js';
+// Importamos las funciones para leer, crear y eliminar notas personales (post-its)
 import { obtenerNotas, crearNota as crearNotaApi, eliminarNota as eliminarNotaApi } from '../api/notesApi.js';
+// Importamos las funciones del router SPA que maneja la navegación por hash en la URL
 import { registrarRuta, registrarRutas, iniciarRouter, ir, navegarA, irAModal, volverDeModal, limpiarHashActual, resetearEstadoRouter, rutaAnterior } from '../router.js';
+// Importamos los diccionarios de rutas y secciones definidos en rutas.js
 import { RUTAS, SECCIONES_USUARIO, SECCIONES_ADMIN, SECCIONES_INSTRUCTOR } from '../rutas.js';
 
-// Estado pendiente para modales con datos — se setea antes de ir(RUTAS.X.Y)
-let _pendingVerTarea        = null;
-let _pendingEditarTarea     = null;
-let _pendingVerUsuario      = null;
-let _pendingEditarUsuario   = null;
-let _pendingCambiarRol      = null;
-let _pendingDesactivar      = null;
-let _pendingActivar         = null;
-let _pendingEliminarUsuario = null;
-let _pendingEliminarTarea   = null;
+// Variables que guardan temporalmente los datos del elemento que se va a ver o editar
+// Se asignan justo antes de navegar al modal, y se leen cuando el modal se abre
+let _pendingVerTarea        = null; // tarea que se va a ver en el modal de solo lectura
+let _pendingEditarTarea     = null; // tarea que se va a editar en el modal de edición
+let _pendingVerUsuario      = null; // usuario que se va a ver en el modal de usuario
+let _pendingEditarUsuario   = null; // usuario que se va a editar en el modal de edición
+let _pendingCambiarRol      = null; // usuario al que se le va a cambiar el rol
+let _pendingDesactivar      = null; // usuario que se va a desactivar
+let _pendingActivar         = null; // usuario que se va a reactivar
+let _pendingEliminarUsuario = null; // usuario que se va a eliminar permanentemente
+let _pendingEliminarTarea   = null; // tarea que se va a eliminar permanentemente
 
-// Handler activo del formulario de edición — se remueve antes de agregar uno nuevo
-// para evitar que listeners de modales anteriores no cerrados se acumulen
+// Variable que guarda el listener del formulario de edición activo actualmente
+// Se elimina antes de agregar uno nuevo para evitar que se acumulen múltiples listeners
 let _activeEditHandler      = null;
 
-// crearIconoLucide — función privada reutilizable para crear íconos Lucide en el DOM
-// Parámetro: nombreIcono — string con el nombre del ícono según la librería Lucide
-// Parámetro: claseExtra — string opcional con clases CSS adicionales
+// Crea un elemento de ícono de la librería Lucide con el nombre y clase indicados
+// Parámetro: nombreIcono — nombre del ícono según la librería (ej: "trash-2", "eye")
+// Parámetro: claseExtra — clase CSS adicional opcional para el ícono
 function crearIconoLucide(nombreIcono, claseExtra) {
+    // Creamos un elemento <i> que Lucide convertirá en un SVG del ícono indicado
     const icono = document.createElement('i');
     icono.setAttribute('data-lucide', nombreIcono);
     icono.classList.add('icono-accion');
+    // Si se indicó una clase extra, la agregamos al elemento
     if (claseExtra) icono.classList.add(claseExtra);
     return icono;
 }
@@ -92,90 +102,126 @@ function crearIconoLucide(nombreIcono, claseExtra) {
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
 
+// Abre el menú lateral del panel indicado por sufijo (ej: "Admin", "Usuario", "Instructor")
 function abrirSidebar(sufijo) {
+    // Buscamos los tres elementos del sidebar: el panel, el fondo oscuro y el botón hamburguesa
     const sidebar = document.getElementById('sidebar' + sufijo);
     const overlay = document.getElementById('overlay' + sufijo);
     const btn     = document.getElementById('btnHamburguesa' + sufijo);
+    // Agregamos las clases que hacen visible el sidebar deslizándolo desde la izquierda
     if (sidebar) sidebar.classList.add('sidebar--abierto');
+    // Hacemos visible el fondo oscuro semitransparente que cubre el contenido detrás del sidebar
     if (overlay) overlay.classList.add('sidebar-overlay--visible');
+    // Animamos el botón hamburguesa para indicar que el menú está abierto
     if (btn)     btn.classList.add('btn-hamburguesa--abierto');
+    // Actualizamos el atributo de accesibilidad para lectores de pantalla
     if (btn)     btn.setAttribute('aria-expanded', 'true');
 }
 
+// Cierra el menú lateral del panel indicado por sufijo
 function cerrarSidebar(sufijo) {
     const sidebar = document.getElementById('sidebar' + sufijo);
     const overlay = document.getElementById('overlay' + sufijo);
     const btn     = document.getElementById('btnHamburguesa' + sufijo);
+    // Quitamos las clases que hacen visible el sidebar
     if (sidebar) sidebar.classList.remove('sidebar--abierto');
+    // Ocultamos el fondo oscuro semitransparente
     if (overlay) overlay.classList.remove('sidebar-overlay--visible');
+    // Regresamos el botón hamburguesa a su estado original
     if (btn)     btn.classList.remove('btn-hamburguesa--abierto');
+    // Actualizamos el atributo de accesibilidad indicando que el menú está cerrado
     if (btn)     btn.setAttribute('aria-expanded', 'false');
 }
 
+// Expande (abre) una card con el ID del cuerpo indicado, mostrando su contenido
 function _expandirCard(cuerpoId) {
+    // Buscamos el elemento contenedor del contenido de la card
     const cuerpo = document.getElementById(cuerpoId);
     if (!cuerpo) return;
+    // Quitamos la clase 'oculto' para que el cuerpo de la card sea visible
     cuerpo.classList.remove('oculto');
+    // Buscamos el encabezado de la card (el elemento justo antes del cuerpo)
     const cabecera = cuerpo.previousElementSibling;
     if (cabecera) {
+        // Rotamos la flecha para que apunte hacia abajo indicando que la card está abierta
         const btnFlecha = cabecera.querySelector('.btn-toggle-card');
         if (btnFlecha) btnFlecha.classList.remove('contraido');
+        // Restauramos el borde inferior del encabezado que separa título de contenido
         cabecera.classList.remove('sin-borde');
     }
 }
 
+// Muestra la sección indicada dentro de una vista SPA (usuario, admin o instructor)
+// Parámetro vistaId: ID del contenedor de la vista (ej: 'vistaAdmin')
+// Parámetro sidebarId: ID del sidebar correspondiente (ej: 'sidebarAdmin')
+// Parámetro sufijo: sufijo del sidebar para abrirlo/cerrarlo (ej: 'Admin')
+// Parámetro nombre: nombre de la sección a mostrar (ej: 'tareas', 'usuarios')
+// Parámetro mapaExpandir: mapa de nombre → ID del cuerpo de la card a expandir
 function _mostrarSeccion(vistaId, sidebarId, sufijo, nombre, mapaExpandir) {
+    // Buscamos el contenedor principal de la vista
     const vista = document.getElementById(vistaId);
     if (!vista) return;
 
+    // Ocultamos todas las secciones de la vista antes de mostrar la seleccionada
     vista.querySelectorAll('.spa-seccion').forEach(function(s) {
         s.classList.add('spa-seccion--oculta');
     });
 
+    // Mostramos únicamente la sección que el usuario eligió
     const target = vista.querySelector('.spa-seccion[data-seccion="' + nombre + '"]');
     if (target) target.classList.remove('spa-seccion--oculta');
 
+    // Actualizamos el link activo en el sidebar para reflejar la sección actual
     const sidebar = document.getElementById(sidebarId);
     if (sidebar) {
+        // Desactivamos todos los links del sidebar primero
         sidebar.querySelectorAll('.sidebar__link[data-seccion]').forEach(function(l) {
             l.classList.remove('sidebar__link--activo');
         });
+        // Activamos el link que corresponde a la sección actual
         const link = sidebar.querySelector('.sidebar__link[data-seccion="' + nombre + '"]');
         if (link) link.classList.add('sidebar__link--activo');
     }
 
+    // Si la sección tiene una card que debe estar expandida, la abrimos
     const cuerpoId = mapaExpandir[nombre];
     if (cuerpoId) _expandirCard(cuerpoId);
 
-    // Si la navegación viene de un modal (volverDeModal), el sidebar no debe cerrarse.
-    // Solo cerrarlo cuando el usuario navega directamente por los links del sidebar.
+    // Cerramos el sidebar solo si el usuario navegó desde un link del sidebar
+    // Si venía de un modal, no cerramos el sidebar para no interrumpir la experiencia
     const anterior = rutaAnterior();
     const vieneDeMModal = anterior && anterior.startsWith('modal/');
     if (!vieneDeMModal) cerrarSidebar(sufijo);
 
-    // Limpiar formularios y filtros al volver a una sección
+    // Si el usuario navegó a la sección de crear tarea, limpiamos el formulario anterior
     if (nombre === 'crear-tarea') {
+        // Limpiamos ambos formularios de crear tarea: el del admin y el del instructor
         ['createTaskForm', 'instrCreateTaskForm'].forEach(function(id) {
             const f = document.getElementById(id);
             if (f) {
+                // Borramos todos los valores de los campos del formulario
                 f.reset();
+                // Quitamos los mensajes de error visibles del intento anterior
                 f.querySelectorAll('.form__error').forEach(function(e) { e.textContent = ''; });
+                // Quitamos el estilo rojo de los campos que tenían error
                 f.querySelectorAll('.form__input, .form__textarea, .form__select').forEach(function(el) {
                     el.classList.remove('error');
                 });
             }
         });
-        // Resetear el dropdown de usuarios: desmarcar checkboxes y restaurar texto
+        // Desmarcamos todos los checkboxes del dropdown de usuarios seleccionados
         ['usuariosDropdownPanel', 'instrUsuariosDropdownPanel'].forEach(function(panelId) {
             const p = document.getElementById(panelId);
             if (!p) return;
             p.querySelectorAll('input[type="checkbox"]').forEach(function(cb) { cb.checked = false; });
         });
+        // Restauramos el texto del botón del dropdown al placeholder original
         ['usuariosDropdownTexto', 'instrUsuariosDropdownTexto'].forEach(function(textoId) {
             const t = document.getElementById(textoId);
             if (t) t.textContent = 'Seleccionar usuarios...';
         });
     }
+    // Si el usuario navegó a la sección de tareas, limpiamos los filtros activos
     if (nombre === 'tareas') {
         [
             ['adminFiltroEstado', 'adminFiltroUsuario'],
@@ -183,51 +229,66 @@ function _mostrarSeccion(vistaId, sidebarId, sufijo, nombre, mapaExpandir) {
         ].forEach(function(pair) {
             const sel = document.getElementById(pair[0]);
             const inp = document.getElementById(pair[1]);
+            // Reseteamos el select al primer elemento (sin filtro)
             if (sel) sel.selectedIndex = 0;
+            // Borramos el texto del campo de búsqueda por usuario
             if (inp) inp.value = '';
         });
-        // Recargar la tabla de tareas según la vista activa
+        // Recargamos la tabla de tareas según el panel activo en este momento
         if (vistaId === 'vistaAdmin') cargarTodasLasTareas();
         else if (vistaId === 'vistaInstructor') cargarTareasInstructor();
     }
 }
 
+// Muestra la sección indicada dentro del panel de usuario
 function mostrarSeccionUsuario(nombre) {
     _mostrarSeccion('vistaUsuario', 'sidebarUsuario', 'Usuario', nombre, {
-        'tareas': 'cuerpoTareasUsuario',
+        'tareas': 'cuerpoTareasUsuario', // al ir a "tareas", expandir la card de tareas
     });
 }
 
+// Muestra la sección indicada dentro del panel de administrador
 function mostrarSeccionAdmin(nombre) {
     _mostrarSeccion('vistaAdmin', 'sidebarAdmin', 'Admin', nombre, {
-        'crear-tarea': 'cuerpoCrearTareas',
-        'usuarios':    'cuerpoUsuarios',
-        'tareas':      'cuerpoTareas',
+        'crear-tarea': 'cuerpoCrearTareas', // al ir a "crear-tarea", expandir esa card
+        'usuarios':    'cuerpoUsuarios',    // al ir a "usuarios", expandir la card de usuarios
+        'tareas':      'cuerpoTareas',      // al ir a "tareas", expandir la card de tareas
     });
 }
 
+// Muestra la sección indicada dentro del panel de instructor
 function mostrarSeccionInstructor(nombre) {
     _mostrarSeccion('vistaInstructor', 'sidebarInstructor', 'Instructor', nombre, {
-        'crear-tarea': 'instrCuerpoCrearTareas',
-        'estudiantes': 'instrCuerpoUsuarios',
-        'tareas':      'instrCuerpoTareas',
+        'crear-tarea': 'instrCuerpoCrearTareas', // al ir a "crear-tarea", expandir esa card
+        'estudiantes': 'instrCuerpoUsuarios',    // al ir a "estudiantes", expandir la card
+        'tareas':      'instrCuerpoTareas',      // al ir a "tareas", expandir la card
     });
 }
 
+// Configura todos los eventos del sidebar: abrir con hamburguesa, cerrar con X y con overlay
+// Parámetro sufijo: texto que identifica el panel (ej: "Admin", "Usuario", "Instructor")
+// Parámetro manejadorNavegacion: función que recibe el nombre de la sección y navega a ella
 function _configurarSidebar(sufijo, manejadorNavegacion) {
+    // Buscamos los cuatro elementos del sidebar en el DOM
     const hamburguesa = document.getElementById('btnHamburguesa' + sufijo);
     const cerrar      = document.getElementById('sidebarCerrar'  + sufijo);
     const overlay     = document.getElementById('overlay'        + sufijo);
     const sidebar     = document.getElementById('sidebar'        + sufijo);
 
+    // El botón de tres líneas (hamburguesa) abre el sidebar
     if (hamburguesa) hamburguesa.addEventListener('click', function() { abrirSidebar(sufijo); });
+    // El botón X dentro del sidebar lo cierra
     if (cerrar)      cerrar.addEventListener('click',      function() { cerrarSidebar(sufijo); });
+    // Hacer clic en el fondo oscuro también cierra el sidebar
     if (overlay)     overlay.addEventListener('click',     function() { cerrarSidebar(sufijo); });
 
+    // Registramos el evento de clic en cada link del sidebar para navegar a su sección
     if (sidebar) {
         sidebar.querySelectorAll('.sidebar__link[data-seccion]').forEach(function(link) {
             link.addEventListener('click', function(e) {
+                // Prevenimos que el navegador recargue la página al hacer clic en el enlace
                 e.preventDefault();
+                // Llamamos al manejador con el nombre de la sección del atributo data-seccion
                 manejadorNavegacion(link.dataset.seccion);
             });
         });
@@ -236,72 +297,75 @@ function _configurarSidebar(sufijo, manejadorNavegacion) {
 
 // ── REFERENCIAS A VISTAS ──────────────────────────────────────────────────────
 
-const pantallaInicio = document.getElementById('pantallaInicio');
-const vistaUsuario   = document.getElementById('vistaUsuario');
-const vistaAdmin     = document.getElementById('vistaAdmin');
-// Busca donde están definidas vistaAdmin, vistaUsuario, pantallaInicio y agrega:
-const vistaInstructor = document.getElementById('vistaInstructor');
+// Guardamos referencias a las cuatro pantallas principales del sistema
+const pantallaInicio  = document.getElementById('pantallaInicio');  // formulario de login
+const vistaUsuario    = document.getElementById('vistaUsuario');     // panel del estudiante
+const vistaAdmin      = document.getElementById('vistaAdmin');       // panel del administrador
+const vistaInstructor = document.getElementById('vistaInstructor');  // panel del instructor
 
-// Oculta todas las vistas del sistema antes de mostrar la activa
-// IMPORTANTE: incluir vistaInstructor en esta función es crítico
-// Sin esta línea, al cerrar sesión el instructor la página quedaba visualmente rota
-// porque vistaInstructor permanecía visible detrás de la pantalla de inicio
+// Oculta todas las vistas del sistema antes de mostrar la que corresponde al rol activo
 function ocultarTodo() {
-    // Ocultar la pantalla de inicio (formulario de login)
+    // Ocultamos la pantalla de inicio (el formulario de login/registro)
     pantallaInicio.classList.add('hidden');
-    // Ocultar la vista del panel de usuario normal
+    // Ocultamos el panel del estudiante
     vistaUsuario.classList.add('hidden');
-    // Ocultar la vista del panel de administrador
+    // Ocultamos el panel del administrador
     vistaAdmin.classList.add('hidden');
-    // Ocultar la vista del panel instructor — faltaba esta línea
-    // Su ausencia causaba que el panel verde quedara visible al cerrar sesión
+    // Ocultamos el panel del instructor (importante para que no quede visible al cerrar sesión)
     if (vistaInstructor) vistaInstructor.classList.add('hidden');
 }
 
 // ── CONTRAER TODAS LAS CARDS ─────────────────────────────────────────────────
-// Issue 8a: garantiza que todas las cards arranquen contraídas al activar cualquier vista,
-// incluso en el segundo login (cuando registrarCardsContraibles no se vuelve a ejecutar).
+// Garantiza que todas las cards arranquen contraídas al activar cualquier vista,
+// incluso en el segundo inicio de sesión cuando no se re-ejecuta registrarCardsContraibles.
 function contraerTodasLasCards() {
+    // Lista de pares [ID del encabezado, ID del cuerpo] de cada card del sistema
     const pares = [
-        ['toggleUsuarios',          'cuerpoUsuarios'],
-        ['toggleTareas',            'cuerpoTareas'],
-        ['toggleCrearTareas',       'cuerpoCrearTareas'],
-        ['instrToggleCrearTareas',  'instrCuerpoCrearTareas'],
-        ['instrToggleUsuarios',     'instrCuerpoUsuarios'],
-        ['instrToggleTareas',       'instrCuerpoTareas'],
-        ['toggleTareasUsuario',     'cuerpoTareasUsuario'],
+        ['toggleUsuarios',          'cuerpoUsuarios'],        // card Usuarios del admin
+        ['toggleTareas',            'cuerpoTareas'],          // card Tareas del admin
+        ['toggleCrearTareas',       'cuerpoCrearTareas'],     // card Crear Tarea del admin
+        ['instrToggleCrearTareas',  'instrCuerpoCrearTareas'],// card Crear Tarea del instructor
+        ['instrToggleUsuarios',     'instrCuerpoUsuarios'],   // card Estudiantes del instructor
+        ['instrToggleTareas',       'instrCuerpoTareas'],     // card Tareas del instructor
+        ['toggleTareasUsuario',     'cuerpoTareasUsuario'],   // card Tareas del usuario
     ];
+    // Recorremos cada par y ocultamos el cuerpo de la card
     pares.forEach(function(par) {
         const encabezado = document.getElementById(par[0]);
         const cuerpo     = document.getElementById(par[1]);
+        // Si alguno de los dos no existe en el DOM, saltamos este par
         if (!encabezado || !cuerpo) return;
+        // Ocultamos el contenido de la card agregando la clase 'oculto'
         cuerpo.classList.add('oculto');
+        // Rotamos la flecha para que apunte hacia arriba (estado contraído)
         const botonFlecha = encabezado.querySelector('.btn-toggle-card');
         if (botonFlecha) botonFlecha.classList.add('contraido');
+        // Quitamos el borde inferior del encabezado cuando la card está contraída
         encabezado.classList.add('sin-borde');
     });
 }
 
+// Activa la pantalla de inicio de sesión: oculta todos los paneles y muestra el login
 export function activarModoInicio() {
+    // Ocultamos todas las vistas (usuario, admin, instructor)
     ocultarTodo();
+    // Mostramos la pantalla de inicio quitando la clase 'hidden'
     pantallaInicio.classList.remove('hidden');
+    // Marcamos el modo actual en el body para que los estilos CSS del rol se apliquen
     document.body.dataset.modo = 'inicio';
+    // Limpiamos los campos del formulario para que no queden datos del usuario anterior
     limpiarFormularioLogin();
+    // Limpiamos el hash de la URL para que no quede una ruta del panel anterior
     limpiarHashActual();
 }
 
-// ── ACTIVAR MODO USUARIO (ACTUALIZADO) ────────────────────────────────────────
-// Al entrar al panel de usuario ya no se muestra el formulario de búsqueda.
-// En su lugar se leen los datos del usuario directamente desde el token JWT
-// guardado en localStorage y se cargan sus tareas automáticamente.
-//
-// Esto es más seguro y profesional: el usuario no puede buscar las tareas
-// de otra persona escribiendo un documento diferente.
+// ── ACTIVAR MODO USUARIO ──────────────────────────────────────────────────────
+// Al entrar al panel de usuario se leen los datos del token JWT guardado en localStorage
+// y se cargan automáticamente sus tareas, calendario y post-its.
+// El usuario solo ve sus propias tareas — no puede buscar las de otra persona.
 
-// cargarPostits — carga y renderiza los post-its personales del usuario
-// Los post-its se persisten en localStorage con la clave postits_${userId}
-// Parámetro: userId — id numérico del usuario logueado (para clave de localStorage única)
-// Este es el ÚNICO uso de localStorage permitido en el proyecto
+// Carga y muestra las notas personales (post-its) del usuario desde el servidor.
+// Parámetro userId: el identificador numérico del usuario logueado
 async function cargarPostits(userId) {
     const seccion = document.getElementById('postitsSeccion');
     if (!seccion) return;
@@ -311,150 +375,182 @@ async function cargarPostits(userId) {
     // Cargar notas desde el servidor
     let notas = await obtenerNotas();
 
+    // Función interna que reconstruye visualmente todos los post-its desde el arreglo 'notas'.
+    // Se llama al cargar el panel, al agregar una nota y al eliminar una nota.
     function renderizarPostits() {
+        // Vaciamos la sección antes de volver a pintarla (anti-duplicación)
         while (seccion.firstChild) seccion.removeChild(seccion.firstChild);
 
-        // Cabecera
+        // ── Cabecera: título + contador de notas ──────────────────────────────
         const header = document.createElement('div');
-        header.className = 'postits__header';
+        header.className = 'postits__header'; // flex row con título y contador separados
         const titulo = document.createElement('h3');
         titulo.className   = 'postits__titulo';
         titulo.textContent = 'Mis notas personales';
         header.appendChild(titulo);
         const contador = document.createElement('span');
-        contador.className   = 'postits__contador';
+        contador.className   = 'postits__contador'; // muestra "X / 12" para que el usuario sepa cuántas le quedan
         contador.textContent = notas.length + ' / ' + MAXIMO_POSTITS;
         header.appendChild(contador);
-        seccion.appendChild(header);
+        seccion.appendChild(header); // pegamos el encabezado al inicio de la sección
 
-        // Grid de notas
+        // ── Grid de post-its: un card por cada nota guardada ──────────────────
         const grid = document.createElement('div');
-        grid.className = 'postits__grid';
+        grid.className = 'postits__grid'; // CSS grid de 3-4 columnas responsivas
 
         notas.forEach(function(nota) {
+            // Tarjeta de la nota — fondo de color pastel definido al crear la nota
             const card = document.createElement('div');
-            card.className = 'postit__card';
-            card.style.backgroundColor = nota.color;
+            card.className = 'postit__card'; // estilo de post-it con sombra y esquinas redondeadas
+            card.style.backgroundColor = nota.color; // color guardado en la base de datos (ej: '#fef3c7')
 
+            // Botón X en la esquina para eliminar la nota
             const btnEliminar = document.createElement('button');
-            btnEliminar.className = 'postit__btn-eliminar';
+            btnEliminar.className = 'postit__btn-eliminar'; // posición absoluta en la esquina superior derecha
             btnEliminar.title     = 'Eliminar nota';
-            btnEliminar.type      = 'button';
+            btnEliminar.type      = 'button'; // evita que active un submit si está dentro de un form
             const iconoX = document.createElement('i');
-            iconoX.setAttribute('data-lucide', 'x');
+            iconoX.setAttribute('data-lucide', 'x'); // ícono X de Lucide
             iconoX.classList.add('icono-accion');
-            btnEliminar.appendChild(iconoX);
+            btnEliminar.appendChild(iconoX); // pegamos el ícono dentro del botón
             btnEliminar.addEventListener('click', async function() {
+                // Llamamos al API para eliminar la nota del servidor (DELETE /api/notes/:id)
                 const ok = await eliminarNotaApi(nota.id);
                 if (ok) {
+                    // Si el servidor confirmó la eliminación, la sacamos del arreglo local
                     notas = notas.filter(function(n) { return n.id !== nota.id; });
+                    // Re-renderizamos para que desaparezca visualmente sin recargar la página
                     renderizarPostits();
                 }
             });
-            card.appendChild(btnEliminar);
+            card.appendChild(btnEliminar); // pegamos el botón X en la tarjeta
 
+            // Texto de la nota
             const texto = document.createElement('p');
-            texto.className   = 'postit__texto';
-            texto.textContent = nota.texto;
-            card.appendChild(texto);
+            texto.className   = 'postit__texto'; // fuente y padding del texto del post-it
+            texto.textContent = nota.texto; // contenido de texto guardado en la base de datos
+            card.appendChild(texto); // pegamos el texto en la tarjeta
 
-            grid.appendChild(card);
+            grid.appendChild(card); // añadimos la tarjeta al grid
         });
 
-        seccion.appendChild(grid);
+        seccion.appendChild(grid); // pegamos el grid completo en la sección
 
-        // Botón Nueva nota
+        // ── Botón "Nueva nota" — siempre al final del grid ────────────────────
         const btnAgregar = document.createElement('button');
-        btnAgregar.className = 'postit__btn-agregar';
+        btnAgregar.className = 'postit__btn-agregar'; // botón con ícono + y texto
         btnAgregar.title     = 'Agregar nota';
         btnAgregar.type      = 'button';
         const iconoPlus = document.createElement('i');
-        iconoPlus.setAttribute('data-lucide', 'plus');
+        iconoPlus.setAttribute('data-lucide', 'plus'); // ícono + de Lucide
         iconoPlus.classList.add('icono-accion');
-        btnAgregar.appendChild(iconoPlus);
-        btnAgregar.appendChild(document.createTextNode(' Nueva nota'));
+        btnAgregar.appendChild(iconoPlus); // ícono dentro del botón
+        btnAgregar.appendChild(document.createTextNode(' Nueva nota')); // texto al lado del ícono
         btnAgregar.addEventListener('click', function() {
             if (notas.length >= MAXIMO_POSTITS) {
+                // Si ya hay 12 notas, mostramos advertencia en lugar de abrir el formulario
                 mostrarNotificacion('Máximo de notas alcanzado (12)', 'advertencia');
                 return;
             }
-            mostrarFormularioPostit();
+            mostrarFormularioPostit(); // abrimos el formulario inline para crear una nota nueva
         });
-        seccion.appendChild(btnAgregar);
+        seccion.appendChild(btnAgregar); // pegamos el botón al final de la sección
 
+        // Convertimos los <i data-lucide="x"> y <i data-lucide="plus"> en SVG reales
         if (window.lucide) window.lucide.createIcons();
     }
 
+    // Función interna que muestra el formulario inline para crear una nota nueva.
+    // Solo puede haber un formulario abierto a la vez — si ya existe, no hacemos nada.
     function mostrarFormularioPostit() {
+        // Si ya hay un formulario visible en la sección, no abrimos uno segundo
         if (seccion.querySelector('.postit__formulario')) return;
 
+        // Contenedor principal del formulario
         const formulario = document.createElement('div');
-        formulario.className = 'postit__formulario';
+        formulario.className = 'postit__formulario'; // flex row con área izquierda y botón guardar
 
+        // Textarea donde el usuario escribe el texto de la nota
         const textarea = document.createElement('textarea');
         textarea.placeholder = 'Escribe tu nota aquí...';
         textarea.className   = 'postit__textarea';
-        textarea.rows        = 3;
+        textarea.rows        = 3; // altura inicial de 3 líneas — el usuario puede escribir más
 
-        const coloresPastel = ['#fef3c7', '#fce7f3', '#d1fae5', '#dbeafe'];
-        let colorSeleccionado = coloresPastel[0];
+        // Paleta de 4 colores pastel para elegir el color de fondo de la nota
+        const coloresPastel = ['#fef3c7', '#fce7f3', '#d1fae5', '#dbeafe']; // amarillo, rosado, verde, azul
+        let colorSeleccionado = coloresPastel[0]; // por defecto se selecciona el amarillo
 
+        // Contenedor de los 4 botones circulares de color
         const selectoresColor = document.createElement('div');
-        selectoresColor.className = 'postit__selectores-color';
+        selectoresColor.className = 'postit__selectores-color'; // flex row de círculos de color
         coloresPastel.forEach(function(color) {
             const selector = document.createElement('button');
-            selector.type  = 'button';
-            selector.className = 'postit__selector-color';
-            selector.style.backgroundColor = color;
+            selector.type  = 'button'; // evita submit accidental
+            selector.className = 'postit__selector-color'; // botón circular con el color de fondo
+            selector.style.backgroundColor = color; // el propio color como fondo del círculo
+            // El primer color arranca con la clase --activo que le da el borde de selección
             if (color === colorSeleccionado) selector.classList.add('postit__selector-color--activo');
             selector.addEventListener('click', function() {
+                // Desactivamos el borde de todos los selectores antes de activar el nuevo
                 selectoresColor.querySelectorAll('.postit__selector-color').forEach(function(s) {
                     s.classList.remove('postit__selector-color--activo');
                 });
-                selector.classList.add('postit__selector-color--activo');
-                colorSeleccionado = color;
+                selector.classList.add('postit__selector-color--activo'); // marcamos el seleccionado
+                colorSeleccionado = color; // guardamos el color elegido para usarlo al guardar
             });
-            selectoresColor.appendChild(selector);
+            selectoresColor.appendChild(selector); // pegamos el círculo en el contenedor
         });
 
+        // Botón "Guardar nota" que envía la nota al servidor
         const btnGuardar = document.createElement('button');
         btnGuardar.type      = 'button';
-        btnGuardar.className = 'postit__btn-guardar';
+        btnGuardar.className = 'postit__btn-guardar'; // botón con color del rol (morado)
         btnGuardar.textContent = 'Guardar nota';
         btnGuardar.addEventListener('click', async function() {
-            const textoVal = textarea.value.trim();
+            const textoVal = textarea.value.trim(); // quitamos espacios en blanco del inicio y final
+            // Si el textarea está vacío, pintamos el borde rojo y no guardamos
             if (!textoVal) { textarea.style.borderColor = '#ef4444'; return; }
 
+            // Desactivamos el botón para evitar doble envío mientras espera la respuesta
             btnGuardar.disabled    = true;
-            btnGuardar.textContent = 'Guardando...';
+            btnGuardar.textContent = 'Guardando...'; // feedback visual de que se está procesando
 
+            // Llamamos al API para guardar la nota (POST /api/notes)
             const nuevaNota = await crearNotaApi(textoVal, colorSeleccionado);
             if (nuevaNota) {
+                // Añadimos la nota al arreglo local y volvemos a renderizar el panel completo
                 notas.push(nuevaNota);
-                renderizarPostits();
+                renderizarPostits(); // re-renderizamos — esto también cierra el formulario
             } else {
+                // Si el servidor falló, rehabilitamos el botón y marcamos el textarea en rojo
                 btnGuardar.disabled    = false;
                 btnGuardar.textContent = 'Guardar nota';
-                textarea.style.borderColor = '#ef4444';
+                textarea.style.borderColor = '#ef4444'; // indicamos que algo salió mal
             }
         });
 
+        // Columna izquierda del formulario: textarea + selectores de color apilados
         const formularioLeft = document.createElement('div');
-        formularioLeft.className = 'postit__formulario-left';
-        formularioLeft.appendChild(textarea);
-        formularioLeft.appendChild(selectoresColor);
-        formulario.appendChild(formularioLeft);
-        formulario.appendChild(btnGuardar);
-        seccion.appendChild(formulario);
+        formularioLeft.className = 'postit__formulario-left'; // flex column
+        formularioLeft.appendChild(textarea);       // textarea arriba
+        formularioLeft.appendChild(selectoresColor); // colores debajo del textarea
+        formulario.appendChild(formularioLeft); // columna izquierda dentro del formulario
+        formulario.appendChild(btnGuardar);     // botón guardar a la derecha
+        seccion.appendChild(formulario);        // formulario al final de la sección de post-its
     }
 
     renderizarPostits();
 }
 
+// Activa el panel de usuario: muestra las tareas del estudiante logueado, su calendario y sus notas
 export async function activarModoUsuario() {
+    // Ocultamos todas las pantallas antes de mostrar la del usuario
     ocultarTodo();
-    contraerTodasLasCards(); // Issue 8a: garantizar cards contraídas al entrar
+    // Contraemos todas las cards para que el panel empiece ordenado
+    contraerTodasLasCards();
+    // Mostramos el panel de usuario quitando la clase 'hidden'
     vistaUsuario.classList.remove('hidden');
+    // Marcamos el modo actual para que los estilos de color morado del usuario se apliquen
     document.body.dataset.modo = 'usuario';
 
     // Leer los datos del usuario desde el token guardado en localStorage
@@ -612,300 +708,350 @@ export async function activarModoUsuario() {
     if (window.lucide) window.lucide.createIcons();
 }
 
-// renderizarDiccionarioRoles — cards de roles en la columna derecha del admin
+// Construye y muestra las tarjetas del diccionario de roles en el panel de administrador.
+// Cada tarjeta muestra el nombre, descripción y un botón para ver los permisos del rol.
 function renderizarDiccionarioRoles(contenedorEl) {
+    // Limpiamos el contenedor eliminando cualquier tarjeta que hubiera de antes
     while (contenedorEl.firstChild) contenedorEl.removeChild(contenedorEl.firstChild);
+    // Iteramos sobre las claves del objeto METADATOS_ROL: 'admin', 'instructor', 'user'
     Object.keys(METADATOS_ROL).forEach(function(rol) {
-        const meta = METADATOS_ROL[rol];
+        const meta = METADATOS_ROL[rol]; // obtenemos los metadatos del rol actual: nombre, icono, color, descripción
+
+        // Creamos la tarjeta principal que envuelve todo el contenido del rol
         const card = document.createElement('div');
-        card.className = 'rol-card';
+        card.className = 'rol-card'; // clase CSS que le da el estilo de tarjeta con borde y sombra
+
+        // Creamos el encabezado de la tarjeta que contiene el ícono y el nombre del rol
         const headerCard = document.createElement('div');
-        headerCard.className = 'rol-card__header';
+        headerCard.className = 'rol-card__header'; // flex row con gap entre ícono y texto
+
+        // Creamos el elemento <i> que Lucide convertirá en un SVG con el ícono del rol
         const icono = document.createElement('i');
-        icono.setAttribute('data-lucide', meta.icono);
-        icono.classList.add('icono-accion');
-        icono.style.color = meta.color;
-        headerCard.appendChild(icono);
+        icono.setAttribute('data-lucide', meta.icono); // el nombre del ícono (ej: 'shield', 'graduation-cap', 'user')
+        icono.classList.add('icono-accion'); // clase CSS que define el tamaño del ícono
+        icono.style.color = meta.color; // coloreamos el ícono con el color del rol (azul/verde/morado)
+        headerCard.appendChild(icono); // pegamos el ícono en el encabezado
+
+        // Creamos el texto con el nombre del rol (ej: 'Administrador')
         const nombre = document.createElement('span');
-        nombre.className   = 'rol-card__nombre';
-        nombre.textContent = meta.nombre;
-        headerCard.appendChild(nombre);
-        card.appendChild(headerCard);
+        nombre.className   = 'rol-card__nombre'; // clase CSS que le da el peso y tamaño al nombre
+        nombre.textContent = meta.nombre; // texto del nombre del rol
+        headerCard.appendChild(nombre); // pegamos el nombre junto al ícono
+        card.appendChild(headerCard); // pegamos el encabezado completo en la tarjeta
+
+        // Creamos el párrafo con la descripción de los permisos del rol
         const desc = document.createElement('p');
-        desc.className   = 'rol-card__descripcion';
-        desc.textContent = meta.descripcion;
-        card.appendChild(desc);
+        desc.className   = 'rol-card__descripcion'; // clase CSS que le da el estilo de texto pequeño y gris
+        desc.textContent = meta.descripcion; // texto descriptivo (ej: 'Acceso total: usuarios, tareas y sistema')
+        card.appendChild(desc); // pegamos la descripción en la tarjeta
+
+        // Creamos el botón "Ver permisos" que abre el modal con la lista de permisos del rol
         const btn = document.createElement('button');
-        btn.className = 'rol-card__btn-permisos';
-        btn.type      = 'button';
-        btn.style.borderColor = meta.color;
-        btn.style.color       = meta.color;
+        btn.className = 'rol-card__btn-permisos'; // clase CSS del botón (borde de color, texto de color)
+        btn.type      = 'button'; // evitamos que el botón envíe un formulario si está dentro de un form
+        btn.style.borderColor = meta.color; // el borde del botón usa el color del rol
+        btn.style.color       = meta.color; // el texto del botón también usa el color del rol
+
+        // Creamos el ícono de lista dentro del botón
         const btnIcono = document.createElement('i');
-        btnIcono.setAttribute('data-lucide', 'list');
-        btnIcono.classList.add('icono-accion');
-        btn.appendChild(btnIcono);
-        btn.appendChild(document.createTextNode(' Ver permisos'));
+        btnIcono.setAttribute('data-lucide', 'list'); // ícono de lista de Lucide
+        btnIcono.classList.add('icono-accion'); // tamaño estándar del ícono
+        btn.appendChild(btnIcono); // pegamos el ícono dentro del botón
+        btn.appendChild(document.createTextNode(' Ver permisos')); // agregamos el texto del botón
+
+        // Al pasar el mouse encima, el botón se rellena con el color del rol (efecto hover)
         btn.addEventListener('mouseenter', function() {
-            btn.style.background = meta.color;
-            btn.style.color      = '#ffffff';
+            btn.style.background = meta.color; // fondo del color del rol
+            btn.style.color      = '#ffffff';   // texto blanco para contrastar con el fondo
         });
+        // Al sacar el mouse, restauramos el estilo original del botón
         btn.addEventListener('mouseleave', function() {
-            btn.style.background  = '';
-            btn.style.color       = meta.color;
+            btn.style.background  = ''; // eliminamos el fondo — regresa al CSS original
+            btn.style.color       = meta.color; // restauramos el color del texto
         });
+        // Al hacer clic, abrimos el modal con todos los permisos del rol seleccionado
         btn.addEventListener('click', function() { abrirModalPermisos(rol, meta); });
-        card.appendChild(btn);
-        contenedorEl.appendChild(card);
+
+        card.appendChild(btn); // pegamos el botón al final de la tarjeta
+        contenedorEl.appendChild(card); // agregamos la tarjeta completa al contenedor del DOM
     });
+    // Después de insertar todos los <i data-lucide>, le decimos a Lucide que los convierta en SVG
     if (window.lucide) window.lucide.createIcons();
 }
 
-// abrirModalPermisos — modal rediseñado con agrupación por categoría y badge del rol
+// Abre un modal que muestra todos los permisos del rol indicado, agrupados por categoría.
+// Parámetro rol: el nombre interno del rol (ej: "admin", "instructor", "user")
+// Parámetro meta: el objeto de metadatos del rol con nombre, color, ícono y descripción
 function abrirModalPermisos(rol, meta) {
+    // Función interna que cierra el modal eliminándolo del DOM si todavía está visible
     const cerrar = () => { if (document.body.contains(overlay)) document.body.removeChild(overlay); };
 
-    // ── Overlay ───────────────────────────────────────────────────────────────
+    // ── Overlay — fondo semitransparente que cubre la pantalla detrás del modal ──
     const overlay = document.createElement('div');
-    overlay.className = 'modal-usuario-overlay';
-    overlay.style.cssText = 'display:flex;align-items:center;justify-content:center;';
+    overlay.className = 'modal-usuario-overlay'; // clase CSS del fondo oscuro
+    overlay.style.cssText = 'display:flex;align-items:center;justify-content:center;'; // centra el panel en la pantalla
+    // Si el usuario hace clic en el fondo oscuro (fuera del panel), cerramos el modal
     overlay.addEventListener('click', function(e) { if (e.target === overlay) cerrar(); });
 
-    // ── Panel ─────────────────────────────────────────────────────────────────
+    // ── Panel — contenedor principal del modal ────────────────────────────────
     const panel = document.createElement('div');
     panel.style.cssText = `
-        background:#fff;
-        border-radius:1.25rem;
-        box-shadow:0 20px 60px rgba(0,0,0,0.18);
-        width:min(520px,92vw);
-        max-height:85vh;
-        overflow:hidden;
+        background:#fff;                            /* fondo blanco del panel */
+        border-radius:1.25rem;                      /* esquinas redondeadas */
+        box-shadow:0 20px 60px rgba(0,0,0,0.18);   /* sombra profunda para que "flote" */
+        width:min(520px,92vw);                      /* 520px en desktop, 92% del ancho en móvil */
+        max-height:85vh;                            /* máximo 85% de la altura de la pantalla */
+        overflow:hidden;                            /* oculta el scroll extra — el cuerpo interno lo maneja */
         display:flex;
-        flex-direction:column;
-        font-family:inherit;
+        flex-direction:column;                      /* apilamos header, body y pie verticalmente */
+        font-family:inherit;                        /* hereda la fuente del resto del proyecto */
     `;
 
-    // ── Header con color del rol ───────────────────────────────────────────────
+    // ── Header del modal — banda de color con ícono, nombre y botón de cerrar ──
     const header = document.createElement('div');
     header.style.cssText = `
-        background:${meta.color};
+        background:${meta.color};           /* fondo del color del rol (azul/verde/morado) */
         padding:1.5rem 1.75rem 1.25rem;
         display:flex;
         align-items:flex-start;
-        justify-content:space-between;
+        justify-content:space-between;      /* título a la izquierda, botón X a la derecha */
         gap:1rem;
     `;
 
+    // Contenedor izquierdo del header: ícono circular + texto del rol
     const headerLeft = document.createElement('div');
     headerLeft.style.cssText = 'display:flex;align-items:center;gap:0.875rem;';
 
-    // Icono circular blanco
+    // Círculo blanco semitransparente que envuelve el ícono del rol
     const iconWrap = document.createElement('div');
     iconWrap.style.cssText = `
         width:48px;height:48px;
-        background:rgba(255,255,255,0.25);
-        border-radius:50%;
+        background:rgba(255,255,255,0.25); /* blanco al 25% de opacidad sobre el color del rol */
+        border-radius:50%;                 /* forma circular */
         display:flex;align-items:center;justify-content:center;
-        flex-shrink:0;
+        flex-shrink:0;                     /* evita que el círculo se encoja en pantallas pequeñas */
     `;
-    const icono = document.createElement('i');
-    icono.setAttribute('data-lucide', meta.icono);
-    icono.style.cssText = 'width:22px;height:22px;color:#fff;';
-    iconWrap.appendChild(icono);
-    headerLeft.appendChild(iconWrap);
+    const icono = document.createElement('i'); // elemento que Lucide convertirá en SVG
+    icono.setAttribute('data-lucide', meta.icono); // nombre del ícono según el rol
+    icono.style.cssText = 'width:22px;height:22px;color:#fff;'; // ícono blanco
+    iconWrap.appendChild(icono); // pegamos el ícono dentro del círculo
+    headerLeft.appendChild(iconWrap); // pegamos el círculo a la izquierda del header
 
+    // Texto del header: título (nombre del rol) y subtítulo (descripción)
     const headerTexto = document.createElement('div');
     const titulo = document.createElement('h2');
-    titulo.textContent = meta.nombre;
+    titulo.textContent = meta.nombre; // nombre del rol (ej: 'Administrador')
     titulo.style.cssText = 'color:#fff;font-size:1.2rem;font-weight:700;margin:0 0 0.2rem;';
     const subtitulo = document.createElement('p');
-    subtitulo.textContent = meta.descripcion;
-    subtitulo.style.cssText = 'color:rgba(255,255,255,0.82);font-size:0.82rem;margin:0;';
-    headerTexto.appendChild(titulo);
-    headerTexto.appendChild(subtitulo);
+    subtitulo.textContent = meta.descripcion; // descripción corta del rol
+    subtitulo.style.cssText = 'color:rgba(255,255,255,0.82);font-size:0.82rem;margin:0;'; // blanco semitransparente
+    headerTexto.appendChild(titulo);    // apilamos título encima
+    headerTexto.appendChild(subtitulo); // y descripción debajo
     headerLeft.appendChild(headerTexto);
-    header.appendChild(headerLeft);
+    header.appendChild(headerLeft); // pegamos el lado izquierdo en el header
 
-    // Botón cerrar blanco
+    // Botón X para cerrar el modal — círculo blanco en la esquina superior derecha
     const btnCerrar = document.createElement('button');
-    btnCerrar.type = 'button';
+    btnCerrar.type = 'button'; // evitamos que envíe formularios
     btnCerrar.style.cssText = `
         width:32px;height:32px;
-        background:rgba(255,255,255,0.2);
-        border:none;border-radius:50%;
+        background:rgba(255,255,255,0.2); /* blanco semitransparente */
+        border:none;border-radius:50%;    /* forma circular */
         cursor:pointer;
         display:flex;align-items:center;justify-content:center;
         flex-shrink:0;
-        transition:background 150ms;
+        transition:background 150ms;      /* transición suave al pasar el mouse */
     `;
+    // Efecto hover: el botón se aclara al pasar el mouse encima
     btnCerrar.addEventListener('mouseenter', () => { btnCerrar.style.background='rgba(255,255,255,0.35)'; });
     btnCerrar.addEventListener('mouseleave', () => { btnCerrar.style.background='rgba(255,255,255,0.2)'; });
-    const icoX = document.createElement('i');
+    const icoX = document.createElement('i'); // ícono X de Lucide
     icoX.setAttribute('data-lucide', 'x');
-    icoX.style.cssText = 'width:16px;height:16px;color:#fff;';
-    btnCerrar.appendChild(icoX);
-    btnCerrar.addEventListener('click', cerrar);
-    header.appendChild(btnCerrar);
-    panel.appendChild(header);
+    icoX.style.cssText = 'width:16px;height:16px;color:#fff;'; // ícono blanco pequeño
+    btnCerrar.appendChild(icoX); // pegamos el ícono X dentro del botón circular
+    btnCerrar.addEventListener('click', cerrar); // al hacer clic, cerramos el modal
+    header.appendChild(btnCerrar); // pegamos el botón X a la derecha del header
+    panel.appendChild(header); // pegamos el header completo en la parte superior del panel
 
-    // ── Badge contador ────────────────────────────────────────────────────────
-    const permisos = PERMISOS_POR_ROL[rol] || [];
-    const badgeBar = document.createElement('div');
+    // ── Badge contador — barra gris con el número de permisos del rol ────────
+    const permisos = PERMISOS_POR_ROL[rol] || []; // obtenemos el arreglo de permisos del rol
+    const badgeBar = document.createElement('div'); // barra horizontal debajo del header
     badgeBar.style.cssText = `
         padding:0.75rem 1.75rem;
-        background:#f8fafc;
-        border-bottom:1px solid #e2e8f0;
+        background:#f8fafc;              /* fondo gris muy claro */
+        border-bottom:1px solid #e2e8f0; /* línea divisora entre la barra y el cuerpo */
         display:flex;align-items:center;gap:0.5rem;
     `;
+    // Badge con el conteo de permisos (ej: '6 permisos activos')
     const badgeCount = document.createElement('span');
-    badgeCount.textContent = `${permisos.length} permisos activos`;
+    badgeCount.textContent = `${permisos.length} permisos activos`; // calculamos la cantidad con .length
     badgeCount.style.cssText = `
-        background:${meta.color};
+        background:${meta.color}; /* fondo del color del rol */
         color:#fff;
         font-size:0.72rem;
         font-weight:700;
         letter-spacing:0.03em;
         padding:0.25rem 0.65rem;
-        border-radius:9999px;
+        border-radius:9999px;      /* forma de píldora — radio muy grande */
     `;
+    // Texto secundario con el nombre del rol (ej: 'Rol: Administrador')
     const badgeRol = document.createElement('span');
-    badgeRol.textContent = `Rol: ${meta.nombre}`;
-    badgeRol.style.cssText = 'font-size:0.78rem;color:#64748b;font-weight:500;';
-    badgeBar.appendChild(badgeCount);
-    badgeBar.appendChild(badgeRol);
-    panel.appendChild(badgeBar);
+    badgeRol.textContent = `Rol: ${meta.nombre}`; // usamos template literal para insertar el nombre
+    badgeRol.style.cssText = 'font-size:0.78rem;color:#64748b;font-weight:500;'; // gris medio
+    badgeBar.appendChild(badgeCount); // primero el badge de color
+    badgeBar.appendChild(badgeRol);   // luego el texto gris del rol
+    panel.appendChild(badgeBar);      // pegamos la barra en el panel
 
-    // ── Cuerpo con permisos agrupados ─────────────────────────────────────────
+    // ── Cuerpo del modal — lista de permisos agrupados por categoría ─────────
     const cuerpo = document.createElement('div');
     cuerpo.style.cssText = 'padding:1.25rem 1.75rem 1.5rem;overflow-y:auto;flex:1;';
+    // overflow-y:auto permite hacer scroll solo dentro del cuerpo si los permisos son muchos
+    // flex:1 hace que el cuerpo ocupe todo el espacio disponible entre el header y el pie
 
-    // Agrupar permisos por prefijo (tasks.* / users.*)
+    // Agrupamos los permisos por su prefijo — 'tasks.create' → grupo 'tasks'
     const grupos = {};
     permisos.forEach(function(p) {
-        const prefijo = p.split('.')[0];
-        if (!grupos[prefijo]) grupos[prefijo] = [];
-        grupos[prefijo].push(p);
+        const prefijo = p.split('.')[0]; // dividimos el permiso por '.' y tomamos la primera parte
+        if (!grupos[prefijo]) grupos[prefijo] = []; // creamos el grupo si no existe
+        grupos[prefijo].push(p); // añadimos el permiso al grupo correspondiente
     });
 
+    // Mapa de etiquetas visuales para cada grupo de permisos
     const etiquetasGrupo = {
-        tasks:    { label: 'Tareas',      icon: 'clipboard-list', color: '#0ea5e9' },
-        users:    { label: 'Usuarios',    icon: 'users',          color: '#8b5cf6' },
-        calendar: { label: 'Calendario',  icon: 'calendar',       color: '#f59e0b' },
-        notes:    { label: 'Notas',       icon: 'file-text',      color: '#10b981' },
-        roles:    { label: 'Roles',       icon: 'shield',         color: '#6366f1' },
+        tasks:    { label: 'Tareas',      icon: 'clipboard-list', color: '#0ea5e9' }, // azul celeste
+        users:    { label: 'Usuarios',    icon: 'users',          color: '#8b5cf6' }, // morado
+        calendar: { label: 'Calendario',  icon: 'calendar',       color: '#f59e0b' }, // amarillo
+        notes:    { label: 'Notas',       icon: 'file-text',      color: '#10b981' }, // verde
+        roles:    { label: 'Roles',       icon: 'shield',         color: '#6366f1' }, // índigo
     };
 
+    // Iteramos sobre cada grupo (tasks, users, calendar, etc.)
     Object.keys(grupos).forEach(function(grupo) {
+        // Si el grupo no está en el mapa, usamos valores genéricos con candado gris
         const meta_g = etiquetasGrupo[grupo] || { label: grupo, icon: 'lock', color: '#64748b' };
 
-        // Encabezado de grupo
+        // Encabezado de cada grupo: ícono de color + nombre del grupo en mayúsculas
         const grupoHeader = document.createElement('div');
         grupoHeader.style.cssText = `
             display:flex;align-items:center;gap:0.5rem;
             margin:0.75rem 0 0.5rem;
             padding-bottom:0.4rem;
-            border-bottom:1.5px solid #f1f5f9;
+            border-bottom:1.5px solid #f1f5f9; /* línea divisora debajo del nombre del grupo */
         `;
-        const icoGrupo = document.createElement('i');
-        icoGrupo.setAttribute('data-lucide', meta_g.icon);
-        icoGrupo.style.cssText = `width:15px;height:15px;color:${meta_g.color};`;
+        const icoGrupo = document.createElement('i'); // ícono del grupo
+        icoGrupo.setAttribute('data-lucide', meta_g.icon); // nombre del ícono del grupo
+        icoGrupo.style.cssText = `width:15px;height:15px;color:${meta_g.color};`; // pequeño y del color del grupo
         const labelGrupo = document.createElement('span');
-        labelGrupo.textContent = meta_g.label;
+        labelGrupo.textContent = meta_g.label; // nombre legible del grupo (ej: 'Tareas')
         labelGrupo.style.cssText = `font-size:0.75rem;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.06em;`;
-        grupoHeader.appendChild(icoGrupo);
-        grupoHeader.appendChild(labelGrupo);
-        cuerpo.appendChild(grupoHeader);
+        grupoHeader.appendChild(icoGrupo);  // ícono del grupo
+        grupoHeader.appendChild(labelGrupo); // nombre del grupo
+        cuerpo.appendChild(grupoHeader); // agregamos el encabezado al cuerpo
 
-        // Items de permisos
+        // Contenedor de los ítems de permisos del grupo actual
         const grid = document.createElement('div');
         grid.style.cssText = 'display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.5rem;';
 
+        // Iteramos sobre cada permiso dentro del grupo (ej: 'tasks.create', 'tasks.delete.all')
         grupos[grupo].forEach(function(permiso) {
-            const item = document.createElement('div');
+            const item = document.createElement('div'); // fila del permiso
             item.style.cssText = `
                 display:flex;align-items:center;gap:0.6rem;
                 padding:0.45rem 0.75rem;
                 border-radius:0.5rem;
-                background:#f8fafc;
-                border:1px solid #e2e8f0;
+                background:#f8fafc;        /* fondo gris muy claro */
+                border:1px solid #e2e8f0;  /* borde sutil */
                 transition:background 150ms;
             `;
+            // Efecto hover: el ítem se ilumina con el color del grupo al pasar el mouse
             item.addEventListener('mouseenter', () => { item.style.background='#f0f9ff'; item.style.borderColor=meta_g.color; });
             item.addEventListener('mouseleave', () => { item.style.background='#f8fafc'; item.style.borderColor='#e2e8f0'; });
 
+            // Círculo con check verde — indica que el permiso está activo para este rol
             const checkWrap = document.createElement('div');
             checkWrap.style.cssText = `
                 width:20px;height:20px;
-                background:${meta_g.color}18;
+                background:${meta_g.color}18; /* color del grupo al 9% de opacidad (sufijo '18' en hex) */
                 border-radius:50%;
                 display:flex;align-items:center;justify-content:center;
                 flex-shrink:0;
             `;
-            const icoCheck = document.createElement('i');
+            const icoCheck = document.createElement('i'); // ícono de check de Lucide
             icoCheck.setAttribute('data-lucide', 'check');
             icoCheck.style.cssText = `width:11px;height:11px;color:${meta_g.color};font-weight:700;`;
-            checkWrap.appendChild(icoCheck);
-            item.appendChild(checkWrap);
+            checkWrap.appendChild(icoCheck); // pegamos el check dentro del círculo
+            item.appendChild(checkWrap); // pegamos el círculo en la fila
 
-            const texto = document.createElement('code');
-            texto.textContent = permiso;
+            // Texto del permiso en formato monoespaciado (ej: tasks.create)
+            const texto = document.createElement('code'); // <code> usa fuente monoespaciada
+            texto.textContent = permiso; // texto del permiso (ej: 'tasks.create')
             texto.style.cssText = 'font-size:0.82rem;color:#1e293b;font-family:ui-monospace,monospace;flex:1;';
-            item.appendChild(texto);
+            item.appendChild(texto); // pegamos el texto en la fila
 
-            grid.appendChild(item);
+            grid.appendChild(item); // agregamos la fila al grid del grupo
         });
-        cuerpo.appendChild(grid);
+        cuerpo.appendChild(grid); // pegamos el grid completo del grupo en el cuerpo
     });
 
-    panel.appendChild(cuerpo);
+    panel.appendChild(cuerpo); // pegamos el cuerpo completo en el panel
 
-    // ── Pie ───────────────────────────────────────────────────────────────────
+    // ── Pie del modal — barra con botón Cerrar ───────────────────────────────
     const pie = document.createElement('div');
     pie.style.cssText = `
         padding:0.875rem 1.75rem;
-        background:#f8fafc;
-        border-top:1px solid #e2e8f0;
-        display:flex;justify-content:flex-end;
+        background:#f8fafc;              /* mismo gris que la barra de badge */
+        border-top:1px solid #e2e8f0;    /* línea divisora sobre el pie */
+        display:flex;justify-content:flex-end; /* botón alineado a la derecha */
     `;
     const btnOk = document.createElement('button');
-    btnOk.type = 'button';
-    btnOk.textContent = 'Cerrar';
+    btnOk.type = 'button'; // evitamos que envíe formularios
+    btnOk.textContent = 'Cerrar'; // texto del botón
     btnOk.style.cssText = `
-        background:${meta.color};
-        color:#fff;
+        background:${meta.color}; /* fondo del color del rol */
+        color:#fff;               /* texto blanco */
         border:none;
         border-radius:0.6rem;
         padding:0.5rem 1.5rem;
         font-size:0.875rem;
         font-weight:600;
         cursor:pointer;
-        transition:opacity 150ms;
+        transition:opacity 150ms; /* transición suave al pasar el mouse */
     `;
+    // Efecto hover: el botón se aclara ligeramente
     btnOk.addEventListener('mouseenter', () => { btnOk.style.opacity='0.85'; });
     btnOk.addEventListener('mouseleave', () => { btnOk.style.opacity='1'; });
-    btnOk.addEventListener('click', cerrar);
-    pie.appendChild(btnOk);
-    panel.appendChild(pie);
+    btnOk.addEventListener('click', cerrar); // al hacer clic, cerramos el modal
+    pie.appendChild(btnOk);   // pegamos el botón en el pie
+    panel.appendChild(pie);   // pegamos el pie en la parte inferior del panel
 
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
+    overlay.appendChild(panel);      // pegamos el panel dentro del overlay oscuro
+    document.body.appendChild(overlay); // insertamos todo el modal en el body de la página
+    // Activamos los íconos de Lucide que acabamos de insertar con data-lucide
     if (window.lucide) window.lucide.createIcons();
 }
 
+// Activa el panel de administrador: muestra usuarios, tareas, dashboard y auditoría
 export async function activarModoAdmin() {
+    // Ocultamos todas las pantallas antes de mostrar la del administrador
     ocultarTodo();
+    // Contraemos todas las cards para que el panel empiece ordenado
     contraerTodasLasCards();
+    // Mostramos el panel de admin quitando la clase 'hidden'
     vistaAdmin.classList.remove('hidden');
+    // Marcamos el modo actual para que los estilos de color azul del admin se apliquen
     document.body.dataset.modo = 'admin';
 
-    cargarDashboard();
-    cargarTablaUsuarios();
-    cargarTodasLasTareas();
-    await inicializarDropdownUsuarios();
+    cargarDashboard();           // llena las 6 tarjetas de contadores (total, pendientes, en progreso...)
+    cargarTablaUsuarios();       // llena la tabla de usuarios con todos los registros del sistema
+    cargarTodasLasTareas();      // llena la tabla de tareas con todas las tareas del sistema
+    await inicializarDropdownUsuarios(); // espera porque necesita la lista de usuarios para el dropdown
 
     const contenedorAuditoria = document.getElementById('auditoriaContenedor');
+    // renderizarAuditoria lee el log guardado en localStorage y lo muestra como lista cronológica
     if (contenedorAuditoria) renderizarAuditoria(contenedorAuditoria);
 
     const contenedorRoles = document.getElementById('rolesContenedor');
+    // renderizarDiccionarioRoles construye las 3 tarjetas de roles (Admin, Instructor, Estudiante)
     if (contenedorRoles) renderizarDiccionarioRoles(contenedorRoles);
 
     // ── SPA: hero + router + sidebar ─────────────────────────────────────────
@@ -931,20 +1077,24 @@ export async function activarModoAdmin() {
 }
 
 // ── ACTIVAR MODO INSTRUCTOR ───────────────────────────────────────────────────
-// Activa el panel de docente con paleta verde pastel.
-// El instructor tiene CRUD completo de tareas pero no puede gestionar usuarios.
-// Se llama desde main.js cuando role === 'instructor'.
+// Activa el panel del instructor con paleta de color verde.
+// El instructor puede gestionar tareas y calificar estudiantes, pero no administrar usuarios.
+// Se llama desde main.js cuando el rol del usuario logueado es 'instructor'.
 export async function activarModoInstructor() {
+    // Ocultamos todas las pantallas antes de mostrar la del instructor
     ocultarTodo();
-    contraerTodasLasCards(); // Issue 8a: garantizar cards contraídas al entrar
+    // Contraemos todas las cards para que el panel empiece ordenado
+    contraerTodasLasCards();
+    // Mostramos el panel de instructor quitando la clase 'hidden'
     vistaInstructor.classList.remove('hidden');
+    // Marcamos el modo actual para que los estilos de color verde del instructor se apliquen
     document.body.dataset.modo = 'instructor';
 
-    // Cargar datos en paralelo: no bloqueamos la UI mientras carga
+    // Cargamos los datos del panel en paralelo para no hacer esperar al instructor
     cargarDashboardInstructor();
     cargarTablaUsuariosInstructor();
     cargarTareasInstructor();
-    // Inicializar el dropdown de usuarios para la card "Crear Tarea" del instructor
+    // Inicializamos el dropdown de selección de usuarios para crear tareas
     await inicializarDropdownInstructor();
 
     // Montar el calendario del instructor (puede agregar eventos, soloLectura = false)
@@ -966,26 +1116,30 @@ export async function activarModoInstructor() {
     // Cargar el panel de calificación de tareas pendientes
     await cargarPanelCalificacion();
 
-    // Auto-refresh del panel de calificación.
-    // Se cancela el intervalo anterior antes de crear uno nuevo para
-    // evitar que se acumulen y causen recargas visuales no deseadas.
+    // Cancelamos cualquier intervalo de actualización automática anterior antes de crear uno nuevo
+    // Esto evita que se acumulen múltiples intervalos que causen recargas visuales inesperadas
     if (window._panelCalificacionInterval) {
         clearInterval(window._panelCalificacionInterval);
         window._panelCalificacionInterval = null;
     }
+    // Actualizamos el panel de calificación cada 10 segundos para mostrar entregas nuevas
     window._panelCalificacionInterval = setInterval(async function() {
         const vistaInstr = document.getElementById('vistaInstructor');
+        // Solo actualizamos si el panel del instructor está visible en pantalla
         const estaVisible = vistaInstr && !vistaInstr.classList.contains('hidden');
         if (estaVisible) {
-            // Issue 8b: no recargar el panel si el instructor está escribiendo en el input de nota
+            // No recargamos el panel si el instructor está escribiendo la nota en ese momento
+            // para evitar que el campo se limpie mientras el instructor teclea
             const focoEnNota = document.activeElement &&
                 document.activeElement.classList.contains('panel-cal__input-nota');
             if (!focoEnNota) {
                 await cargarPanelCalificacion();
             }
+            // Actualizamos también el dashboard y la tabla de estudiantes
             cargarDashboardInstructor();
             cargarTablaUsuariosInstructor();
         } else {
+            // Si el panel ya no está visible, cancelamos el intervalo para no gastar recursos
             clearInterval(window._panelCalificacionInterval);
             window._panelCalificacionInterval = null;
         }
@@ -1013,9 +1167,9 @@ export async function activarModoInstructor() {
     if (window.lucide) window.lucide.createIcons();
 }
 
-// calcularRendimiento — determina el nivel de rendimiento y el estado resultante
-// según la nota asignada por el instructor.
-// Retorna: { estado, rendimiento, color, bg, icono }
+// Determina el nivel de rendimiento de un estudiante según la nota asignada
+// Retorna un objeto con el estado (completada/reprobada), el nivel de rendimiento,
+// y los colores de fondo y texto para mostrar visualmente en el sistema
 function calcularRendimiento(nota) {
     if (nota < 70) {
         return {
@@ -1047,11 +1201,11 @@ function calcularRendimiento(nota) {
     }
 }
 
-// Página activa del panel de calificación — persiste entre llamadas del intervalo
+// Número de la página actualmente visible en el panel de calificación (se mantiene entre actualizaciones)
 let _paginaCalificacion = 1;
 
-// cargarPanelCalificacion — lista las tareas con status=pendiente_aprobacion
-// para que el instructor las apruebe con una nota del 0 al 100
+// Muestra las tareas con estado "pendiente_aprobacion" para que el instructor las califique.
+// Cada tarjeta tiene un campo para ingresar la nota (0-100) y un preview del resultado en tiempo real.
 async function cargarPanelCalificacion() {
     const panel = document.getElementById('instrPanelCalificacion');
     if (!panel) return;
@@ -1218,18 +1372,21 @@ async function cargarPanelCalificacion() {
             todasLasCards.push(card);
         });
 
-        // Renderiza la página actual de cards (3 por página) con controles de paginación
+        // Renderiza la página actual de cards (3 por página) con controles de paginación.
+        // Se llama al cargar el panel y al calificar una tarea (para actualizar la vista).
         function _renderPagina() {
+            // Eliminamos la lista y la paginación anteriores antes de redibujar
             const viejaLista = panel.querySelector('.panel-cal__lista');
             const viejaPag   = panel.querySelector('.panel-cal__paginacion');
-            if (viejaLista) panel.removeChild(viejaLista);
-            if (viejaPag)   panel.removeChild(viejaPag);
+            if (viejaLista) panel.removeChild(viejaLista); // quitamos la lista de cards
+            if (viejaPag)   panel.removeChild(viejaPag);   // quitamos los controles de paginación
 
+            // Si ya no quedan cards (todas fueron calificadas), mostramos el mensaje de celebración
             if (todasLasCards.length === 0) {
                 const vacioWrap = document.createElement('div');
-                vacioWrap.className = 'panel-cal__vacio';
+                vacioWrap.className = 'panel-cal__vacio'; // centrado con padding
                 const icVacio = document.createElement('div');
-                icVacio.textContent = '🎉';
+                icVacio.textContent = '🎉'; // emoji de celebración — todas las entregas revisadas
                 icVacio.style.cssText = 'font-size:2.5rem;margin-bottom:0.5rem;';
                 const txVacio = document.createElement('p');
                 txVacio.textContent = 'Todas las entregas han sido revisadas';
@@ -1237,44 +1394,53 @@ async function cargarPanelCalificacion() {
                 vacioWrap.appendChild(icVacio);
                 vacioWrap.appendChild(txVacio);
                 panel.appendChild(vacioWrap);
-                return;
+                return; // salimos — no hay más que mostrar
             }
 
-            const totalPaginas = Math.ceil(todasLasCards.length / CARDS_POR_PAGINA);
+            // Calculamos el total de páginas necesarias
+            const totalPaginas = Math.ceil(todasLasCards.length / CARDS_POR_PAGINA); // ej: 7 cards → 3 páginas
+            // Si la página actual supera el total (por calificar tareas), retrocedemos a la última
             if (_paginaCalificacion > totalPaginas) _paginaCalificacion = totalPaginas;
 
+            // Índice del primer elemento de la página actual (página 1 → índice 0)
             const inicio = (_paginaCalificacion - 1) * CARDS_POR_PAGINA;
+            // Contenedor que agrupa las cards de la página actual
             const lista = document.createElement('div');
-            lista.className = 'panel-cal__lista';
+            lista.className = 'panel-cal__lista'; // flex column con gap entre cards
+            // Cortamos el arreglo para mostrar solo las cards de esta página
             todasLasCards.slice(inicio, inicio + CARDS_POR_PAGINA).forEach(function(c) {
-                lista.appendChild(c);
+                lista.appendChild(c); // pegamos cada card en la lista
             });
-            panel.appendChild(lista);
+            panel.appendChild(lista); // pegamos la lista en el panel
 
+            // Solo mostramos los controles de paginación si hay más de una página
             if (totalPaginas > 1) {
                 const paginacion = document.createElement('div');
-                paginacion.className = 'panel-cal__paginacion';
+                paginacion.className = 'panel-cal__paginacion'; // flex row centrado con los 3 controles
 
+                // Botón ← para ir a la página anterior
                 const btnPrev = document.createElement('button');
                 btnPrev.className = 'panel-cal__pag-btn';
                 btnPrev.textContent = '←';
-                btnPrev.disabled = _paginaCalificacion === 1;
+                btnPrev.disabled = _paginaCalificacion === 1; // desactivado si estamos en la primera página
                 btnPrev.addEventListener('click', function() { _paginaCalificacion--; _renderPagina(); });
 
+                // Indicador de página actual (ej: "2 / 3")
                 const indicador = document.createElement('span');
                 indicador.className = 'panel-cal__pag-indicador';
                 indicador.textContent = _paginaCalificacion + ' / ' + totalPaginas;
 
+                // Botón → para ir a la página siguiente
                 const btnNext = document.createElement('button');
                 btnNext.className = 'panel-cal__pag-btn';
                 btnNext.textContent = '→';
-                btnNext.disabled = _paginaCalificacion === totalPaginas;
+                btnNext.disabled = _paginaCalificacion === totalPaginas; // desactivado en la última página
                 btnNext.addEventListener('click', function() { _paginaCalificacion++; _renderPagina(); });
 
-                paginacion.appendChild(btnPrev);
-                paginacion.appendChild(indicador);
-                paginacion.appendChild(btnNext);
-                panel.appendChild(paginacion);
+                paginacion.appendChild(btnPrev);     // ← a la izquierda
+                paginacion.appendChild(indicador);   // "X / Y" en el centro
+                paginacion.appendChild(btnNext);     // → a la derecha
+                panel.appendChild(paginacion);       // pegamos la barra de paginación en el panel
             }
         }
 
@@ -1288,35 +1454,39 @@ async function cargarPanelCalificacion() {
     }
 }
 
-// cargarDashboardInstructor — actualiza las tarjetas de estadísticas del panel instructor.
-// FILTRO: solo cuenta tareas asignadas a estudiantes (role=user), no de admins ni otros instructores.
+// Actualiza las tarjetas de estadísticas del panel del instructor con datos frescos del servidor.
+// Solo cuenta las tareas asignadas a estudiantes (rol=user), no las de admins ni otros instructores.
 async function cargarDashboardInstructor() {
+    // Pedimos tareas y usuarios al mismo tiempo con Promise.all para no hacer dos esperas seguidas
     const [todasTareas, todosUsuarios] = await Promise.all([
-        obtenerTodasLasTareas(),
-        obtenerTodosLosUsuarios(),
+        obtenerTodasLasTareas(),    // GET /api/tasks — todas las tareas del sistema
+        obtenerTodosLosUsuarios(),  // GET /api/users — todos los usuarios del sistema
     ]);
-    if (!todasTareas || !todosUsuarios) return;
+    if (!todasTareas || !todosUsuarios) return; // si alguna petición falló, no actualizamos nada
 
-    // Solo IDs de estudiantes (role=user)
+    // Construimos un Set de IDs solo de estudiantes (role='user'), excluyendo admins e instructores
     const idsEstudiantes = new Set(
         todosUsuarios.filter(u => u.role === 'user').map(u => u.id)
     );
 
-    // Solo tareas con al menos un estudiante asignado
+    // Filtramos solo las tareas que tienen asignado al menos un estudiante
+    // assignedUsers es un arreglo de IDs (números) — buscamos intersección con el Set de estudiantes
     const tareas = todasTareas.filter(t =>
         Array.isArray(t.assignedUsers) && t.assignedUsers.some(id => idsEstudiantes.has(Number(id)))
     );
 
+    // Referencias a los elementos del DOM donde se escriben los contadores de las tarjetas
     const el = {
-        total:      document.getElementById('instrDashTotal'),
-        pendiente:  document.getElementById('instrDashPendiente'),
-        progreso:   document.getElementById('instrDashProgreso'),
-        aprobacion: document.getElementById('instrDashAprobacion'),
-        completada: document.getElementById('instrDashCompletada'),
-        reprobada:  document.getElementById('instrDashReprobada'),
+        total:      document.getElementById('instrDashTotal'),      // tarjeta gris: total
+        pendiente:  document.getElementById('instrDashPendiente'),  // tarjeta amarilla: pendientes
+        progreso:   document.getElementById('instrDashProgreso'),   // tarjeta azul: en progreso
+        aprobacion: document.getElementById('instrDashAprobacion'), // tarjeta naranja: por aprobar
+        completada: document.getElementById('instrDashCompletada'), // tarjeta verde: completadas
+        reprobada:  document.getElementById('instrDashReprobada'),  // tarjeta roja: reprobadas
     };
 
-    if (el.total)      el.total.textContent      = tareas.length;
+    // Escribimos el conteo en cada tarjeta usando .filter para contar por estado
+    if (el.total)      el.total.textContent      = tareas.length; // total sin filtrar por estado
     if (el.pendiente)  el.pendiente.textContent   = tareas.filter(t => t.status === 'pendiente').length;
     if (el.progreso)   el.progreso.textContent    = tareas.filter(t => t.status === 'en_progreso').length;
     if (el.aprobacion) el.aprobacion.textContent  = tareas.filter(t => t.status === 'pendiente_aprobacion').length;
@@ -1324,9 +1494,8 @@ async function cargarDashboardInstructor() {
     if (el.reprobada)  el.reprobada.textContent   = tareas.filter(t => t.status === 'reprobada').length;
 }
 
-// cargarTablaUsuariosInstructor — llena la tabla de usuarios del panel instructor.
-// DIFERENCIA con cargarTablaUsuarios (admin): aquí los botones de acción son
-// SOLO "Ver / Asignar" — sin Editar, sin Cambiar Rol, sin Eliminar.
+// Llena la tabla de estudiantes del panel del instructor con datos actualizados.
+// A diferencia del admin, aquí solo se muestra el botón "Ver" — sin editar, cambiar rol ni eliminar.
 async function cargarTablaUsuariosInstructor() {
     const tbody = document.getElementById('instrUsersTableBody');
     if (!tbody) return;
@@ -1452,8 +1621,8 @@ async function cargarTablaUsuariosInstructor() {
     if (window.lucide) window.lucide.createIcons();
 }
 
-// aplicarFiltrosInstructor — filtra la tabla de tareas del instructor por estado, usuario y orden.
-// Solo muestra tareas asignadas a estudiantes (role=user).
+// Filtra y reordena la tabla de tareas del instructor según los selectores de estado, usuario y orden.
+// Solo muestra tareas que tienen al menos un estudiante (role=user) asignado.
 async function aplicarFiltrosInstructor() {
     const tbody = document.getElementById('instrTasksTableBody');
     if (!tbody) return;
@@ -1507,8 +1676,8 @@ async function aplicarFiltrosInstructor() {
     if (window.lucide) window.lucide.createIcons();
 }
 
-// cargarTareasInstructor — llena la tabla de tareas del panel instructor.
-// Es equivalente a cargarTodasLasTareas del admin pero usa los IDs del instructor.
+// Llena la tabla de tareas del panel instructor con todas las tareas de estudiantes.
+// Es el equivalente de cargarTodasLasTareas del admin, pero filtrado solo para estudiantes.
 async function cargarTareasInstructor() {
     const tbody = document.getElementById('instrTasksTableBody');
     if (!tbody) return;
@@ -1543,8 +1712,8 @@ async function cargarTareasInstructor() {
     if (window.lucide) window.lucide.createIcons();
 }
 
-// formatearUsuariosDisplay — muestra el primer nombre y "+N" si hay más
-// assignedUsersDisplay es un string "Nombre1, Nombre2, Nombre3"
+// Formatea la cadena de usuarios asignados para mostrar solo el primero y "+N" si hay más
+// Parámetro displayStr: texto con los nombres separados por coma (ej: "Ana, Luis, María")
 function formatearUsuariosDisplay(displayStr) {
     if (!displayStr) return '—';
     const nombres = displayStr.split(', ');
@@ -1553,7 +1722,7 @@ function formatearUsuariosDisplay(displayStr) {
 }
 
 // ── CELDA DE DESCRIPCIÓN CON TRUNCADO ─────────────────────────────────────────
-// Siempre muestra el botón "Ver tarea". El texto se trunca con CSS a 2 líneas.
+// Crea la celda de descripción con el texto truncado y un botón "Ver tarea" siempre visible.
 function crearCeldaDescripcion(tarea) {
     const celda = document.createElement('td');
     celda.style.maxWidth = '0'; // necesario para que el ellipsis funcione en table-layout
@@ -1582,9 +1751,9 @@ function crearCeldaDescripcion(tarea) {
     return celda;
 }
 
-// abrirModalVerTarea — abre el modal de solo lectura con los datos de la tarea
-// Muestra: título, descripción, estado, comentario, nota (grade), usuarios asignados.
-// Si la tarea está completada y no tiene nota → muestra "Sin calificar".
+// Abre el modal de solo lectura con toda la información de una tarea.
+// Muestra título, descripción, estado, nota del instructor y usuarios asignados.
+// Si la tarea ya fue calificada muestra la nota con su nivel de rendimiento; si no, "Sin calificar".
 async function abrirModalVerTarea(tareaInicial) {
     const modal = document.getElementById('verTareaModal');
     if (!modal) return;
@@ -1649,9 +1818,8 @@ async function abrirModalVerTarea(tareaInicial) {
     modal.classList.remove('hidden');
 }
 
-// crearFilaTareaInstructor — construye una fila de la tabla de tareas del instructor.
-// El instructor puede Editar y Eliminar tareas (CRUD completo).
-// Sigue el mismo patrón de crearFilaTareaAdmin.
+// Construye y retorna un elemento <tr> con los datos de una tarea para el panel del instructor.
+// El instructor puede editar y eliminar tareas — tiene CRUD completo sobre tareas.
 function crearFilaTareaInstructor(tarea, indice) {
     const fila = document.createElement('tr');
     fila.dataset.id = tarea.id;
@@ -1665,14 +1833,11 @@ function crearFilaTareaInstructor(tarea, indice) {
     const celdaDesc = crearCeldaDescripcion(tarea);
 
     const celdaEstado = document.createElement('td');
-    // Construir el badge de estado con los mismos colores que el panel admin
-    // CORRECCIÓN: la clase CSS es 'status-pendiente', 'status-completada', etc.
-    // No 'status-badge--pendiente' — ese era el bug que causaba que no se vieran los colores
+    // Creamos el badge de estado visual con las dos clases necesarias para que tenga color
     const badgeEstado = document.createElement('span');
-    // Dos clases: status-badge (estilos base del badge) y status-${tarea.status} (color específico)
-    // Esto es exactamente lo mismo que hace crearFilaTareaAdmin — mantiene coherencia visual
+    // La clase 'status-badge' da la forma base del badge y 'status-X' le da el color según el estado
     badgeEstado.classList.add('status-badge', `status-${tarea.status}`);
-    // Usar la misma función formatearEstado que usa el admin para el texto del badge
+    // Convertimos el valor técnico (ej: "en_progreso") al texto legible (ej: "En Progreso")
     badgeEstado.textContent = formatearEstado(tarea.status);
     celdaEstado.appendChild(badgeEstado);
 
@@ -1728,8 +1893,8 @@ function crearFilaTareaInstructor(tarea, indice) {
     return fila;
 }
 
-// actualizarFilaTareaInstructor — actualiza la fila del instructor en-place.
-// Sin reconstruir la tabla completa — evita el parpadeo visual.
+// Actualiza los datos de una fila existente en la tabla del instructor sin reconstruirla completa.
+// Esto evita el parpadeo visual que ocurre cuando se vacía y vuelve a llenar toda la tabla.
 function actualizarFilaTareaInstructor(tarea) {
     const tbody = document.getElementById('instrTasksTableBody');
     if (!tbody) return false;
@@ -1757,8 +1922,8 @@ function actualizarFilaTareaInstructor(tarea) {
     return true;
 }
 
-// inicializarDropdownInstructor — carga los usuarios en el dropdown de la card Crear Tarea del instructor.
-// Usa los IDs instrUsuariosDropdown*, distintos a los del admin para coexistir en el DOM.
+// Carga la lista de estudiantes en el dropdown de selección de la card "Crear Tarea" del instructor.
+// Usa IDs propios (instrUsuariosDropdown*) distintos a los del admin para coexistir sin conflictos.
 async function inicializarDropdownInstructor() {
     const panel = document.getElementById('instrUsuariosDropdownPanel');
     const btn   = document.getElementById('instrUsuariosDropdownBtn');
@@ -1860,9 +2025,8 @@ async function inicializarDropdownInstructor() {
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 
-// Carga las estadísticas del dashboard desde el backend y las muestra en pantalla.
-// GET /api/tasks/dashboard → { total, pendientes, enProgreso, aprobacion, completadas }
-// ACTUALIZACIÓN v3.4.0: se agrega el elemento dashboardAprobacion para pendiente_aprobacion.
+// Carga las estadísticas del dashboard del administrador desde el servidor.
+// Llama a GET /api/tasks/dashboard que retorna los conteos por estado de todas las tareas.
 async function cargarDashboard() {
     const data = await obtenerDashboard();
     if (!data) return;
@@ -1886,6 +2050,7 @@ async function cargarDashboard() {
 
 // ── TABLA USUARIOS ────────────────────────────────────────────────────────────
 
+// Carga todos los usuarios del sistema desde el servidor y los muestra en la tabla del admin
 export async function cargarTablaUsuarios() {
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) return;
@@ -1928,85 +2093,100 @@ export async function cargarTablaUsuarios() {
 }
 
 
-// confirmarEliminarTarea — modal DOM nativo estilo admin para confirmar eliminación
+// Muestra un modal de confirmación antes de eliminar una tarea de forma permanente.
+// Parámetro tituloTarea: el nombre de la tarea para mostrar en el mensaje de confirmación.
+// Retorna una promesa que resuelve en true (confirmar) o false (cancelar).
+// Esta función retorna una Promesa — el caller usa `await` para esperar la decisión del usuario.
+// La promesa resuelve en `true` (el usuario confirmó) o `false` (el usuario canceló).
 function confirmarEliminarTarea(tituloTarea) {
     return new Promise(function(resolve) {
+        // ── Overlay — fondo oscuro que cubre todo el panel mientras el modal está abierto ──
         const overlay = document.createElement('div');
-        overlay.className = 'modal-usuario-overlay';
-        overlay.style.zIndex = '9999';
+        overlay.className = 'modal-usuario-overlay'; // fondo semitransparente
+        overlay.style.zIndex = '9999'; // encima de cualquier otro elemento de la página
 
+        // ── Panel — caja blanca del modal de confirmación ────────────────────
         const panel = document.createElement('div');
-        panel.className = 'modal-usuario';
+        panel.className = 'modal-usuario'; // clase CSS del modal estándar del sistema
         panel.style.cssText = 'max-width:420px;padding:0;overflow:hidden;';
 
-        // Header igual al modal-admin — borde rojo inferior
+        // ── Header: título “Eliminar tarea” + borde rojo ──────────────────────
         const header = document.createElement('div');
         header.className = 'modal-usuario__header';
-        header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:2px solid #ef4444;';
+        header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:2px solid #ef4444;'; // borde rojo = acción destructiva
         const tituloEl = document.createElement('h3');
-        tituloEl.textContent = 'Eliminar tarea';
+        tituloEl.textContent = 'Eliminar tarea'; // título del modal
         tituloEl.style.cssText = 'font-size:1.1rem;font-weight:700;color:var(--texto-oscuro);margin:0;';
         const btnX = document.createElement('button');
-        btnX.className = 'modal-usuario__cerrar';
+        btnX.className = 'modal-usuario__cerrar'; // botón X en la esquina superior derecha
         btnX.innerHTML = '✕';
-        btnX.addEventListener('click', function() { cerrar(false); });
+        btnX.addEventListener('click', function() { cerrar(false); }); // X cancela la operación
         header.appendChild(tituloEl);
         header.appendChild(btnX);
-        panel.appendChild(header);
+        panel.appendChild(header); // pegamos el header en el panel
 
-        // Cuerpo centrado con ícono Lucide y descripción
+        // ── Cuerpo: ícono de papelera + mensaje de advertencia ──────────────
         const cuerpo = document.createElement('div');
         cuerpo.style.cssText = 'padding:1.5rem;display:flex;flex-direction:column;align-items:center;gap:1rem;text-align:center;';
+        // Círculo rojo semitransparente que envuelve el ícono de papelera
         const iconoWrap = document.createElement('div');
         iconoWrap.style.cssText = 'width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;';
         const icono = document.createElement('i');
-        icono.setAttribute('data-lucide', 'trash-2');
-        icono.style.cssText = 'width:26px;height:26px;stroke:#ef4444;fill:none;';
-        iconoWrap.appendChild(icono);
+        icono.setAttribute('data-lucide', 'trash-2'); // ícono de papelera de Lucide
+        icono.style.cssText = 'width:26px;height:26px;stroke:#ef4444;fill:none;'; // trazo rojo, sin relleno
+        iconoWrap.appendChild(icono); // papelera dentro del círculo
         cuerpo.appendChild(iconoWrap);
+        // Párrafo con el título de la tarea en negrita y el aviso de acción irreversible
         const desc = document.createElement('p');
-        desc.innerHTML = '<strong style="color:var(--texto-oscuro)">“' + tituloTarea + '”</strong><br><span style="color:var(--texto-medio);font-size:0.875rem;">será eliminada permanentemente. Esta acción no se puede deshacer.</span>';
+        desc.innerHTML = '<strong style=”color:var(--texto-oscuro)”>”' + tituloTarea + '”</strong><br><span style=”color:var(--texto-medio);font-size:0.875rem;”>será eliminada permanentemente. Esta acción no se puede deshacer.</span>';
         desc.style.cssText = 'margin:0;line-height:1.6;';
         cuerpo.appendChild(desc);
-        panel.appendChild(cuerpo);
+        panel.appendChild(cuerpo); // pegamos el cuerpo en el panel
 
-        // Footer con botones y hover
+        // ── Footer: botones Cancelar y Confirmar ────────────────────────────
         const footer = document.createElement('div');
-        footer.style.cssText = 'display:flex;gap:0.75rem;padding:1rem 1.5rem 1.5rem;border-top:1px solid var(--borde-suave);';
+        footer.style.cssText = 'display:flex;gap:0.75rem;padding:1rem 1.5rem 1.5rem;border-top:1px solid var(--borde-suave);'; // flex row con los dos botones
 
+        // Botón Cancelar — gris, no elimina nada
         const btnCancelar = document.createElement('button');
         btnCancelar.textContent = 'Cancelar';
         btnCancelar.type = 'button';
         btnCancelar.style.cssText = 'flex:1;height:42px;border:none;cursor:pointer;border-radius:var(--radio-full);background:var(--fondo-gris);color:var(--texto-medio);font-size:0.875rem;font-weight:600;transition:background 0.15s,transform 0.1s;';
+        // Efectos hover: el botón sube ligeramente al pasar el mouse
         btnCancelar.addEventListener('mouseenter', function() { this.style.background='var(--borde-suave)'; this.style.transform='translateY(-1px)'; });
         btnCancelar.addEventListener('mouseleave', function() { this.style.background='var(--fondo-gris)'; this.style.transform='translateY(0)'; });
-        btnCancelar.addEventListener('click', function() { cerrar(false); });
+        btnCancelar.addEventListener('click', function() { cerrar(false); }); // resuelve la promesa con false
 
+        // Botón Confirmar — gradiente rojo, confirma la eliminación
         const btnConfirmar = document.createElement('button');
         btnConfirmar.textContent = 'Sí, eliminar';
         btnConfirmar.type = 'button';
         btnConfirmar.style.cssText = 'flex:1;height:42px;border:none;cursor:pointer;border-radius:var(--radio-full);background:linear-gradient(135deg,#ef4444,#dc2626);color:white;font-size:0.875rem;font-weight:600;transition:opacity 0.15s,transform 0.1s;';
+        // Efectos hover: el botón se aclara y sube ligeramente
         btnConfirmar.addEventListener('mouseenter', function() { this.style.opacity='0.88'; this.style.transform='translateY(-1px)'; });
         btnConfirmar.addEventListener('mouseleave', function() { this.style.opacity='1'; this.style.transform='translateY(0)'; });
-        btnConfirmar.addEventListener('click', function() { cerrar(true); });
+        btnConfirmar.addEventListener('click', function() { cerrar(true); }); // resuelve la promesa con true
 
-        footer.appendChild(btnCancelar);
-        footer.appendChild(btnConfirmar);
-        panel.appendChild(footer);
-        overlay.appendChild(panel);
-        document.body.appendChild(overlay);
+        footer.appendChild(btnCancelar);  // Cancelar a la izquierda
+        footer.appendChild(btnConfirmar); // Sí, eliminar a la derecha
+        panel.appendChild(footer);        // pegamos el footer en el panel
+        overlay.appendChild(panel);       // pegamos el panel dentro del overlay
+        document.body.appendChild(overlay); // insertamos todo el modal en el body
 
+        // Activamos el ícono de papelera que acabamos de insertar con data-lucide
         if (window.lucide) window.lucide.createIcons();
 
+        // Función interna que cierra el modal y resuelve la promesa con el resultado
         function cerrar(resultado) {
-            if (overlay.parentNode) document.body.removeChild(overlay);
-            resolve(resultado);
+            if (overlay.parentNode) document.body.removeChild(overlay); // eliminamos el modal del DOM
+            resolve(resultado); // resultado=true → confirmó eliminar; resultado=false → canceló
         }
+        // Hacer clic en el fondo oscuro (fuera del panel) también cancela
         overlay.addEventListener('click', function(e) { if (e.target === overlay) cerrar(false); });
     });
 }
 
-// crearBadgeRol — badge visual con el nombre y color del rol del usuario
+// Crea y retorna un badge visual con el nombre del rol del usuario (Admin, Instructor, Estudiante)
 function crearBadgeRol(rol) {
     const badge = document.createElement('span');
     badge.className = 'status-badge';
@@ -2020,7 +2200,7 @@ function crearBadgeRol(rol) {
     return badge;
 }
 
-// crearBadgeEstado — badge verde (Activo) o rojo (Inactivo) según is_active
+// Crea y retorna un badge verde con "Activo" o rojo con "Inactivo" según el estado del usuario
 function crearBadgeEstado(isActive) {
     const badge = document.createElement('span');
     badge.className = 'status-badge';
@@ -2034,7 +2214,11 @@ function crearBadgeEstado(isActive) {
     return badge;
 }
 
-// crearBotonIcono — botón circular 32x32 con ícono Lucide para la tabla de usuarios
+// Crea y retorna un botón circular con ícono Lucide para las tablas de usuarios y tareas
+// Parámetro nombreIcono: nombre del ícono Lucide (ej: "pencil", "trash-2", "eye")
+// Parámetro tooltip: texto que aparece al pasar el cursor sobre el botón
+// Parámetro claseColor: clase CSS que define el color del botón (ej: "btn-accion--rojo")
+// Parámetro handler: función que se ejecuta al hacer clic en el botón
 function crearBotonIcono(nombreIcono, tooltip, claseColor, handler) {
     const btn = document.createElement('button');
     btn.className = `btn-accion-icono ${claseColor}`;
@@ -2048,12 +2232,8 @@ function crearBotonIcono(nombreIcono, tooltip, claseColor, handler) {
     return btn;
 }
 
-// Construye una fila de la tabla de usuarios del panel admin
-// Ahora incluye tres botones: Ver/Asignar, Editar y Eliminar
-// Parámetros:
-//   usuario — objeto del usuario a representar
-//   indice  — posición en la lista (para el # correlativo)
-// crearFilaUsuario — columnas: # | Nombre | Documento | Correo | Rol | Estado | Acciones
+// Construye y retorna una fila <tr> completa con los datos de un usuario para el panel admin.
+// Columnas: ID | Nombre | Documento | Correo | Rol | Estado | Acciones (Ver, Editar, Cambiar rol, Activar/Desactivar, Eliminar)
 function crearFilaUsuario(usuario, indice) {
     const fila = document.createElement('tr');
 
@@ -2132,7 +2312,8 @@ function crearFilaUsuario(usuario, indice) {
     return fila;
 }
 
-// abrirDropdownRol — modal de selección de rol (reemplaza el dropdown inline anterior)
+// Abre un modal con las opciones de rol disponibles para cambiar el rol del usuario.
+// Muestra tres tarjetas: Estudiante, Instructor y Administrador; la actual está desactivada.
 function abrirDropdownRol(usuario, filaEl) {
     // Cerrar modal de rol si ya existe
     const anteriorOverlay = document.getElementById('modalCambiarRolOverlay');
@@ -2291,8 +2472,8 @@ function abrirDropdownRol(usuario, filaEl) {
 
 // ── MODAL EDITAR USUARIO ──────────────────────────────────────────────────────
 
-// Abre un modal rediseñado (v2) para editar los datos de un usuario
-// (nombre, correo, documento). Incluye avatar, botón X y diseño consistente con modal-v2.
+// Abre el modal para editar los datos básicos de un usuario: documento, nombre y correo.
+// Solo el administrador puede editar usuarios. El instructor solo puede verlos.
 async function abrirModalEditarUsuario(usuario) {
     cerrarModalEditarUsuarioExistente();
 
@@ -2432,19 +2613,22 @@ async function abrirModalEditarUsuario(usuario) {
     });
 }
 
+// Cierra el modal de edición de usuario si está abierto y vuelve a la ruta anterior
 function cerrarModalEditarUsuarioExistente() {
+    // Buscamos el overlay del modal de edición por su ID único
     const existing = document.getElementById('modalEditarUsuarioOverlay');
     if (existing) {
+        // Eliminamos el modal del DOM completamente
         existing.remove();
+        // Si la URL actual apunta a la ruta de editar usuario, volvemos a la ruta anterior
         if (window.location.hash.slice(1).startsWith(RUTAS.ADMIN.EDITAR_USUARIO)) volverDeModal();
     }
 }
 
 // ── DASHBOARD LOCAL ──────────────────────────────────────────────────────────
-// Recalcula los contadores del dashboard usando todasLasTareas en memoria,
-// sin hacer ninguna petición al servidor.
-// Se usa después de editar o eliminar una tarea para reflejar el cambio de inmediato.
-// ACTUALIZACIÓN v3.4.0: incluye el contador de pendiente_aprobacion.
+// Recalcula y actualiza los contadores del dashboard usando las tareas en memoria,
+// sin hacer ninguna petición al servidor. Se usa tras editar o eliminar una tarea
+// para que el cambio se refleje de inmediato sin esperar al backend.
 function actualizarDashboardLocal() {
     const el = {
         total:      document.getElementById('dashboardTotal'),
@@ -2472,15 +2656,20 @@ function actualizarDashboardLocal() {
 
 // ── TABLA TAREAS ADMIN ────────────────────────────────────────────────────────
 
-// Fuente de verdad del admin: todas las tareas sin filtrar
+// Arreglo en memoria que guarda todas las tareas del sistema sin ningún filtro aplicado.
+// Se actualiza con cargarTodasLasTareas y se filtra con aplicarFiltrosAdmin.
 let todasLasTareas = [];
 
+// Carga todas las tareas del servidor y las muestra en la tabla del admin aplicando filtros
 export async function cargarTodasLasTareas() {
+    // Obtenemos todas las tareas del backend y las guardamos en la variable local
     const tareas = await obtenerTodasLasTareas();
     todasLasTareas = tareas || [];
+    // Aplicamos los filtros activos para actualizar la vista de la tabla
     aplicarFiltrosAdmin();
 }
 
+// Filtra y muestra las tareas del admin según el estado, el usuario y el orden seleccionados
 export function aplicarFiltrosAdmin() {
     const tbody         = document.getElementById('adminTasksTableBody');
     const contadorEl    = document.getElementById('adminTasksCount');
@@ -2523,9 +2712,9 @@ export function aplicarFiltrosAdmin() {
     if (window.lucide) window.lucide.createIcons();
 }
 
-// Convierte el valor técnico del estado a texto legible en español.
-// Se usa en la tabla de tareas del panel admin.
-// ACTUALIZACIÓN v3.4.0: incluye el cuarto estado pendiente_aprobacion.
+// Convierte el valor técnico del estado de una tarea al texto legible en español.
+// Parámetro estado: valor interno como "en_progreso" o "pendiente_aprobacion"
+// Retorna el texto que se muestra en los badges de estado de la interfaz
 function formatearEstado(estado) {
     const mapa = {
         pendiente:            'Pendiente',
@@ -2539,8 +2728,9 @@ function formatearEstado(estado) {
     return mapa[estado] || estado;
 }
 
-// Abre el modal de edición compartido para una tarea del panel admin.
-// Al guardar, recarga la tabla de tareas y el dashboard.
+// Abre el modal de edición de tareas para el administrador.
+// El admin puede editar título, descripción, estado y comentario, pero no puede calificar.
+// Al guardar con éxito, actualiza la tabla y el dashboard sin recargar toda la página.
 function manejarEdicionTareaAdmin(tarea) {
     mostrarModalEdicion(tarea, false, 'admin');
 
@@ -2673,12 +2863,9 @@ function manejarEdicionTareaAdmin(tarea) {
     _activeEditHandler = guardarCambiosAdmin;
     formulario.addEventListener('submit', guardarCambiosAdmin);
 }
-// manejarEdicionTareaInstructor — abre el modal compartido de edición para el instructor.
-// Diferencia con manejarEdicionTareaAdmin:
-//   - Muestra los campos de nota (grade) y motivo de edición de nota
-//   - Al guardar, recarga cargarTareasInstructor() y cargarDashboardInstructor()
-//   - No actualiza todasLasTareas (esa variable es privada del panel admin)
-// Usa el mismo modal editModal y el mismo formulario editTaskForm del index.html.
+// Abre el modal de edición de tareas para el instructor.
+// A diferencia del admin, el instructor puede también editar la nota (grade) y el motivo.
+// Al guardar, recarga las tablas del instructor y el panel de calificación.
 function manejarEdicionTareaInstructor(tarea) {
     mostrarModalEdicion(tarea, false, 'instructor');
 
@@ -2851,18 +3038,24 @@ function manejarEdicionTareaInstructor(tarea) {
     formulario.addEventListener('submit', guardarCambiosInstructor);
 }
 
+// Construye y retorna un elemento <tr> con los datos de una tarea para el panel del admin.
+// Columnas: ID | Título | Descripción | Estado | Usuario asignado | Fecha | Acciones (Editar, Eliminar)
 function crearFilaTareaAdmin(tarea, indice) {
     const fila = document.createElement('tr');
 
+    // Celda del número identificador de la tarea en la base de datos
     const celdaNum = document.createElement('td');
     celdaNum.textContent = tarea.id;
 
+    // Celda del título de la tarea
     const celdaTitulo = document.createElement('td');
     celdaTitulo.textContent = tarea.title;
 
+    // Celda de descripción con texto truncado y botón "Ver tarea"
     const celdaDesc = crearCeldaDescripcion(tarea);
 
     const celdaEstado = document.createElement('td');
+    // Badge de color que muestra el estado actual de la tarea
     const badge = document.createElement('span');
     badge.classList.add('status-badge', `status-${tarea.status}`);
     badge.textContent = formatearEstado(tarea.status);
@@ -2922,9 +3115,11 @@ function crearFilaTareaAdmin(tarea, indice) {
 }
 
 // ── MODAL USUARIO (admin e instructor) ───────────────────────────────────────
-// Rediseño v2: layout en dos columnas con header de avatar, sección de tareas
-// con scroll propio y formulario de asignación más compacto y visual.
+// Muestra un modal con el perfil del usuario seleccionado y sus tareas asignadas.
+// En la columna izquierda aparecen las tareas; en la derecha, el formulario para asignar nuevas.
+// Es compartido por admin e instructor, adaptando el color del botón según el rol activo.
 
+// Abre el modal de perfil de usuario con sus tareas y el formulario de asignación
 export async function abrirModalUsuario(usuario) {
     cerrarModalUsuarioExistente();
 
@@ -3325,36 +3520,35 @@ export async function abrirModalUsuario(usuario) {
     });
 }
 
+// Cierra el modal de perfil de usuario si está abierto y vuelve a la ruta anterior
 function cerrarModalUsuarioExistente() {
+    // Buscamos el overlay del modal de usuario por su ID único
     const existing = document.getElementById('modalUsuarioOverlay');
     if (existing) {
+        // Eliminamos el modal del DOM completamente
         existing.remove();
+        // Si la URL actual apunta a ver usuario o ver estudiante, volvemos a la ruta anterior
         const h = window.location.hash.slice(1);
         if (h.startsWith(RUTAS.ADMIN.VER_USUARIO) || h.startsWith(RUTAS.INSTRUCTOR.VER_ESTUDIANTE)) volverDeModal();
     }
 }
 
 // ── CARDS CONTRAÍBLES ─────────────────────────────────────────────────────────
-// Registra el comportamiento de toggle (contraer/desplegar) en las cards del panel admin.
-// Cada card tiene un encabezado con clase admin-card__cabecera--toggle y un cuerpo
-// con clase admin-card__cuerpo. Al hacer clic en el encabezado (o en la flecha):
-//   - Se alterna la clase "oculto" en el cuerpo para ocultarlo o mostrarlo
-//   - Se alterna la clase "contraido" en la flecha para rotarla
-//   - Se alterna la clase "sin-borde" en el encabezado para quitar el separador
+// Registra el comportamiento de abrir y cerrar (toggle) en las cards de los paneles.
+// Al hacer clic en el encabezado de una card: el cuerpo se muestra u oculta,
+// la flecha se rota para indicar el estado, y el borde del encabezado se ajusta.
 function registrarCardsContraibles() {
-     // Pares de [id del encabezado, id del cuerpo] de cada card contraíble.
-    // Se agregan aquí los pares del instructor con prefijo "instr" para que
-    // la misma función maneje ambos paneles (admin e instructor) sin duplicar código.
+    // Pares de [ID del encabezado, ID del cuerpo] de cada card contraíble del sistema
     const pares = [
-        // Cards del panel admin
+        // Cards del panel de administrador
         ['toggleUsuarios',          'cuerpoUsuarios'],
         ['toggleTareas',            'cuerpoTareas'],
         ['toggleCrearTareas',       'cuerpoCrearTareas'],
-        // Cards del panel instructor — mismos IDs que el HTML del vistaInstructor
+        // Cards del panel de instructor (misma función, distintos IDs con prefijo "instr")
         ['instrToggleCrearTareas',  'instrCuerpoCrearTareas'],
         ['instrToggleUsuarios',     'instrCuerpoUsuarios'],
         ['instrToggleTareas',       'instrCuerpoTareas'],
-        // Card de tareas del panel usuario
+        // Card del panel de usuario (estudiante)
         ['toggleTareasUsuario',     'cuerpoTareasUsuario'],
     ];
 
@@ -3391,12 +3585,12 @@ function registrarCardsContraibles() {
 }
 
 // ── CARD CREAR TAREAS — DROPDOWN DE USUARIOS ──────────────────────────────────
-// Flag para registrar los listeners del botón y del documento solo una vez.
-// Sin esto, cada vez que se llama inicializarDropdownUsuarios() (p.ej. al crear
-// un usuario) se duplican los listeners y el panel se abre/cierra erráticamente.
+// Bandera que indica si los listeners del dropdown ya fueron registrados.
+// Evita que al llamar esta función varias veces se dupliquen los listeners.
 let _dropdownListenersRegistrados = false;
 
-// Recarga los checkboxes del panel sin volver a registrar listeners.
+// Actualiza la lista de checkboxes del dropdown sin volver a registrar los listeners del botón.
+// Se llama cuando se crea un nuevo usuario y hay que reflejar el cambio en el dropdown.
 async function recargarCheckboxesDropdown() {
     const btn   = document.getElementById('usuariosDropdownBtn');
     const panel = document.getElementById('usuariosDropdownPanel');
@@ -3490,9 +3684,8 @@ async function recargarCheckboxesDropdown() {
     });
 }
 
-// Inicializa el dropdown de checkboxes de usuarios en la card "Crear Tarea".
-// Registra los listeners del botón y del documento solo la primera vez.
-// Las llamadas posteriores (tras crear un usuario) solo recargan los checkboxes.
+// Inicializa el dropdown de usuarios de la card "Crear Tarea" del panel admin.
+// La primera vez registra los eventos del botón; las veces siguientes solo actualiza los checkboxes.
 async function inicializarDropdownUsuarios() {
     const btn   = document.getElementById('usuariosDropdownBtn');
     const panel = document.getElementById('usuariosDropdownPanel');
@@ -3538,13 +3731,10 @@ async function inicializarDropdownUsuarios() {
     });
 }
 
-// Actualiza el texto del botón del dropdown según los checkboxes seleccionados.
-// Si ninguno está seleccionado muestra el placeholder.
-// Si hay seleccionados muestra los nombres separados por coma (máximo 2 + "y N más").
-// Parámetros:
-//   btn   — el elemento button del dropdown
-//   texto — el span que muestra el texto dentro del botón
-//   panel — el div con los checkboxes para leer cuáles están marcados
+// Actualiza el texto del botón del dropdown según los usuarios seleccionados.
+// Sin selección muestra "Seleccionar usuarios..."; con selección muestra los primeros 2 nombres
+// y "+N más" si hay más de dos, para que el botón no se haga muy largo.
+// Parámetros: btn (el botón), texto (el span con el texto), panel (el contenedor con los checkboxes)
 function actualizarTextoDropdown(btn, texto, panel) {
     // Se buscan todos los checkboxes marcados dentro del panel
     const seleccionados = panel.querySelectorAll('input[type="checkbox"]:checked');
@@ -3573,8 +3763,8 @@ function actualizarTextoDropdown(btn, texto, panel) {
     }
 }
 
-// Retorna un arreglo con los IDs numéricos de los usuarios seleccionados en el dropdown.
-// Se usa al hacer submit del formulario de crear tarea.
+// Retorna un arreglo con los IDs numéricos de los usuarios que tienen el checkbox marcado.
+// Se usa al enviar el formulario de crear tarea para saber a quiénes asignarla.
 function obtenerIdsSeleccionados() {
     const panel = document.getElementById('usuariosDropdownPanel');
     if (!panel) return [];
@@ -3587,14 +3777,9 @@ function obtenerIdsSeleccionados() {
 }
 
 // ── LIMPIAR FORMULARIO DE LOGIN ───────────────────────────────────────────────
-// Limpia los campos de email y contraseña del formulario de login,
-// oculta el mensaje de bienvenida y quita los mensajes de error visibles.
-//
-// Se llama desde activarModoInicio() y desde manejarCerrarSesion()
-// para garantizar que cuando el usuario vuelve a la pantalla de inicio
-// no vea los datos del usuario anterior en los campos.
-// Esto es crítico en entornos compartidos: un segundo usuario no debe
-// ver el email del usuario anterior si este no cerró el navegador.
+// Limpia todos los campos del formulario de login y oculta los mensajes de error.
+// Se llama al activar la pantalla de inicio y al cerrar sesión para que ningún dato
+// del usuario anterior quede visible, especialmente en computadores compartidos.
 function limpiarFormularioLogin() {
     // Limpiar el campo de email
     const inputEmail = document.getElementById('loginEmail');
@@ -3631,13 +3816,9 @@ function limpiarFormularioLogin() {
 }
 
 // ── CERRAR SESIÓN CON CONFIRMACIÓN ────────────────────────────────────────────
-// Se llama al hacer clic en el botón circular de logout en ambos paneles.
-// Muestra una confirmación SweetAlert2 antes de cerrar sesión.
-// Si el usuario confirma:
-//   1. Se borra la sesión del localStorage (tokens y datos del usuario)
-//   2. Se limpian los campos del formulario de login
-//   3. Se redirige a la pantalla de inicio
-// Así ningún dato queda expuesto si otro usuario usa el mismo computador.
+// Se llama al hacer clic en el botón de logout de cualquier panel.
+// Muestra un modal de confirmación antes de cerrar sesión para evitar cierres accidentales.
+// Al confirmar: borra los tokens del localStorage, limpia el formulario y vuelve al login.
 async function manejarCerrarSesion() {
     // Modal DOM nativo de confirmación de logout
     // Reemplaza SweetAlert2 para evitar que el modal quede encima de la pantalla de inicio
@@ -3747,27 +3928,30 @@ async function manejarCerrarSesion() {
 }
 
 // ── ABRIR MODAL DE REGISTRO ───────────────────────────────────────────────────
-// Se llama al hacer clic en el botón "Regístrate aquí" debajo del login.
-// El modal aparece encima de la pantalla de inicio sin que esta desaparezca.
+// Muestra el modal de registro de cuenta nueva encima de la pantalla de login
 function abrirModalRegistro() {
     const modal = document.getElementById('registroModal');
+    // Mostramos el modal quitando la clase 'hidden'
     if (modal) modal.classList.remove('hidden');
-    // Limpiar el formulario por si el usuario lo abrió y cerró antes
+    // Limpiamos el formulario para que empiece vacío aunque el usuario lo haya cerrado antes
     limpiarFormularioRegistro();
 }
 
 // ── CERRAR MODAL DE REGISTRO ──────────────────────────────────────────────────
-// Se llama al hacer clic en el botón X o al registrarse exitosamente.
+// Oculta el modal de registro y limpia los campos al cerrar con X o al registrarse con éxito
 function cerrarModalRegistro() {
     const modal = document.getElementById('registroModal');
+    // Ocultamos el modal agregando la clase 'hidden'
     if (modal) modal.classList.add('hidden');
+    // Limpiamos los campos del formulario para el próximo uso
     limpiarFormularioRegistro();
+    // Si la URL tiene la ruta del modal de registro, volvemos a la ruta anterior
     if (window.location.hash === '#' + RUTAS.MODAL.REGISTRO) volverDeModal();
 }
 
 // ── LIMPIAR FORMULARIO DE REGISTRO ───────────────────────────────────────────
-// Limpia todos los campos del formulario y los mensajes de error.
-// Se llama al abrir y al cerrar el modal para siempre empezar limpio.
+// Limpia todos los campos del formulario de registro y sus mensajes de error.
+// Se llama al abrir y al cerrar el modal para que siempre empiece sin datos previos.
 function limpiarFormularioRegistro() {
     // Agregar 'registroConfirmar' al array de campos
     const campos = ['registroNombre', 'registroDocumento', 'registroEmail', 'registroPassword', 'registroConfirmar'];
@@ -3787,9 +3971,9 @@ function limpiarFormularioRegistro() {
 }
 
 // ── VALIDAR FORMULARIO DE REGISTRO ───────────────────────────────────────────
-// Valida los 4 campos del formulario antes de enviar la petición al backend.
-// Muestra errores en los spans de cada campo Y como toast de SweetAlert2.
-// Retorna true si todos los campos son válidos.
+// Valida los 5 campos del formulario de registro antes de enviarlos al servidor.
+// Muestra los errores en los spans de cada campo y también como notificación toast.
+// Retorna true si todos los campos son válidos, false si alguno tiene error.
 async function validarFormularioRegistroLocal() {
     let esValido      = true;
     let primerMensaje = null;
@@ -3910,9 +4094,9 @@ async function validarFormularioRegistroLocal() {
     return esValido;
 }
 
-// registrarListenerCambioPassword — registra todos los eventos del modal de cambio de contraseña.
-// Se llama una sola vez al inicio desde registrarEventosNavegacion().
-// El modal se abre desde los 3 botones de perfil circular (admin, usuario, instructor).
+// Registra todos los eventos del modal de cambio de contraseña: abrir, cerrar y enviar.
+// Se llama una sola vez desde registrarEventosNavegacion al arrancar el sistema.
+// El modal se puede abrir desde el botón de perfil de cualquiera de los tres paneles.
 function registrarListenerCambioPassword() {
     const modal          = document.getElementById('cambioPasswordModal');
     const btnCerrar      = document.getElementById('cambioPasswordClose');
@@ -4026,9 +4210,9 @@ function registrarListenerCambioPassword() {
     }
 }
 
-// manejarEdicionTareaUsuario — abre el modal de edición en modo usuario y registra
-// el submit handler. Equivalente a manejarEdicionTareaAdmin/Instructor pero para el rol usuario.
-// Se llama desde el route handler de RUTAS.USUARIO.EDITAR_TAREA.
+// Abre el modal de edición en modo usuario: el estudiante solo puede cambiar el estado
+// y agregar un comentario. No puede editar título ni descripción (son de solo lectura).
+// Se llama cuando el estudiante hace clic en el botón Editar de su tabla de tareas.
 function manejarEdicionTareaUsuario(tarea) {
     mostrarModalEdicion(tarea, true); // soloLecturaTituloDesc = true
 
@@ -4074,11 +4258,14 @@ function manejarEdicionTareaUsuario(tarea) {
 }
 
 // ── REGISTRO DE EVENTOS DE NAVEGACIÓN ────────────────────────────────────────
+// Registra todas las rutas del router SPA y los listeners de todos los formularios
+// y botones del sistema. Se llama una sola vez al cargar la aplicación desde main.js.
 
 export function registrarEventosNavegacion() {
+    // Iniciamos el router que escucha cambios en el hash de la URL
     iniciarRouter();
 
-    // Rutas de modales — disponibles desde el arranque, antes de activar cualquier rol.
+    // Registramos las rutas de los modales globales disponibles desde cualquier panel
     registrarRuta(RUTAS.MODAL.REGISTRO,      function() { abrirModalRegistro(); });
     registrarRuta(RUTAS.MODAL.CERRAR_SESION, function() { manejarCerrarSesion(); });
 
@@ -4251,20 +4438,23 @@ export function registrarEventosNavegacion() {
     registrarCardsContraibles();
 
     // ── FORMULARIO DE LOGIN ───────────────────────────────────────────────────────
+    // Tomamos referencias a todos los elementos del formulario de inicio de sesión
     const formLogin       = document.getElementById('loginForm');
-    const inputEmail     = document.getElementById('loginEmail');              // Se cambia el id de loginDocumento a loginEmail para que coincida con el HTML actualizado
+    const inputEmail      = document.getElementById('loginEmail');
     const inputPassword   = document.getElementById('loginPassword');
-    const errorEmail     = document.getElementById('loginEmailError');
+    const errorEmail      = document.getElementById('loginEmailError');
     const errorPassword   = document.getElementById('loginPasswordError');
     const bienvenidaDiv   = document.getElementById('loginBienvenida');
     const bienvenidaTexto = document.getElementById('loginBienvenidaTexto');
     const btnToggle       = document.getElementById('btnTogglePassword');
 
-    // Botón ojo — alternar visibilidad de la contraseña usando ícono Lucide
+    // El botón con el ícono de ojo alterna entre mostrar y ocultar la contraseña
     if (btnToggle) {
         btnToggle.addEventListener('click', function () {
+            // Si el campo es tipo "password" lo cambiamos a "text" y viceversa
             const tipo = inputPassword.type === 'password' ? 'text' : 'password';
             inputPassword.type = tipo;
+            // Cambiamos el ícono del ojo: abierto cuando se ve la contraseña, tachado cuando no
             const iconoEl = document.getElementById('iconoTogglePassword');
             if (iconoEl) {
                 iconoEl.setAttribute('data-lucide', tipo === 'text' ? 'eye-off' : 'eye');
@@ -4273,30 +4463,31 @@ export function registrarEventosNavegacion() {
         });
     }
 
-    // Submit del formulario de login
+    // Al enviar el formulario de inicio de sesión validamos y llamamos al backend
     if (formLogin) {
         formLogin.addEventListener('submit', async function (event) {
+            // Prevenimos que el navegador recargue la página al enviar el formulario
             event.preventDefault();
 
-            // validarFormularioLogin valida ambos campos con el mismo patrón del proyecto:
-            // muestra el error en el span del input Y como toast con SweetAlert2.
-            // Retorna false si algo falla — en ese caso no llamamos al servidor.
-             const esValido = await validarFormularioLogin({
-                emailInput:    inputEmail,      // ← antes era docInput: inputDocumento
+            // Validamos que el email y la contraseña tengan el formato correcto
+            // Si la validación falla, la función muestra el error y retorna false
+            const esValido = await validarFormularioLogin({
+                emailInput:    inputEmail,
                 passwordInput: inputPassword,
-                emailError:    errorEmail,      // ← antes era docError: errorDocumento
+                emailError:    errorEmail,
                 passwordError: errorPassword,
             });
+            // Si hay errores de validación, detenemos el proceso sin llamar al servidor
             if (!esValido) return;
 
-            // Deshabilitar el botón para evitar doble envío
+            // Deshabilitamos el botón mientras se procesa para evitar doble envío
             const btnLogin = document.getElementById('btnLogin');
             if (btnLogin) { btnLogin.disabled = true; btnLogin.textContent = 'Ingresando...'; }
 
             try {
-                // Llamada al backend — si falla lanza un Error con el mensaje del servidor
+                // Enviamos las credenciales al servidor para verificar la identidad del usuario
                 const datos = await loginUsuario({
-                email:    inputEmail.value.trim(),     // ← antes era documento
+                email:    inputEmail.value.trim(),
                 password: inputPassword.value,
             })
 
@@ -4326,16 +4517,15 @@ export function registrarEventosNavegacion() {
                 // Se evalúan los 3 roles posibles: admin, instructor y user
                 // Sin este bloque completo, el instructor aterrizaba en la vista de usuario
                 if (datos.user.role === 'admin') {
-                    // El rol admin activa el panel de administración con CRUD completo
+                    // El administrador ve el panel azul con acceso a usuarios, tareas y auditoría
                     registrarEvento('login', `Sesión iniciada: ${datos.user.name}`);
                     await activarModoAdmin();
                 } else if (datos.user.role === 'instructor') {
-                    // El rol instructor activa el panel docente con paleta verde
-                    // Esta línea faltaba — causaba que instructor viera la vista de usuario
+                    // El instructor ve el panel verde con gestión de tareas y calificación
                     registrarEvento('login', `Sesión iniciada: ${datos.user.name}`);
                     await activarModoInstructor();
                 } else {
-                    // El rol user activa el panel personal con solo sus tareas
+                    // El estudiante ve el panel morado con solo sus tareas asignadas
                     activarModoUsuario();
                 }
 
@@ -4564,9 +4754,10 @@ export function registrarEventosNavegacion() {
     const formCrearTarea = document.getElementById('createTaskForm');
     if (formCrearTarea) {
         formCrearTarea.addEventListener('submit', async function(event) {
+            // Prevenimos que el navegador recargue la página al enviar el formulario
             event.preventDefault();
 
-            // Se leen los valores de los campos del formulario
+            // Tomamos referencias a los campos del formulario para leer sus valores
             const titleInput   = document.getElementById('newTaskTitle');
             const descInput    = document.getElementById('newTaskDescription');
             const statusInput  = document.getElementById('newTaskStatus');
@@ -4574,7 +4765,7 @@ export function registrarEventosNavegacion() {
             const titleError   = document.getElementById('newTaskTitleError');
             const statusError  = document.getElementById('newTaskStatusError');
 
-            // FEAT #57: validación con mensajes descriptivos del backend (Zod-matching)
+            // Leemos los valores ingresados por el usuario y quitamos espacios innecesarios
             const titulo  = titleInput  ? titleInput.value.trim()  : '';
             const estado  = statusInput ? statusInput.value         : '';
 
@@ -4642,19 +4833,19 @@ export function registrarEventosNavegacion() {
         });
     }
 
-        // Formulario de crear tarea del instructor — con validaciones y spans de error
+        // Formulario de crear tarea en la card "Crear Tarea" del panel del instructor
     const instrCreateTaskForm = document.getElementById('instrCreateTaskForm');
     if (instrCreateTaskForm) {
         instrCreateTaskForm.addEventListener('submit', async function(event) {
+            // Prevenimos que el navegador recargue la página al enviar el formulario
             event.preventDefault();
 
-            // Referencias a los campos del formulario del instructor
+            // Tomamos referencias a los campos del formulario del instructor
             const tituloInput    = document.getElementById('instrNewTaskTitle');
             const estadoInput    = document.getElementById('instrNewTaskStatus');
             const instrComentEl  = document.getElementById('instrNewTaskComment');
 
-            // Referencias a los spans de error de cada campo
-            // Estos IDs deben existir en index.html debajo de cada campo
+            // Tomamos referencias a los spans que muestran los mensajes de error de cada campo
             const errorTitulo    = document.getElementById('instrNewTaskTitleError');
             const errorEstado    = document.getElementById('instrNewTaskStatusError');
             const errorUsuarios  = document.getElementById('instrNewTaskUsersError');
@@ -4808,10 +4999,8 @@ export function registrarEventosNavegacion() {
     }
 
     // ── BÚSQUEDA DE TAREAS EN EL PANEL USUARIO ────────────────────────────────
-    // El input filtra en tiempo real las filas ya pintadas en la tabla.
-    // No hace peticiones al servidor — trabaja sobre el DOM directamente.
-    // El id del input coincide con el que está en index.html
-    // Buscador de tareas del usuario — ahora responde a submit, no a input en vivo
+    // El buscador filtra las filas visibles en la tabla sin hacer peticiones al servidor.
+    // Trabaja directamente sobre el DOM comparando el texto de cada fila con el término buscado.
     const formBuscador     = document.getElementById('userSearchTaskForm');
     const inputBuscador    = document.getElementById('userSearchTaskInput');
     const btnLimpiarBuscador = document.getElementById('userSearchClearBtn');
@@ -4866,18 +5055,19 @@ export function registrarEventosNavegacion() {
         });
     }
 
-    // Prevenir que el form de búsqueda de tareas recargue la página al presionar Enter
+    // Prevenimos que el formulario de búsqueda recargue la página al presionar Enter
     const userSearchTaskForm = document.getElementById('userSearchTaskForm');
     if (userSearchTaskForm) {
         userSearchTaskForm.addEventListener('submit', function(event) {
+            // Sin este preventDefault el navegador recargaría la página al dar Enter
             event.preventDefault();
         });
     }
 
-    // ── BOTONES EDITAR Y EXPORTAR DE LA TABLA DE TAREAS DEL USUARIO ──────────
-    // Los botones se crean dinámicamente en tareasUI.js con data-action="edit" o "export".
-    // Se usa delegación de eventos en el tbody para capturar clics aunque
-    // las filas se agreguen después de registrar este listener.
+    // ── BOTONES DE ACCIÓN DE LA TABLA DE TAREAS DEL USUARIO ──────────────────
+    // Los botones de acción (ver, editar, exportar) se crean dinámicamente en tareasUI.js
+    // con el atributo data-action. Usamos delegación de eventos en el tbody para que
+    // el listener funcione incluso con filas que se agregaron después de registrarlo.
     const tablaUsuario = document.getElementById('tasksTableBody');
     if (tablaUsuario) {
         tablaUsuario.addEventListener('click', async function(event) {
@@ -4956,13 +5146,11 @@ export function registrarEventosNavegacion() {
     if (verTareaModal)  verTareaModal.addEventListener('click', function(e) { if (e.target === verTareaModal) cerrarVerTarea(); });
 }
 
-// cargarDashboardUsuario — carga las estadísticas del dashboard en el panel de usuario.
-// Usa IDs distintos a los del panel admin para que ambos paneles puedan coexistir
-// en el DOM sin sobrescribirse mutuamente.
-// Se llama desde activarModoUsuario() al entrar al panel de usuario.
+// Actualiza las tarjetas de estadísticas del panel del estudiante.
+// Usa las tareas que ya se cargaron en activarModoUsuario para no hacer una petición extra.
+// Usa IDs de elementos distintos a los del admin para que ambos paneles coexistan sin conflictos.
 function cargarDashboardUsuario(tareas) {
-    // Recibe las tareas ya cargadas en activarModoUsuario
-    // No hace fetch extra — evita el 401 por userId=undefined
+    // Verificamos que haya un arreglo de tareas válido antes de calcular los contadores
     if (!tareas || !Array.isArray(tareas)) return;
 
     const el = {
@@ -4982,9 +5170,9 @@ function cargarDashboardUsuario(tareas) {
     if (el.reprobada)  el.reprobada.textContent  = tareas.filter(function(t) { return t.status === 'reprobada'; }).length;
 }
 
-// registrarListenerOlvidoPassword — registra todos los eventos del flujo de recuperación.
-// Se llama una sola vez desde registrarEventosNavegacion().
-// El flujo tiene 3 pasos secuenciales: email → código → nueva contraseña.
+// Registra todos los eventos del flujo de recuperación de contraseña olvidada.
+// Se llama una sola vez al arrancar el sistema. El flujo tiene 3 pasos:
+// 1) El usuario ingresa su email  →  2) Ingresa el código de verificación  →  3) Escribe la nueva contraseña.
 function registrarListenerOlvidoPassword() {
     const modal     = document.getElementById('olvidoPasswordModal');
     const btnAbrir  = document.getElementById('btnOlvidoPassword');

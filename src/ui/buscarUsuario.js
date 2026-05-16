@@ -1,58 +1,52 @@
-// MÓDULO: ui/buscarUsuario.js
-// CAPA: UI (manipulación visual de la interfaz)
+// Archivo: ui/buscarUsuario.js
+// Este archivo construye y maneja la vista de búsqueda de tareas para el estudiante.
+// El estudiante escribe su número de documento y ve la lista de sus tareas asignadas.
+// Todo el HTML se construye con createElement y appendChild — nunca se usa innerHTML.
 
-// Responsabilidad única: montar la vista de búsqueda de usuario para el modo usuario.
-// El usuario escribe su número de documento y ve sus tareas asignadas en una lista.
-// Este módulo NO maneja edición ni eliminación de tareas — eso es responsabilidad
-// de tareasService.js que usa la tabla fija del HTML con botones Editar y Eliminar.
-
-// Todo el DOM se construye con createElement y appendChild.
-// Ninguna línea de este archivo usa innerHTML ni atributos style en JS.
-
-// Se importa la función de búsqueda de usuario por documento desde tareasApi.js
+// Importamos las funciones del servidor para buscar usuario y obtener sus tareas
 import {
-    buscarUsuarioPorDocumento,
-    obtenerTareasDeUsuario
+    buscarUsuarioPorDocumento, // busca en el servidor un usuario por su documento de identidad
+    obtenerTareasDeUsuario     // trae del servidor las tareas asignadas a un usuario
 } from '../api/tareasApi.js';
 
-// FEAT #57: mostrarNotificacion para toasts de error descriptivos
+// Importamos la función para mostrar mensajes emergentes (toasts) al usuario
 import { mostrarNotificacion } from '../utils/notificaciones.js';
 
-// Función principal que monta la vista de búsqueda en el contenedor recibido
-// Parámetro: contenedor — el elemento HTML donde se renderiza la vista
+// Exportamos la función montarBuscarUsuario que construye toda la vista de búsqueda
+// y la inserta dentro del elemento HTML que recibe como parámetro
 export function montarBuscarUsuario(contenedor) {
 
-    // Se vacía el contenedor con removeChild para no usar innerHTML
+    // Vaciamos el contenedor antes de construir la vista para no duplicar elementos
     while (contenedor.firstChild) contenedor.removeChild(contenedor.firstChild);
 
-    // Tarjeta principal que envuelve toda la vista de búsqueda
+    // Creamos la tarjeta principal que envuelve toda la vista de búsqueda
     const card = document.createElement('div');
     card.className = 'card';
 
-    // Título de la sección de búsqueda
+    // Creamos el título de la sección
     const titulo = document.createElement('h2');
     titulo.className   = 'card__title';
     titulo.textContent = 'Buscar mis tareas';
     card.appendChild(titulo);
 
-    // Formulario de búsqueda: contiene el input de documento y el botón buscar
+    // Creamos el formulario de búsqueda con el campo de documento y el botón buscar
     const formulario = document.createElement('form');
     formulario.className = 'form';
-    // noValidate desactiva la validación nativa del navegador para manejarla manualmente
+    // noValidate desactiva la validación automática del navegador para manejarla nosotros mismos
     formulario.noValidate = true;
 
-    // Grupo del campo de documento (label + input + span de error)
+    // Creamos el grupo del campo de documento (contiene etiqueta, input y mensaje de error)
     const grupo = document.createElement('div');
     grupo.className = 'form__group';
 
-    // Etiqueta del campo de documento
+    // Creamos la etiqueta del campo de documento
     const label = document.createElement('label');
     label.setAttribute('for', 'buscar-input-doc');
     label.className   = 'form__label';
     label.textContent = 'Numero de documento';
     grupo.appendChild(label);
 
-    // Input de texto donde el usuario escribe su número de documento
+    // Creamos el campo de texto donde el estudiante escribe su número de documento
     const input = document.createElement('input');
     input.type        = 'text';
     input.id          = 'buscar-input-doc';
@@ -60,7 +54,7 @@ export function montarBuscarUsuario(contenedor) {
     input.placeholder = 'Ingresa tu numero de documento';
     grupo.appendChild(input);
 
-    // Span donde se mostrará el mensaje de error si el campo queda vacío
+    // Creamos el span donde mostraremos el mensaje de error si el campo está vacío
     const errorSpan = document.createElement('span');
     errorSpan.className = 'form__error';
     errorSpan.id        = 'buscar-input-error';
@@ -68,12 +62,12 @@ export function montarBuscarUsuario(contenedor) {
 
     formulario.appendChild(grupo);
 
-    // Botón de submit del formulario de búsqueda
+    // Creamos el botón de búsqueda que envía el formulario
     const boton = document.createElement('button');
     boton.type      = 'submit';
     boton.className = 'btn btn--primary';
 
-    // El span interior es requerido por la clase btn del proyecto (ver styles.css)
+    // Creamos el texto del botón (el span interno es requerido por los estilos del proyecto)
     const textoBoton = document.createElement('span');
     textoBoton.className   = 'btn__text';
     textoBoton.textContent = 'Buscar mis tareas';
@@ -82,56 +76,57 @@ export function montarBuscarUsuario(contenedor) {
 
     card.appendChild(formulario);
 
-    // Área de resultado que empieza oculta con la clase 'hidden'
-    // Se revela cuando hay un resultado de búsqueda para mostrar
+    // Creamos el área donde se mostrará el resultado de la búsqueda
+    // Empieza oculta con la clase 'hidden' — se revela cuando hay un resultado
     const areaResultado = document.createElement('div');
     areaResultado.id        = 'buscar-resultado';
     areaResultado.className = 'buscar-resultado hidden';
     card.appendChild(areaResultado);
 
+    // Insertamos la tarjeta completa dentro del contenedor recibido como parámetro
     contenedor.appendChild(card);
 
-    // Listener que limpia el error del campo mientras el usuario escribe
-    // Mejora la UX: el error desaparece en cuanto el usuario empieza a corregir
+    // Hacemos que el mensaje de error desaparezca mientras el estudiante escribe en el campo
     input.addEventListener('input', function() {
         errorSpan.textContent = '';
         input.classList.remove('error');
     });
 
-    // Listener del submit del formulario de búsqueda
+    // Manejamos el envío del formulario cuando el estudiante presiona "Buscar mis tareas"
     formulario.addEventListener('submit', async function(event) {
-        // Se previene el comportamiento nativo que recargaría la página
+        // Evitamos que el formulario recargue la página
         event.preventDefault();
 
+        // Leemos el número de documento escrito por el estudiante (sin espacios al inicio/final)
         const documento = input.value.trim();
 
-        // Se valida que el campo no esté vacío antes de hacer la petición
+        // Si el campo está vacío, mostramos el error y cancelamos la búsqueda
         if (!documento) {
             const msg = 'El documento del usuario es obligatorio';
             errorSpan.textContent = msg;
             input.classList.add('error');
-            // FEAT #57: toast descriptivo en lugar de dejar solo el span
+            // Mostramos también un toast con el error para que sea más visible
             await mostrarNotificacion(msg, 'error');
             return;
         }
 
-        // Se revela el área de resultado y se muestra un mensaje de carga
+        // Mostramos el área de resultado y ponemos un mensaje de "Buscando..."
         areaResultado.classList.remove('hidden');
-        // Se vacía el resultado anterior con removeChild para no usar innerHTML
+        // Vaciamos el resultado anterior antes de mostrar el nuevo
         while (areaResultado.firstChild) areaResultado.removeChild(areaResultado.firstChild);
 
-        // Párrafo de carga mientras espera la respuesta del servidor
+        // Mostramos el mensaje de carga mientras el servidor responde
         const cargando = document.createElement('p');
         cargando.textContent = 'Buscando...';
         areaResultado.appendChild(cargando);
 
-        // Se busca el usuario en el servidor por su número de documento
+        // Consultamos al servidor si existe un usuario con ese documento
         const usuario = await buscarUsuarioPorDocumento(documento);
 
-        // Se vacía el mensaje de carga antes de mostrar el resultado
+        // Vaciamos el mensaje de carga una vez que el servidor respondió
         while (areaResultado.firstChild) areaResultado.removeChild(areaResultado.firstChild);
 
-        // Si no se encontró ningún usuario se muestra el mensaje correspondiente
+        // Si el servidor no encontró ningún usuario con ese documento, mostramos el mensaje y terminamos
         if (!usuario) {
             const noEncontrado = document.createElement('p');
             noEncontrado.className   = 'buscar-resultado__no-encontrado';
@@ -140,8 +135,7 @@ export function montarBuscarUsuario(contenedor) {
             return;
         }
 
-        // Se obtienen las tareas del usuario filtrando por su id interno
-        // El campo userId en las tareas guarda el id numérico, no el documento
+        // Si encontramos al usuario, pedimos sus tareas al servidor usando su id interno
         let tareas = [];
         try {
             tareas = await obtenerTareasDeUsuario(usuario.id);
@@ -149,28 +143,25 @@ export function montarBuscarUsuario(contenedor) {
             console.error('Error al obtener las tareas del usuario:', error);
         }
 
-        // Se pinta el resultado con los datos del usuario y su lista de tareas
+        // Dibujamos el resultado completo con los datos del usuario y la lista de tareas
         renderizarResultadoBusqueda(areaResultado, usuario, tareas);
     });
 }
 
-// Construye y muestra el resultado de búsqueda con los datos del usuario y sus tareas
-// Parámetros:
-//   area    — el div donde se inserta el resultado
-//   usuario — objeto del usuario encontrado
-//   tareas  — arreglo de tareas asignadas a ese usuario
+// Función privada que construye y muestra el resultado de búsqueda en el área de resultado
+// Recibe el área HTML donde pintar, el objeto del usuario encontrado y su lista de tareas
 function renderizarResultadoBusqueda(area, usuario, tareas) {
 
-    // Se vacía el área antes de pintar el nuevo resultado
+    // Vaciamos el área antes de construir el nuevo resultado
     while (area.firstChild) area.removeChild(area.firstChild);
 
-    // Título con el nombre del usuario encontrado
+    // Mostramos el nombre del usuario encontrado como título del resultado
     const tituloUsuario = document.createElement('h3');
     tituloUsuario.className   = 'buscar-resultado__titulo';
     tituloUsuario.textContent = `Usuario: ${usuario.name}`;
     area.appendChild(tituloUsuario);
 
-    // Si no tiene tareas se muestra un mensaje informativo y se termina
+    // Si el usuario no tiene tareas asignadas, mostramos un mensaje informativo y terminamos
     if (tareas.length === 0) {
         const sinTareas = document.createElement('p');
         sinTareas.className   = 'buscar-resultado__sin-tareas';
@@ -179,29 +170,30 @@ function renderizarResultadoBusqueda(area, usuario, tareas) {
         return;
     }
 
-    // Párrafo con el contador de tareas encontradas
+    // Mostramos el número total de tareas asignadas al usuario
     const contador = document.createElement('p');
     contador.className   = 'buscar-resultado__contador';
     contador.textContent = `Tareas asignadas: ${tareas.length}`;
     area.appendChild(contador);
 
-    // Lista de tareas con título y badge de estado por cada una
+    // Creamos la lista HTML que contendrá una fila por cada tarea del usuario
     const lista = document.createElement('ul');
     lista.className = 'buscar-resultado__lista';
 
+    // Por cada tarea, creamos un elemento de lista con el título y un badge de color con el estado
     tareas.forEach(function(tarea) {
 
-        // Elemento de lista que contiene el título y el badge de estado
+        // Creamos el elemento de lista para esta tarea
         const item = document.createElement('li');
         item.className = 'buscar-resultado__item';
 
-        // Span con el título de la tarea
+        // Creamos el texto con el título de la tarea
         const tituloTarea = document.createElement('span');
         tituloTarea.className   = 'buscar-resultado__tarea-titulo';
         tituloTarea.textContent = tarea.title;
 
-        // Badge coloreado con el estado de la tarea
-        // classList.add acepta múltiples clases: la base y la dinámica de color
+        // Creamos el badge coloreado que muestra el estado de la tarea
+        // Las clases 'status-badge' y 'status-pendiente' (por ejemplo) aplican el color correspondiente
         const badge = document.createElement('span');
         badge.classList.add('status-badge', `status-${tarea.status}`);
         badge.textContent = formatearEstado(tarea.status);
@@ -214,15 +206,14 @@ function renderizarResultadoBusqueda(area, usuario, tareas) {
     area.appendChild(lista);
 }
 
-// Convierte el valor técnico del estado a texto legible en español
-// Se usa para los badges de la lista de tareas de este módulo
-// Parámetro: estado — valor del campo status (pendiente, en_progreso, completada)
+// Función privada que convierte el valor técnico del estado a texto legible en español
+// por ejemplo: "en_progreso" se convierte en "En Progreso"
 function formatearEstado(estado) {
     const mapa = {
         pendiente:   'Pendiente',
         en_progreso: 'En Progreso',
         completada:  'Completada'
     };
-    // Si el estado no existe en el mapa se retorna el valor original como fallback
+    // Si el estado no está en el mapa, retornamos el valor original sin cambios
     return mapa[estado] || estado;
 }
