@@ -4229,21 +4229,16 @@ function manejarEdicionTareaUsuario(tarea) {
             ? document.getElementById('editTaskComment').value.trim()
             : '';
 
-        const { actualizarTarea } = await import('../api/tareasApi.js');
-        const tareaActualizada = await actualizarTarea(tareaId, {
-            status:  nuevoEstado,
-            comment: nuevoComentario,
-        });
+        // Usamos PATCH /tasks/:id/status — accesible por todos los roles (no requiere admin/instructor)
+        // PUT /tasks/:id requiere requireAdminOrInstructor y devolvería 403 para el estudiante
+        const { cambiarEstadoTarea } = await import('../api/tareasApi.js');
+        const tareaActualizada = await cambiarEstadoTarea(tareaId, nuevoEstado, nuevoComentario);
 
         if (tareaActualizada) {
             const { actualizarFilaTarea } = await import('./tareasUI.js');
             actualizarFilaTarea(tareaActualizada);
             ocultarModalEdicion();
             await mostrarNotificacion('Tarea actualizada correctamente', 'exito');
-            try {
-                const tareasAct = await obtenerTodasLasTareas();
-                crearCalendario({ contenedorId: 'instrCalendario', paleta: 'instructor', soloLectura: false, tareas: tareasAct });
-            } catch { /* calendar refresh opcional */ }
         } else {
             await mostrarNotificacion('Error al actualizar la tarea', 'error');
         }

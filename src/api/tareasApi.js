@@ -151,18 +151,22 @@ export async function actualizarTarea(tareaId, datosTarea) {
 
 // ── CAMBIAR SOLO EL ESTADO DE UNA TAREA ──────────────────────────────────────
 
-// Exportamos la función cambiarEstadoTarea que actualiza únicamente el estado de una tarea
-// sin modificar ningún otro dato (título, descripción, etc.)
-// Los estados posibles son: 'pendiente', 'en_progreso', 'pendiente_aprobacion', 'completada'
-export async function cambiarEstadoTarea(tareaId, status) {
+// Exportamos la función cambiarEstadoTarea que actualiza el estado de una tarea
+// y opcionalmente guarda un comentario del estudiante en la misma petición.
+// Accesible por todos los roles — los estudiantes lo usan para actualizar su progreso.
+// Los estados posibles son: 'pendiente', 'en_progreso', 'pendiente_aprobacion', 'completada', 'reprobada'
+export async function cambiarEstadoTarea(tareaId, status, comment) {
     try {
-        // Construimos la URL con la sub-ruta /status al final para indicar que solo cambiamos el estado
+        // Construimos la URL con la sub-ruta /status al final
         const url = `${API_BASE_URL}${API_PREFIX}/tasks/${tareaId}/status`;
-        // Hacemos la petición PATCH (actualización parcial) enviando solo el nuevo estado
+        // Construimos el body incluyendo comment solo si se proporcionó
+        const body = { status };
+        if (comment !== undefined) body.comment = comment;
+        // Hacemos la petición PATCH enviando el estado y el comentario opcional
         const response = await fetchConAuth(url, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status }),
+            body: JSON.stringify(body),
         });
         const json = await response.json();
         if (!response.ok) throw new Error(json.message || `Error al cambiar estado de tarea ${tareaId}`);

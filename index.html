@@ -53,9 +53,10 @@
                         <label for="loginEmail" class="form__label">Correo electrónico</label>
                         <div class="login-field"> <!-- contenedor relativo para posicionar el ícono dentro del input -->
                             <i data-lucide="mail" class="login-field__icon"></i> <!-- ícono de sobre dentro del input -->
+                            <!-- JS lee loginEmail al enviar el formulario -->
                             <input
                                 type="text"
-                                id="loginEmail"           <!-- JS lee este valor al enviar el formulario -->
+                                id="loginEmail"
                                 class="form__input login-field__input"
                                 placeholder="ejemplo@correo.com"
                                 autocomplete="email"
@@ -69,17 +70,19 @@
                         <label for="loginPassword" class="form__label">Contraseña</label>
                         <div class="login-field">
                             <i data-lucide="lock" class="login-field__icon"></i> <!-- ícono de candado dentro del input -->
+                            <!-- JS lee loginPassword y lo envía al servidor -->
                             <input
                                 type="password"
-                                id="loginPassword"        <!-- JS lee este valor y lo envía al servidor -->
+                                id="loginPassword"
                                 class="form__input login-field__input login-field__input--pass"
                                 placeholder="Tu contraseña"
                                 autocomplete="current-password"
                             >
+                            <!-- JS alterna btnTogglePassword entre type="password" y type="text" al hacer clic -->
                             <button
                                 type="button"
                                 class="login-field__toggle"
-                                id="btnTogglePassword"    <!-- JS alterna type="password"/"text" al hacer clic -->
+                                id="btnTogglePassword"
                                 aria-label="Mostrar u ocultar contraseña"
                             >
                                 <i data-lucide="eye" id="iconoTogglePassword"></i> <!-- JS cambia el ícono entre ojo abierto/cerrado -->
