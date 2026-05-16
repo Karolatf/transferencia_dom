@@ -787,8 +787,11 @@ function abrirModalPermisos(rol, meta) {
     });
 
     const etiquetasGrupo = {
-        tasks: { label: 'Tareas', icon: 'clipboard-list', color: '#0ea5e9' },
-        users: { label: 'Usuarios', icon: 'users',         color: '#8b5cf6' },
+        tasks:    { label: 'Tareas',      icon: 'clipboard-list', color: '#0ea5e9' },
+        users:    { label: 'Usuarios',    icon: 'users',          color: '#8b5cf6' },
+        calendar: { label: 'Calendario',  icon: 'calendar',       color: '#f59e0b' },
+        notes:    { label: 'Notas',       icon: 'file-text',      color: '#10b981' },
+        roles:    { label: 'Roles',       icon: 'shield',         color: '#6366f1' },
     };
 
     Object.keys(grupos).forEach(function(grupo) {
