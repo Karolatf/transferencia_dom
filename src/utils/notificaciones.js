@@ -287,6 +287,12 @@ export function mostrarModalToggleEstado(nombreUsuario, accion) {
                 toastInterno(panel, 'El motivo debe tener al menos 10 caracteres.');
                 return;
             }
+            if (!/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]/.test(motivo)) {
+                errorEl.style.display = 'block';
+                textarea.style.borderColor = '#dc2626';
+                toastInterno(panel, 'El motivo debe contener al menos una letra.');
+                return;
+            }
             cerrar({ confirmado: true, motivo });
         });
 
