@@ -1,74 +1,83 @@
-/* VARIABLES GLOBALES */
+/* ══════════════════════════════════════════════════════════════════════════
+   VARIABLES GLOBALES — todas las constantes de diseño del sistema en un
+   solo lugar. Cambiar una variable aquí actualiza todo el proyecto.
+   ══════════════════════════════════════════════════════════════════════════ */
 :root {
-    --color-primario:        #c762e3;
-    --color-primario-oscuro: #be5cc3;
-    --color-primario-suave:  #faf5ff;
+    /* Colores principales por rol ─────────────────────────────────────── */
+    --color-primario:        #c762e3; /* morado para el rol estudiante/usuario */
+    --color-primario-oscuro: #be5cc3; /* morado más oscuro para hover/estados */
+    --color-primario-suave:  #faf5ff; /* fondo suave morado (glow de foco) */
 
-    --color-admin:        #0284c7;
-    --color-admin-oscuro: #0369a1;
+    --color-admin:        #0284c7;   /* azul para el rol administrador */
+    --color-admin-oscuro: #0369a1;   /* azul más oscuro para hover del admin */
 
-    /* Variables de color para el rol instructor — paleta verde pastel */
-    --color-instructor:        #059669;
-    --color-instructor-oscuro: #047857;
-    --color-instructor-suave:  #d1fae5;
+    --color-instructor:        #059669; /* verde para el rol instructor */
+    --color-instructor-oscuro: #047857; /* verde más oscuro para hover del instructor */
+    --color-instructor-suave:  #d1fae5; /* fondo verde suave del panel instructor */
 
-    --color-pendiente:  #fbbf24;
-    --color-progreso:   #60a5fa;
-    --color-completada: #34d399;
-    --color-aprobacion: #f97316;
-    --color-error:      #ef4444;
+    /* Colores de estado de tareas ─────────────────────────────────────── */
+    --color-pendiente:  #fbbf24; /* amarillo para tareas pendientes */
+    --color-progreso:   #60a5fa; /* azul claro para tareas en progreso */
+    --color-completada: #34d399; /* verde para tareas completadas */
+    --color-aprobacion: #f97316; /* naranja para tareas en revisión */
+    --color-error:      #ef4444; /* rojo para errores y validaciones */
 
-    --texto-oscuro: #111827;
-    --texto-medio:  #4b5563;
-    --texto-claro:  #9ca3af;
+    /* Grises de texto ─────────────────────────────────────────────────── */
+    --texto-oscuro: #111827; /* texto principal y títulos */
+    --texto-medio:  #4b5563; /* texto secundario y párrafos */
+    --texto-claro:  #9ca3af; /* texto de ayuda y etiquetas */
 
-    --fondo-gris:  #f9fafb;
-    --borde-suave: #e5e7eb;
+    /* Colores de fondo y borde ────────────────────────────────────────── */
+    --fondo-gris:  #f9fafb; /* fondo suave de filas, encabezados de tabla */
+    --borde-suave: #e5e7eb; /* borde de cards, inputs y separadores */
 
     --fuente: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 
-    --texto-sm:  0.875rem;
-    --texto-md:  1rem;
-    --texto-lg:  1.125rem;
-    --texto-xl:  1.25rem;
-    --texto-2xl: 1.5rem;
-    --texto-3xl: 1.875rem;
+    /* Escala de tamaños de fuente ─────────────────────────────────────── */
+    --texto-sm:  0.875rem; /* texto pequeño: etiquetas, badges, notas */
+    --texto-md:  1rem;     /* texto normal: párrafos y botones */
+    --texto-lg:  1.125rem; /* texto mediano: títulos de sección */
+    --texto-xl:  1.25rem;  /* texto grande: títulos de card */
+    --texto-2xl: 1.5rem;   /* texto muy grande: títulos de panel */
+    --texto-3xl: 1.875rem; /* texto máximo: título de la pantalla de inicio */
 
-    --espacio-xs:  0.25rem;
-    --espacio-sm:  0.5rem;
-    --espacio-md:  1rem;
-    --espacio-lg:  1.5rem;
-    --espacio-xl:  2rem;
-    --espacio-2xl: 3rem;
+    /* Escala de espaciados ────────────────────────────────────────────── */
+    --espacio-xs:  0.25rem; /* espacio mínimo entre elementos muy juntos */
+    --espacio-sm:  0.5rem;  /* espacio pequeño dentro de componentes */
+    --espacio-md:  1rem;    /* espacio estándar entre campos de formulario */
+    --espacio-lg:  1.5rem;  /* espacio grande entre secciones */
+    --espacio-xl:  2rem;    /* espacio extra grande entre cards */
+    --espacio-2xl: 3rem;    /* espacio máximo entre bloques principales */
 
-    --radio-sm:   0.375rem;
-    --radio-md:   0.5rem;
-    --radio-lg:   0.75rem;
-    --radio-xl:   1rem;
-    --radio-2xl:  1.5rem;
-    --radio-full: 9999px;
+    /* Radios de borde (bordes redondeados) ────────────────────────────── */
+    --radio-sm:   0.375rem; /* redondeado suave para badges y botones pequeños */
+    --radio-md:   0.5rem;   /* redondeado estándar para inputs y cards */
+    --radio-lg:   0.75rem;  /* redondeado mayor para tarjetas y modales */
+    --radio-xl:   1rem;     /* redondeado grande para panels principales */
+    --radio-2xl:  1.5rem;   /* redondeado extra para modales flotantes */
+    --radio-full: 9999px;   /* círculo perfecto o pill (botones redondeados) */
 
-    --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-    --sombra-md: 0 4px 10px rgba(0, 0, 0, 0.10);
-    --sombra-lg: 0 8px 20px rgba(0, 0, 0, 0.10);
+    /* Sombras ─────────────────────────────────────────────────────────── */
+    --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.08);  /* sombra sutil para stat-cards */
+    --sombra-md: 0 4px 10px rgba(0, 0, 0, 0.10); /* sombra normal para cards */
+    --sombra-lg: 0 8px 20px rgba(0, 0, 0, 0.10); /* sombra intensa para modales */
 
-    --transicion: 200ms ease;
+    --transicion: 200ms ease; /* duración y curva estándar de todas las animaciones */
 
-    /* Variable de acento para modales — cambia según el modo activo del body */
-    --color-modal-acento: var(--color-primario);
+    /* Color de acento para modales — se sobreescribe en body[data-modo] */
+    --color-modal-acento: var(--color-primario); /* por defecto: morado de usuario */
 }
 
-/* RESET */
+/* RESET — eliminamos márgenes y bordes por defecto del navegador */
 *, *::before, *::after {
-    box-sizing: border-box;
+    box-sizing: border-box; /* el padding no agrega ancho extra al elemento */
     margin: 0;
     padding: 0;
 }
 
-/* Issue 6: eliminar el handle de redimensionamiento en todas las textareas del proyecto */
-textarea { resize: none; }
+textarea { resize: none; } /* en todos los textarea del sitio, desactivamos el handle de arrastre */
 
-html { font-size: 16px; }
+html { font-size: 16px; } /* base de 16px para que 1rem = 16px en todo el sistema */
 
 body {
     font-family: var(--fuente);
@@ -81,41 +90,32 @@ body {
     padding: 0;
 }
 
-/* FONDOS POR MODO */
+/* FONDOS POR MODO — el JS agrega data-modo al body según el rol que inicia sesión */
 body[data-modo="inicio"] {
     background: linear-gradient(rgba(8, 8, 24, 0.58), rgba(8, 8, 24, 0.58)),
-                url('/bg-inicio.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
+                url('/bg-inicio.jpg');   /* imagen de fondo con overlay oscuro */
+    background-size: cover;             /* la imagen cubre toda la pantalla */
+    background-position: center;        /* centra la imagen en todos los tamaños */
+    background-attachment: fixed;       /* la imagen no se mueve al hacer scroll */
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-body[data-modo="usuario"] { background-color: #f3e8ff; }
-body[data-modo="admin"]   { 
-    background-color: #e0f2fe; 
-    --color-modal-acento: var(--color-admin);
+body[data-modo="usuario"] { background-color: #f3e8ff; } /* fondo morado suave para el panel de usuario */
+body[data-modo="admin"]   {
+    background-color: #e0f2fe;                      /* fondo azul suave para el panel de admin */
+    --color-modal-acento: var(--color-admin);        /* cambia el acento de modales a azul */
 }
 
 
-/* HIDDEN */
-.hidden { display: none !important; }
+/* HIDDEN — clase utilitaria para ocultar cualquier elemento del DOM */
+.hidden { display: none !important; } /* el !important garantiza que siempre gane sobre otros estilos */
 
 
-/* PANTALLA DE INICIO */
-.pantalla-inicio {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--espacio-xl);
-    gap: var(--espacio-xl);
-}
+/* PANTALLA DE INICIO — se define en detalle más adelante con el diseño Liquid Glass */
 
-.inicio__header { text-align: center; }
+.inicio__header { text-align: center; } /* centra el título y subtítulo de la pantalla */
 
 .inicio__titulo {
     font-size: var(--texto-3xl);
@@ -188,11 +188,11 @@ body[data-modo="admin"]   {
 .btn-acceso--admin:hover { background-color: var(--color-admin-oscuro); }
 
 
-/* VISTAS */
+/* VISTAS — contenedor de cada panel (usuario/admin/instructor) */
 .vista {
-    min-height: 100vh;
+    min-height: 100vh;         /* la vista siempre ocupa toda la pantalla */
     display: flex;
-    flex-direction: column;
+    flex-direction: column;    /* header arriba, contenido en el medio, footer abajo */
 }
 
 
@@ -284,17 +284,15 @@ body[data-modo="admin"]   {
 
 .header--admin .header__subtitle { color: rgba(255,255,255,0.85); }
 
+/* Contenedor del botón hamburguesa — posicionado a la izquierda del header */
 .header__nav {
-    position: absolute;
-    left: 32px;
-    top: 50%;
-    transform: translateY(-50%);
-
+    position: absolute;        /* sale del flujo normal para ubicarse sobre el header */
+    left: 32px;                /* distancia desde el borde izquierdo del header */
+    top: 50%;                  /* se posiciona a la mitad vertical del header */
+    transform: translateY(-50%); /* corrección para que quede exactamente centrado */
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
+    align-items: center;       /* alinea los ítems del nav al centro vertical */
+    gap: 0.5rem;               /* separación entre el botón hamburguesa y el de logout */
 }
 
 /* Botón volver rediseñado: flechita + texto, redondeado */
@@ -388,25 +386,24 @@ body[data-modo="admin"]   {
     gap: var(--espacio-md);
 }
 
-.contenido-vista--admin,
-.contenido-vista--usuario,
-.contenido-vista--instructor {
-    max-width: 1200px;
+.contenido-vista--usuario {
+    max-width: 1200px; /* el panel de usuario es más estrecho que admin e instructor */
 }
+/* admin e instructor usan max-width: 1400px (definido más adelante) */
 
-/* CARD BASE */
+/* CARD BASE — tarjeta blanca con sombra usada en todos los paneles */
 .card {
     background: white;
-    border-radius: var(--radio-xl);
-    padding: var(--espacio-xl);
-    box-shadow: var(--sombra-md);
+    border-radius: var(--radio-xl);  /* esquinas redondeadas estándar de cards */
+    padding: var(--espacio-xl);      /* espacio interno generoso */
+    box-shadow: var(--sombra-md);    /* sombra suave para que flote sobre el fondo */
 }
 
 .card__title {
-    font-size: var(--texto-lg);
+    font-size: var(--texto-lg);      /* título más grande que el texto normal */
     font-weight: 700;
     color: var(--texto-oscuro);
-    margin-bottom: var(--espacio-lg);
+    margin-bottom: var(--espacio-lg); /* espacio debajo del título antes del contenido */
 }
 
 .card--usuario-info {
@@ -496,8 +493,7 @@ body[data-modo="admin"]   {
 .form__input::placeholder { color: var(--texto-claro); }
 
 .form__textarea {
-    resize: none;
-    min-height: 80px;
+    min-height: 80px; /* altura mínima del textarea de descripción de tareas */
 }
 
 .form__input.error {
@@ -814,14 +810,7 @@ body[data-modo="admin"]   {
 
 .modal__close:hover { color: var(--texto-oscuro); }
 
-.modal__actions {
-    display: flex;
-    gap: var(--espacio-md);
-    justify-content: flex-end;
-    margin-top: var(--espacio-lg);
-}
-
-.modal__actions .btn { width: auto; margin-top: 0; }
+.modal__actions .btn { width: auto; margin-top: 0; } /* dentro del modal los botones no ocupan 100% */
 
 
 /* MODAL DINÁMICO DE USUARIO (reemplaza panel fijo y card estática de buscar) */
@@ -1246,7 +1235,7 @@ body[data-modo="admin"]   {
     font-size: 0.83rem;
 }
 
-.modal-v2__form .form__textarea { resize: none; min-height: 52px; }
+.modal-v2__form .form__textarea { min-height: 52px; } /* textarea más compacto dentro del modal */
 
 /* Botón de submit */
 .modal-v2__btn-submit {
@@ -1500,14 +1489,13 @@ body[data-modo="admin"]   {
     gap: var(--espacio-sm);
 }
 
-/* FOOTER */
+/* FOOTER — barra inferior de cada panel con el nombre del proyecto */
 .footer {
     background: white;
     padding: var(--espacio-lg);
     text-align: center;
-    margin-top: auto;
-    border-radius: var(--radio-xl);
-    margin-top: var(--espacio-lg);
+    border-radius: var(--radio-xl); /* esquinas redondeadas igual que el header */
+    margin-top: var(--espacio-lg);  /* empuja el footer hacia abajo separándolo del contenido */
 }
 
 .footer__text {
@@ -2076,16 +2064,20 @@ body[data-modo="admin"]   {
     }
 }
 
-/* ── PANTALLA DE INICIO — Liquid Glass ───────────────────────────────────── */
+/* ── PANTALLA DE INICIO — Liquid Glass ──────────────────────────────────────
+   Contenedor de la pantalla de login con efecto de cristal y orbs flotantes.
+   Ocupa toda la ventana, centra la card de login y oculta los orbs que salen. */
 .pantalla-inicio {
-    width: 100%;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 24px;
-    position: relative;
-    overflow: hidden;
+    width: 100%;               /* ocupa todo el ancho de la ventana */
+    min-height: 100vh;         /* ocupa toda la altura de la ventana */
+    display: flex;             /* usamos flexbox para centrar la card */
+    flex-direction: column;    /* los hijos se apilan en columna */
+    justify-content: center;   /* centra verticalmente */
+    align-items: center;       /* centra horizontalmente */
+    padding: 24px;             /* espacio interior para que la card no toque los bordes */
+    gap: var(--espacio-xl);    /* separación entre hijos (card + elementos extra) */
+    position: relative;        /* necesario para que los orbs (position:absolute) sean relativos a este */
+    overflow: hidden;          /* corta los orbs que salen del borde de la pantalla */
 }
 
 /* Orbs flotantes para profundidad y color */
@@ -2983,12 +2975,13 @@ body[data-modo="instructor"] {
     letter-spacing: -0.02em;
 }
 
+/* Fila de botones al pie del modal — alinea Cancelar y Confirmar en fila */
 .modal__actions {
     display: flex;
-    align-items: center;
-    gap: var(--espacio-sm);
-    flex-wrap: wrap;
-    padding: var(--espacio-md) var(--espacio-lg);
+    align-items: center;            /* alinea los botones al centro vertical */
+    gap: var(--espacio-sm);         /* separación entre los botones */
+    flex-wrap: wrap;                /* en pantallas pequeñas los botones se apilan */
+    padding: var(--espacio-md) var(--espacio-lg); /* espacio interior del área de botones */
 }
 
 .modal__actions button,
@@ -3032,10 +3025,10 @@ body[data-modo="instructor"] {
     .stat-card { max-width: none; }
 }
 
-/* Proporciones desktop */
+/* Admin e instructor necesitan más ancho porque tienen tablas con muchas columnas */
 .contenido-vista--admin,
 .contenido-vista--instructor {
-    max-width: 1400px;
+    max-width: 1400px; /* más ancho que usuario para que las tablas quepan cómodamente */
 }
 
 /* Layout de tres columnas del panel admin */
@@ -3583,12 +3576,13 @@ body[data-modo="instructor"] {
     content: '📝';
 }
 
+/* Chip numérico que muestra cuántas notas tiene el usuario */
 .postits__contador {
     font-size: 0.72rem;
-    font-weight: 600;
-    background: var(--fondo-suave, #f1f5f9);
-    color: var(--texto-claro);
-    border-radius: 9999px;
+    font-weight: 700;                          /* negrita para que el número resalte */
+    background: transparent;                    /* sin fondo para verse discreto */
+    color: var(--color-primario, #7c3aed);     /* morado del rol usuario */
+    border-radius: 9999px;                     /* forma de pill redondeado */
     padding: 2px 10px;
 }
 
@@ -3708,9 +3702,8 @@ body[data-modo="instructor"] {
     border-radius: var(--radio-sm);
     padding: 8px 10px;
     font-size: 0.82rem;
-    font-family: inherit;
-    resize: none;
-    min-height: 64px;
+    font-family: inherit;     /* hereda la fuente del sistema, no la del navegador */
+    min-height: 64px;         /* altura mínima para escribir el texto del post-it */
     outline: none;
     transition: border-color 0.15s;
 }
@@ -4212,9 +4205,16 @@ body[data-modo="instructor"] {
     gap: 1rem;
     align-items: stretch;
 }
+/* Tarjeta de cada tarea en el panel de calificación del instructor */
 .panel-cal__card {
-    display: flex;
-    flex-direction: column;
+    display: flex;              /* usamos flex para que el botón quede siempre abajo */
+    flex-direction: column;     /* los elementos de la card se apilan verticalmente */
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    padding: 1.25rem 1.25rem 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s, border-color 0.2s;
 }
 @media (max-width: 900px) {
     .panel-cal__lista { grid-template-columns: repeat(2, 1fr); }
@@ -4245,14 +4245,6 @@ body[data-modo="instructor"] {
 .panel-cal__vacio {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 2.5rem 1rem; text-align: center;
-}
-.panel-cal__card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 1rem;
-    padding: 1.25rem 1.25rem 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    transition: box-shadow 0.2s, border-color 0.2s;
 }
 .panel-cal__card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.1);
@@ -4512,8 +4504,7 @@ body[data-modo="instructor"] {
 }
 
 .modal-admin__textarea {
-    resize: none;
-    min-height: 80px;
+    min-height: 80px; /* altura mínima para descripción de tarea en modal admin */
 }
 
 .modal-admin__error {
@@ -4894,14 +4885,12 @@ body[data-modo="instructor"] {
     border-color: #bbf7d0;
 }
 
-/* ── Exportar JSON en cards del instructor → verde ───────────────────────── */
+/* El botón de controles del instructor usa verde en lugar de azul admin */
 [data-modo="instructor"] .btn--control {
-    background-color: var(--color-instructor);
-    border-color: var(--color-instructor);
+    background-color: var(--color-instructor); /* reemplaza el azul del admin con verde */
 }
 [data-modo="instructor"] .btn--control:hover {
-    background-color: var(--color-instructor-oscuro);
-    border-color: var(--color-instructor-oscuro);
+    background-color: var(--color-instructor-oscuro); /* verde más oscuro en hover */
 }
 /* Admin modal: label de nota de solo lectura */
 .modal-admin__grade-label {
@@ -5005,12 +4994,7 @@ body:has(#vistaUsuario:not(.hidden)) .swal2-confirm:hover {
     background-color: #db2777 !important;
 }
 
-/* Contador de notas — color morado del rol usuario */
-.postits__contador {
-    color: var(--color-primario, #7c3aed) !important;
-    background: transparent !important;
-    font-weight: 700;
-}
+/* color de .postits__contador ya está definido y unificado en la sección de post-its */
 /* ── BOTÓN VER PERMISOS — color dinámico por rol via JS ─────────────────── */
 .rol-card__btn-permisos {
     display: flex;
@@ -5540,13 +5524,7 @@ body[data-modo="usuario"] .btn-hamburguesa__linea {
     }
 }
 
-/* ── HEADER NAV ADAPTADO PARA HAMBURGUESA ────────────────────────────────────── */
-/* El header__nav ahora solo contiene el botón hamburguesa */
-.header__nav {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
+/* header__nav ya está definido más arriba con position: absolute y gap: 0.5rem */
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    RESPONSIVE MÓVIL — correcciones quirúrgicas

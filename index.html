@@ -11,21 +11,26 @@
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body data-modo="inicio">
+<!-- data-modo="inicio" indica el estado inicial — el JS lo cambia a "usuario", "admin" o "instructor" -->
 
-<!-- PANTALLA DE INICIO -->
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PANTALLA DE INICIO — pantalla de login con efecto liquid glass
+     Se muestra al cargar la app si no hay sesión guardada.
+     Contiene: orbs decorativos, logo, formulario de login, registro y recuperación.
+     ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="pantalla-inicio" id="pantallaInicio">
 
-    <!-- Orbs de color para efecto liquid glass -->
-    <div class="login-orb login-orb--1" aria-hidden="true"></div>
-    <div class="login-orb login-orb--2" aria-hidden="true"></div>
-    <div class="login-orb login-orb--3" aria-hidden="true"></div>
+    <!-- Orbs decorativos de color que flotan en el fondo (efecto visual, no interactivos) -->
+    <div class="login-orb login-orb--1" aria-hidden="true"></div> <!-- orb morado grande arriba-izquierda -->
+    <div class="login-orb login-orb--2" aria-hidden="true"></div> <!-- orb azul grande abajo-derecha -->
+    <div class="login-orb login-orb--3" aria-hidden="true"></div> <!-- orb rosado pequeño centro-derecha -->
 
-    <div class="inicio__columna-panel">
-        <div class="inicio__glass-card">
+    <div class="inicio__columna-panel"> <!-- columna que centra la card de login -->
+        <div class="inicio__glass-card"> <!-- tarjeta de cristal con efecto blur y bordes translúcidos -->
 
-            <!-- Ícono de la aplicación -->
+            <!-- Ícono decorativo del sistema en la parte superior de la card -->
             <div class="login-logo">
-                <i data-lucide="shield-check" class="login-logo__icono"></i>
+                <i data-lucide="shield-check" class="login-logo__icono"></i> <!-- Lucide convierte este <i> en un SVG de escudo con check -->
             </div>
 
             <header class="inicio__header">
@@ -33,21 +38,22 @@
                 <p class="inicio__subtitulo">Ingresa tus credenciales para continuar</p>
             </header>
 
-            <div class="login-form-wrapper">
+            <div class="login-form-wrapper"> <!-- envuelve el formulario y los enlaces de registro/recuperación -->
 
-                <!-- Mensaje de bienvenida — aparece tras un login exitoso -->
-                <div class="login-bienvenida hidden" id="loginBienvenida">
+                <!-- Mensaje de bienvenida personalizado — se muestra solo al completar el login -->
+                <div class="login-bienvenida hidden" id="loginBienvenida"> <!-- hidden por defecto, JS lo muestra tras login exitoso -->
                     <i data-lucide="check-circle" class="login-bienvenida__icono-svg"></i>
-                    <p class="login-bienvenida__texto" id="loginBienvenidaTexto">¡Bienvenido!</p>
+                    <p class="login-bienvenida__texto" id="loginBienvenidaTexto">¡Bienvenido!</p> <!-- JS inyecta el nombre del usuario aquí -->
                 </div>
 
-                <form class="login-form" id="loginForm" novalidate>
+                <form class="login-form" id="loginForm" novalidate> <!-- novalidate: desactivamos validación del browser, la hacemos en JS -->
 
-                    <!-- Campo de correo electrónico -->
+                    <!-- Campo de correo electrónico del login -->
                     <div class="form__group">
                         <label for="loginEmail" class="form__label">Correo electrónico</label>
-                        <div class="login-field">
-                            <i data-lucide="mail" class="login-field__icon"></i>
+                        <div class="login-field"> <!-- contenedor relativo para posicionar el ícono dentro del input -->
+                            <i data-lucide="mail" class="login-field__icon"></i> <!-- ícono de sobre dentro del input -->
+                            <!-- JS lee loginEmail al enviar el formulario -->
                             <input
                                 type="text"
                                 id="loginEmail"
@@ -56,14 +62,15 @@
                                 autocomplete="email"
                             >
                         </div>
-                        <span class="form__error" id="loginEmailError"></span>
+                        <span class="form__error" id="loginEmailError"></span> <!-- JS escribe aquí el mensaje de error del email -->
                     </div>
 
-                    <!-- Campo de contraseña con ícono y toggle -->
+                    <!-- Campo de contraseña con ícono de candado y botón ojo para mostrar/ocultar -->
                     <div class="form__group">
                         <label for="loginPassword" class="form__label">Contraseña</label>
                         <div class="login-field">
-                            <i data-lucide="lock" class="login-field__icon"></i>
+                            <i data-lucide="lock" class="login-field__icon"></i> <!-- ícono de candado dentro del input -->
+                            <!-- JS lee loginPassword y lo envía al servidor -->
                             <input
                                 type="password"
                                 id="loginPassword"
@@ -71,43 +78,44 @@
                                 placeholder="Tu contraseña"
                                 autocomplete="current-password"
                             >
+                            <!-- JS alterna btnTogglePassword entre type="password" y type="text" al hacer clic -->
                             <button
                                 type="button"
                                 class="login-field__toggle"
                                 id="btnTogglePassword"
                                 aria-label="Mostrar u ocultar contraseña"
                             >
-                                <i data-lucide="eye" id="iconoTogglePassword"></i>
+                                <i data-lucide="eye" id="iconoTogglePassword"></i> <!-- JS cambia el ícono entre ojo abierto/cerrado -->
                             </button>
                         </div>
-                        <span class="form__error" id="loginPasswordError"></span>
+                        <span class="form__error" id="loginPasswordError"></span> <!-- JS escribe aquí el mensaje de error de la contraseña -->
                     </div>
 
-                    <!-- Botón de ingreso -->
+                    <!-- Botón principal de ingreso — JS lo deshabilita mientras procesa el login -->
                     <button type="submit" class="btn-acceso btn-acceso--login" id="btnLogin">
                         <i data-lucide="log-in"></i>
                         Ingresar al Sistema
                     </button>
                 </form>
 
-                <!-- Separador -->
+                <!-- Separador visual entre el login y los enlaces de registro/recuperación -->
                 <div class="login-divider">
                     <span class="login-divider__line"></span>
                     <span class="login-divider__texto">o</span>
                     <span class="login-divider__line"></span>
                 </div>
 
-                <!-- Registro -->
+                <!-- Enlace para abrir el modal de registro de nueva cuenta -->
                 <p class="login-registro-texto">
                     ¿No tienes cuenta?
-                    <button type="button" class="login-registro-btn" id="btnAbrirRegistro">
+                    <button type="button" class="login-registro-btn" id="btnAbrirRegistro"> <!-- JS muestra el modal de registro al hacer clic -->
                         Regístrate
                     </button>
                 </p>
 
-                <!-- Olvidó contraseña -->
+                <!-- Enlace para abrir el modal de recuperación de contraseña -->
                 <p class="link-acceso">
-                    <button type="button" class="btn-link" id="btnOlvidoPassword">¿Olvidó su contraseña?</button>
+                    <button type="button" class="btn-link" id="btnOlvidoPassword">¿Olvidó su contraseña?</button> <!-- JS abre el modal de recuperación -->
                 </p>
 
             </div>
@@ -116,7 +124,13 @@
 </div>
 
 
-<!-- VISTA USUARIO -->
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     VISTA USUARIO — Panel personal del estudiante
+     Se muestra cuando el rol del usuario logueado es "user" (estudiante).
+     Contiene: sidebar de navegación, hero de bienvenida, dashboard de estadísticas,
+     tabla de tareas asignadas, calendario personal y notas personales (post-its).
+     Color de acento: morado/violeta (variable CSS --color-primario).
+     ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="vista hidden" id="vistaUsuario">
 
     <!-- Sidebar drawer -->
@@ -204,55 +218,57 @@
                 </div>
             </div>
 
-            <section class="dashboard-stats">
+            <!-- Dashboard de estadísticas — JS llena los span con los valores reales del servidor -->
+            <section class="dashboard-stats"> <!-- grilla de 6 tarjetas con contadores por estado -->
                 <div class="stat-card">
                     <span class="stat-card__label">Total tareas</span>
-                    <span class="stat-card__valor" id="userDashTotal">—</span>
+                    <span class="stat-card__valor" id="userDashTotal">—</span> <!-- JS escribe aquí el total de tareas del usuario -->
                 </div>
-                <div class="stat-card stat-card--pendiente">
+                <div class="stat-card stat-card--pendiente"> <!-- borde amarillo = pendiente -->
                     <span class="stat-card__label">Pendientes</span>
-                    <span class="stat-card__valor" id="userDashPendiente">—</span>
+                    <span class="stat-card__valor" id="userDashPendiente">—</span> <!-- JS escribe el número de tareas pendientes -->
                 </div>
-                <div class="stat-card stat-card--progreso">
+                <div class="stat-card stat-card--progreso"> <!-- borde azul = en progreso -->
                     <span class="stat-card__label">En Progreso</span>
-                    <span class="stat-card__valor" id="userDashProgreso">—</span>
+                    <span class="stat-card__valor" id="userDashProgreso">—</span> <!-- JS escribe el número de tareas en progreso -->
                 </div>
-                <div class="stat-card stat-card--aprobacion">
+                <div class="stat-card stat-card--aprobacion"> <!-- borde naranja = esperando aprobación -->
                     <span class="stat-card__label">Por aprobar</span>
-                    <span class="stat-card__valor" id="userDashAprobacion">—</span>
+                    <span class="stat-card__valor" id="userDashAprobacion">—</span> <!-- JS escribe el número de tareas en revisión -->
                 </div>
-                <div class="stat-card stat-card--completada">
+                <div class="stat-card stat-card--completada"> <!-- borde verde = completada -->
                     <span class="stat-card__label">Completadas</span>
-                    <span class="stat-card__valor" id="userDashCompletada">—</span>
+                    <span class="stat-card__valor" id="userDashCompletada">—</span> <!-- JS escribe el número de tareas completadas -->
                 </div>
-                <div class="stat-card stat-card--reprobada">
+                <div class="stat-card stat-card--reprobada"> <!-- borde rojo = reprobada -->
                     <span class="stat-card__label">Reprobadas</span>
-                    <span class="stat-card__valor" id="userDashReprobada">—</span>
+                    <span class="stat-card__valor" id="userDashReprobada">—</span> <!-- JS escribe el número de tareas reprobadas -->
                 </div>
             </section>
 
-            <div class="usuario-fila-top">
-                <section class="hidden usuario-datos-col" id="userDataSection">
+            <!-- Fila superior: datos del usuario (izquierda) + calendario (derecha) -->
+            <div class="usuario-fila-top"> <!-- flex row en desktop, columna en móvil -->
+                <section class="hidden usuario-datos-col" id="userDataSection"> <!-- hidden por defecto, JS lo muestra al cargar -->
                     <div class="card card--usuario-info">
                         <h2 class="card__title">Datos del usuario</h2>
-                        <div class="user-info">
+                        <div class="user-info"> <!-- grid de 2 columnas con los datos del perfil -->
                             <div class="user-info__item">
                                 <span class="user-info__label">ID</span>
-                                <span class="user-info__value" id="userId"></span>
+                                <span class="user-info__value" id="userId"></span> <!-- JS escribe aquí el ID del usuario desde la sesión -->
                             </div>
                             <div class="user-info__item">
                                 <span class="user-info__label">Nombre</span>
-                                <span class="user-info__value" id="userName"></span>
+                                <span class="user-info__value" id="userName"></span> <!-- JS escribe el nombre completo del usuario -->
                             </div>
                             <div class="user-info__item">
                                 <span class="user-info__label">Correo</span>
-                                <span class="user-info__value" id="userEmail"></span>
+                                <span class="user-info__value" id="userEmail"></span> <!-- JS escribe el correo del usuario -->
                             </div>
                         </div>
                     </div>
                 </section>
-                <div class="usuario-calendario-col">
-                    <div id="usuarioCalendario" class="seccion-calendario"></div>
+                <div class="usuario-calendario-col"> <!-- columna derecha con el calendario -->
+                    <div id="usuarioCalendario" class="seccion-calendario"></div> <!-- JS monta aquí el calendario interactivo -->
                 </div>
             </div>
 
@@ -282,7 +298,7 @@
                             </button>
                         </div>
                     </form>
-                    <div class="tasks-table-container">
+                    <div class="tasks-table-container"> <!-- overflow-x:auto para scroll horizontal en móvil -->
                         <table class="tasks-table">
                             <thead class="tasks-table__head">
                                 <tr>
@@ -294,10 +310,11 @@
                                     <th scope="col">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="tasksTableBody"></tbody>
+                            <tbody id="tasksTableBody"></tbody> <!-- JS inserta aquí las filas <tr> con las tareas del usuario -->
                         </table>
                     </div>
-                    <div class="tasks-empty" id="tasksEmptyState">
+                    <!-- Mensaje vacío — visible cuando el usuario no tiene tareas asignadas -->
+                    <div class="tasks-empty" id="tasksEmptyState"> <!-- JS lo oculta cuando hay tareas -->
                         <p class="tasks-empty__text">No tienes tareas asignadas</p>
                         <p class="tasks-empty__subtext">El administrador te asignara tareas desde su panel</p>
                     </div>
@@ -322,7 +339,13 @@
 </div>
 
 
-<!-- VISTA ADMIN -->
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     VISTA ADMIN — Panel de administración
+     Se muestra cuando el rol del usuario logueado es "admin".
+     Contiene: sidebar, hero, dashboard de tareas, tabla de usuarios del sistema,
+     tabla de todas las tareas, formulario crear tarea, calendario, auditoría y roles.
+     Color de acento: azul (variable CSS --color-admin).
+     ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="vista hidden" id="vistaAdmin">
 
     <!-- Sidebar drawer -->
@@ -422,10 +445,11 @@
                 </div>
             </div>
 
-            <section class="dashboard-stats">
+            <!-- Dashboard de estadísticas del admin — los valores los llena JS al cargar el panel -->
+            <section class="dashboard-stats"> <!-- igual al del usuario pero sobre TODAS las tareas del sistema -->
                 <div class="stat-card">
                     <span class="stat-card__label">Total tareas</span>
-                    <span class="stat-card__valor" id="dashboardTotal">—</span>
+                    <span class="stat-card__valor" id="dashboardTotal">—</span> <!-- JS llena con el total global de tareas -->
                 </div>
                 <div class="stat-card stat-card--pendiente">
                     <span class="stat-card__label">Pendientes</span>
@@ -449,14 +473,15 @@
                 </div>
             </section>
 
-            <div class="admin-inicio-grid">
-                <aside class="columna-auditoria" id="columnaAuditoria">
+            <!-- Grid de tres columnas: auditoría, roles y sistema — solo visible en la sección inicio del admin -->
+            <div class="admin-inicio-grid"> <!-- en tablet colapsa a 2 col, en móvil a 1 col -->
+                <aside class="columna-auditoria" id="columnaAuditoria"> <!-- columna izquierda: log de acciones recientes -->
                     <h3 class="columna__titulo">Actividad reciente</h3>
-                    <div id="auditoriaContenedor"></div>
+                    <div id="auditoriaContenedor"></div> <!-- JS inserta aquí los últimos eventos del log de auditoría -->
                 </aside>
-                <aside class="columna-roles" id="columnaRoles">
+                <aside class="columna-roles" id="columnaRoles"> <!-- columna central: descripción de los roles del sistema -->
                     <h3 class="columna__titulo">Roles del sistema</h3>
-                    <div id="rolesContenedor"></div>
+                    <div id="rolesContenedor"></div> <!-- JS inserta aquí las tarjetas de cada rol con sus permisos -->
                 </aside>
                 <aside class="columna-sistema">
                     <h3 class="columna__titulo">Información del sistema</h3>
@@ -512,8 +537,8 @@
 
         </div><!-- fin spa-seccion inicio -->
 
-        <!-- SECCIÓN: CREAR TAREA -->
-        <div class="spa-seccion spa-seccion--oculta" data-seccion="crear-tarea">
+        <!-- SECCIÓN: CREAR TAREA — formulario para que el admin cree y asigne tareas -->
+        <div class="spa-seccion spa-seccion--oculta" data-seccion="crear-tarea"> <!-- oculta por defecto, el router la muestra -->
             <section class="admin-card admin-card--full" id="cardCrearTareas">
                 <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleCrearTareas">
                     <h2 class="admin-card__titulo">Crear Tarea</h2>
@@ -525,18 +550,18 @@
                     <form id="createTaskForm" class="form" novalidate>
                         <div class="form__group">
                             <label for="newTaskTitle" class="form__label">Título</label>
-                            <input type="text" id="newTaskTitle" class="form__input" placeholder="Ej: Revisar documentación del proyecto" autocomplete="off">
-                            <span class="form__error" id="newTaskTitleError"></span>
+                            <input type="text" id="newTaskTitle" class="form__input" placeholder="Ej: Revisar documentación del proyecto" autocomplete="off"> <!-- JS lee este valor al crear la tarea -->
+                            <span class="form__error" id="newTaskTitleError"></span> <!-- JS muestra aquí si el título está vacío -->
                         </div>
                         <div class="form__group">
                             <label for="newTaskDescription" class="form__label">
                                 Descripción <span class="form__label--opcional">(opcional)</span>
                             </label>
-                            <textarea id="newTaskDescription" class="form__input form__textarea" rows="2" placeholder="Descripción detallada de la tarea..."></textarea>
+                            <textarea id="newTaskDescription" class="form__input form__textarea" rows="2" placeholder="Descripción detallada de la tarea..."></textarea> <!-- JS lee este valor -->
                         </div>
                         <div class="form__group">
                             <label for="newTaskStatus" class="form__label">Estado</label>
-                            <select id="newTaskStatus" class="form__input">
+                            <select id="newTaskStatus" class="form__input"> <!-- solo se puede crear como pendiente o en progreso -->
                                 <option value="" disabled selected>Selecciona un estado</option>
                                 <option value="pendiente">Pendiente</option>
                                 <option value="en_progreso">En Progreso</option>
@@ -551,71 +576,72 @@
                         </div>
                         <div class="form__group">
                             <label class="form__label">Asignar usuarios</label>
-                            <div class="usuarios-dropdown" id="usuariosDropdown">
+                            <div class="usuarios-dropdown" id="usuariosDropdown"> <!-- dropdown personalizado con checkboxes para multi-selección -->
                                 <button type="button" class="usuarios-dropdown__btn" id="usuariosDropdownBtn" aria-expanded="false" aria-haspopup="listbox">
-                                    <span id="usuariosDropdownTexto">Seleccionar usuarios...</span>
+                                    <span id="usuariosDropdownTexto">Seleccionar usuarios...</span> <!-- JS actualiza este texto con los usuarios elegidos -->
                                     <span class="usuarios-dropdown__icono">▼</span>
                                 </button>
-                                <div class="usuarios-dropdown__panel hidden" id="usuariosDropdownPanel" role="listbox"></div>
+                                <div class="usuarios-dropdown__panel hidden" id="usuariosDropdownPanel" role="listbox"></div> <!-- JS llena este panel con la lista de usuarios -->
                             </div>
                             <span class="form__error" id="newTaskUsersError"></span>
                         </div>
                         <button type="submit" class="btn btn--admin-primary">
-                            <span class="btn__text">Crear Tarea</span>
+                            <span class="btn__text">Crear Tarea</span> <!-- JS cambia el texto a "Creando..." mientras procesa -->
                         </button>
                     </form>
                 </div>
             </section>
         </div><!-- fin spa-seccion crear-tarea -->
 
-        <!-- SECCIÓN: USUARIOS -->
+        <!-- SECCIÓN: USUARIOS — tabla con todos los usuarios registrados en el sistema -->
         <div class="spa-seccion spa-seccion--oculta" data-seccion="usuarios">
             <section class="admin-card admin-card--full" id="cardUsuarios">
-                <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleUsuarios">
+                <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleUsuarios"> <!-- cabecera con botón para contraer/expandir -->
                     <h2 class="admin-card__titulo">Usuarios del Sistema</h2>
                     <div class="admin-card__cabecera-derecha">
-                        <button id="adminBtnExportarUsuarios" class="btn-accion-icono btn-accion--azul" type="button" title="Exportar usuarios como JSON"><i data-lucide="download" class="icono-accion"></i></button>
-                        <span id="adminUsersCount" class="tasks-header__count">0 usuarios</span>
-                        <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Usuarios del Sistema">▼</button>
+                        <button id="adminBtnExportarUsuarios" class="btn-accion-icono btn-accion--azul" type="button" title="Exportar usuarios como JSON"><i data-lucide="download" class="icono-accion"></i></button> <!-- descarga la lista en JSON -->
+                        <span id="adminUsersCount" class="tasks-header__count">0 usuarios</span> <!-- JS actualiza este contador -->
+                        <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Usuarios del Sistema">▼</button> <!-- JS rota el ícono al contraer -->
                     </div>
                 </div>
-                <div class="admin-card__cuerpo" id="cuerpoUsuarios">
+                <div class="admin-card__cuerpo" id="cuerpoUsuarios"> <!-- JS oculta/muestra este cuerpo al contraer/expandir -->
                     <div class="tasks-table-container">
-                        <table class="tasks-table tasks-table--admin">
+                        <table class="tasks-table tasks-table--admin"> <!-- tabla con anchos fijos de columna definidos en CSS -->
                             <thead class="tasks-table__head">
                                 <tr>
                                     <th scope="col" class="col-num">#</th>
                                     <th scope="col" class="col-nombre">Nombre</th>
                                     <th scope="col" class="col-doc">Documento</th>
                                     <th scope="col" class="col-correo">Correo</th>
-                                    <th scope="col" class="col-rol">Rol</th>
-                                    <th scope="col" class="col-estado">Estado</th>
-                                    <th scope="col" class="col-acciones">Acciones</th>
+                                    <th scope="col" class="col-rol">Rol</th> <!-- badge de color por rol -->
+                                    <th scope="col" class="col-estado">Estado</th> <!-- activo/inactivo -->
+                                    <th scope="col" class="col-acciones">Acciones</th> <!-- botones de ver/editar/rol/activar/eliminar -->
                                 </tr>
                             </thead>
-                            <tbody id="usersTableBody"></tbody>
+                            <tbody id="usersTableBody"></tbody> <!-- JS inserta aquí las filas de cada usuario -->
                         </table>
                     </div>
                 </div>
             </section>
         </div><!-- fin spa-seccion usuarios -->
 
-        <!-- SECCIÓN: TAREAS -->
-        <div class="spa-seccion spa-seccion--oculta" data-seccion="tareas">
+        <!-- SECCIÓN: TAREAS — tabla completa de todas las tareas del sistema con filtros -->
+        <div class="spa-seccion spa-seccion--oculta" data-seccion="tareas"> <!-- oculta por defecto, el router la muestra -->
             <section class="admin-card admin-card--full" id="cardTareas">
                 <div class="admin-card__cabecera admin-card__cabecera--toggle" id="toggleTareas">
                     <h2 class="admin-card__titulo">Todas las Tareas del Sistema</h2>
                     <div class="admin-card__cabecera-derecha">
-                        <span id="adminTasksCount" class="tasks-header__count">0 tareas</span>
+                        <span id="adminTasksCount" class="tasks-header__count">0 tareas</span> <!-- JS actualiza el contador al cargar -->
                         <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Tareas del Sistema">▼</button>
                     </div>
                 </div>
                 <div class="admin-card__cuerpo" id="cuerpoTareas">
+                    <!-- Barra de filtros y orden — JS lee estos valores al pulsar "Aplicar" -->
                     <div class="tasks-controls">
                         <div class="tasks-controls__grupo">
                             <label for="adminFiltroEstado" class="tasks-controls__label">Estado</label>
                             <div class="tasks-controls__select-wrapper">
-                                <select id="adminFiltroEstado" class="tasks-controls__select">
+                                <select id="adminFiltroEstado" class="tasks-controls__select"> <!-- filtra la tabla por estado de tarea -->
                                     <option value="">Todos</option>
                                     <option value="pendiente">Pendiente</option>
                                     <option value="en_progreso">En Progreso</option>
@@ -628,12 +654,12 @@
                         </div>
                         <div class="tasks-controls__grupo">
                             <label for="adminFiltroUsuario" class="tasks-controls__label">Usuario</label>
-                            <input type="text" id="adminFiltroUsuario" class="tasks-controls__input" placeholder="Nombre del usuario">
+                            <input type="text" id="adminFiltroUsuario" class="tasks-controls__input" placeholder="Nombre del usuario"> <!-- filtra por nombre del usuario asignado -->
                         </div>
                         <div class="tasks-controls__grupo">
                             <label for="adminOrdenSelect" class="tasks-controls__label">Ordenar</label>
                             <div class="tasks-controls__select-wrapper">
-                                <select id="adminOrdenSelect" class="tasks-controls__select">
+                                <select id="adminOrdenSelect" class="tasks-controls__select"> <!-- ordena las filas de la tabla -->
                                     <option value="">Sin orden</option>
                                     <option value="titulo_asc">Título A-Z</option>
                                     <option value="titulo_desc">Título Z-A</option>
@@ -646,13 +672,13 @@
                         <div class="tasks-controls__grupo tasks-controls__grupo--acciones-bar">
                             <span class="tasks-controls__label">Acciones</span>
                             <div class="tasks-controls__acciones-bar">
-                                <button class="btn-accion-icono btn-accion--azul" id="adminBtnAplicarFiltros" title="Aplicar filtros"><i data-lucide="check" class="icono-accion"></i></button>
-                                <button class="btn-accion-icono btn-accion--gris" id="adminBtnLimpiarFiltros" title="Limpiar filtros"><i data-lucide="x" class="icono-accion"></i></button>
-                                <button class="btn-accion-icono btn-accion--azul" id="adminBtnExportar" title="Exportar JSON"><i data-lucide="download" class="icono-accion"></i></button>
+                                <button class="btn-accion-icono btn-accion--azul" id="adminBtnAplicarFiltros" title="Aplicar filtros"><i data-lucide="check" class="icono-accion"></i></button> <!-- aplica filtro + orden a la tabla -->
+                                <button class="btn-accion-icono btn-accion--gris" id="adminBtnLimpiarFiltros" title="Limpiar filtros"><i data-lucide="x" class="icono-accion"></i></button> <!-- limpia los filtros y recarga -->
+                                <button class="btn-accion-icono btn-accion--azul" id="adminBtnExportar" title="Exportar JSON"><i data-lucide="download" class="icono-accion"></i></button> <!-- descarga las tareas filtradas en JSON -->
                             </div>
                         </div>
                     </div>
-                    <div class="tasks-table-container">
+                    <div class="tasks-table-container"> <!-- overflow-x:auto para scroll horizontal en móvil -->
                         <table class="tasks-table tasks-table--admin">
                             <thead class="tasks-table__head">
                                 <tr>
@@ -662,10 +688,10 @@
                                     <th scope="col">Estado</th>
                                     <th scope="col">Usuario asignado</th>
                                     <th scope="col">Creación</th>
-                                    <th scope="col">Acciones</th>
+                                    <th scope="col">Acciones</th> <!-- ver / editar / eliminar -->
                                 </tr>
                             </thead>
-                            <tbody id="adminTasksTableBody"></tbody>
+                            <tbody id="adminTasksTableBody"></tbody> <!-- JS inserta aquí las filas <tr> de cada tarea -->
                         </table>
                     </div>
                 </div>
@@ -683,23 +709,30 @@
 </div>
 
 
-<!-- VISTA INSTRUCTOR -->
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     VISTA INSTRUCTOR — Panel del docente
+     Se muestra cuando el rol del usuario logueado es "instructor".
+     Contiene: sidebar, hero, dashboard de tareas de estudiantes, tabla de estudiantes,
+     tabla de tareas de estudiantes, crear tarea, calendario, panel de calificación.
+     El instructor puede gestionar tareas y calificar, pero no puede administrar usuarios.
+     Color de acento: verde (variable CSS --color-instructor).
+     ═══════════════════════════════════════════════════════════════════════════ -->
 <div class="vista hidden" id="vistaInstructor">
 
-    <!-- Sidebar drawer -->
+    <!-- Sidebar drawer — se abre con el botón de hamburguesa, se cierra con el overlay o la X -->
     <nav class="sidebar" id="sidebarInstructor" aria-label="Menú docente">
         <div class="sidebar__header">
             <div class="sidebar__brand">
-                <i data-lucide="graduation-cap" class="sidebar__brand-icon"></i>
+                <i data-lucide="graduation-cap" class="sidebar__brand-icon"></i> <!-- ícono de birrete = rol instructor -->
                 <span>Panel Docente</span>
             </div>
             <button class="sidebar__cerrar" id="sidebarCerrarInstructor" type="button" aria-label="Cerrar menú">
-                <i data-lucide="x"></i>
+                <i data-lucide="x"></i> <!-- JS escucha este botón para cerrar el sidebar -->
             </button>
         </div>
         <ul class="sidebar__nav" role="list">
             <li>
-                <a class="sidebar__link sidebar__link--activo" data-seccion="inicio" href="#instructor/inicio">
+                <a class="sidebar__link sidebar__link--activo" data-seccion="inicio" href="#instructor/inicio"> <!-- data-seccion permite que JS marque el enlace activo -->
                     <i data-lucide="home" class="sidebar__link-icon"></i>
                     <span>Inicio</span>
                 </a>
@@ -724,21 +757,21 @@
             </li>
         </ul>
         <div class="sidebar__footer">
-            <button class="sidebar__link sidebar__link--footer" id="btnPerfilInstructor" type="button">
+            <button class="sidebar__link sidebar__link--footer" id="btnPerfilInstructor" type="button"> <!-- abre el modal de cambio de contraseña -->
                 <i data-lucide="lock" class="sidebar__link-icon"></i>
                 <span>Cambiar contraseña</span>
             </button>
-            <button class="sidebar__link sidebar__link--footer sidebar__link--danger" id="btnLogoutInstructor" type="button">
+            <button class="sidebar__link sidebar__link--footer sidebar__link--danger" id="btnLogoutInstructor" type="button"> <!-- cierra sesión y vuelve al login -->
                 <i data-lucide="power" class="sidebar__link-icon"></i>
                 <span>Cerrar sesión</span>
             </button>
         </div>
     </nav>
-    <div class="sidebar-overlay" id="overlayInstructor"></div>
+    <div class="sidebar-overlay" id="overlayInstructor"></div> <!-- fondo semitransparente — JS lo activa al abrir el sidebar -->
 
-    <header class="header header--instructor">
+    <header class="header header--instructor"> <!-- barra superior verde del panel docente -->
         <div class="header__nav">
-            <button class="btn-hamburguesa" id="btnHamburguesaInstructor" type="button" aria-label="Abrir menú" aria-expanded="false">
+            <button class="btn-hamburguesa" id="btnHamburguesaInstructor" type="button" aria-label="Abrir menú" aria-expanded="false"> <!-- las 3 líneas que abren el sidebar -->
                 <span class="btn-hamburguesa__linea"></span>
                 <span class="btn-hamburguesa__linea"></span>
                 <span class="btn-hamburguesa__linea"></span>
@@ -746,8 +779,8 @@
         </div>
         <h1 class="header__title">Panel Docente</h1>
         <p class="header__subtitle">Gestión de tareas y seguimiento de estudiantes</p>
-        <form id="instrSearchUserForm" novalidate class="header__busqueda-instructor">
-            <input type="text" id="instrUserDocument" placeholder="Buscar usuario por nombre, doc o ID..." autocomplete="off">
+        <form id="instrSearchUserForm" novalidate class="header__busqueda-instructor"> <!-- JS captura el submit para buscar el usuario en el servidor -->
+            <input type="text" id="instrUserDocument" placeholder="Buscar usuario por nombre, doc o ID..." autocomplete="off"> <!-- JS lee este campo al buscar -->
             <button type="submit">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242 1.398a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
@@ -783,14 +816,15 @@
                 </div>
             </div>
 
-            <section class="dashboard-stats">
+            <!-- Dashboard de estadísticas del instructor — JS llena los span al cargar el panel -->
+            <section class="dashboard-stats"> <!-- muestra contadores sobre las tareas de todos los estudiantes -->
                 <div class="stat-card">
                     <span class="stat-card__label">Total tareas</span>
-                    <span class="stat-card__valor" id="instrDashTotal">—</span>
+                    <span class="stat-card__valor" id="instrDashTotal">—</span> <!-- JS escribe el total global -->
                 </div>
                 <div class="stat-card stat-card--pendiente">
                     <span class="stat-card__label">Pendientes</span>
-                    <span class="stat-card__valor" id="instrDashPendiente">—</span>
+                    <span class="stat-card__valor" id="instrDashPendiente">—</span> <!-- JS escribe el conteo de pendientes -->
                 </div>
                 <div class="stat-card stat-card--progreso">
                     <span class="stat-card__label">En Progreso</span>
@@ -810,14 +844,15 @@
                 </div>
             </section>
 
+            <!-- Dos widgets lado a lado: calendario de eventos y panel de calificación rápida -->
             <div class="instructor-widgets">
-                <div id="instrCalendario" class="seccion-calendario"></div>
-                <div id="instrPanelCalificacion" class="panel-calificacion"></div>
+                <div id="instrCalendario" class="seccion-calendario"></div> <!-- JS monta aquí el calendario con eventos del sistema -->
+                <div id="instrPanelCalificacion" class="panel-calificacion"></div> <!-- JS monta aquí las tarjetas de tareas por calificar -->
             </div>
 
         </div><!-- fin spa-seccion inicio -->
 
-        <!-- SECCIÓN: CREAR TAREA -->
+        <!-- SECCIÓN: CREAR TAREA — formulario para que el instructor asigne tareas a estudiantes -->
         <div class="spa-seccion spa-seccion--oculta" data-seccion="crear-tarea">
             <section class="admin-card admin-card--full" id="instrCardCrearTareas">
                 <div class="admin-card__cabecera admin-card__cabecera--toggle" id="instrToggleCrearTareas">
@@ -827,21 +862,21 @@
                     </div>
                 </div>
                 <div class="admin-card__cuerpo" id="instrCuerpoCrearTareas">
-                    <form id="instrCreateTaskForm" class="form" novalidate>
+                    <form id="instrCreateTaskForm" class="form" novalidate> <!-- novalidate: la validación la hace JS, no el browser -->
                         <div class="form__group">
                             <label for="instrNewTaskTitle" class="form__label">Título</label>
-                            <input type="text" id="instrNewTaskTitle" class="form__input" placeholder="Ej: Revisar documentación del proyecto" autocomplete="off">
-                            <span class="form__error" id="instrNewTaskTitleError"></span>
+                            <input type="text" id="instrNewTaskTitle" class="form__input" placeholder="Ej: Revisar documentación del proyecto" autocomplete="off"> <!-- JS lee este campo al enviar -->
+                            <span class="form__error" id="instrNewTaskTitleError"></span> <!-- JS escribe aquí el mensaje si el título está vacío -->
                         </div>
                         <div class="form__group">
                             <label for="instrNewTaskDescription" class="form__label">
                                 Descripción <span class="form__label--opcional">(opcional)</span>
                             </label>
-                            <textarea id="instrNewTaskDescription" class="form__input form__textarea" rows="2" placeholder="Descripción detallada de la tarea..."></textarea>
+                            <textarea id="instrNewTaskDescription" class="form__input form__textarea" rows="2" placeholder="Descripción detallada de la tarea..."></textarea> <!-- JS lee este valor -->
                         </div>
                         <div class="form__group">
                             <label for="instrNewTaskStatus" class="form__label">Estado</label>
-                            <select id="instrNewTaskStatus" class="form__input">
+                            <select id="instrNewTaskStatus" class="form__input"> <!-- solo pendiente o en_progreso al crear -->
                                 <option value="" disabled selected>Selecciona un estado</option>
                                 <option value="pendiente">Pendiente</option>
                                 <option value="en_progreso">En Progreso</option>
@@ -856,36 +891,36 @@
                         </div>
                         <div class="form__group">
                             <label class="form__label">Asignar usuarios</label>
-                            <div class="usuarios-dropdown" id="instrUsuariosDropdown">
+                            <div class="usuarios-dropdown" id="instrUsuariosDropdown"> <!-- dropdown personalizado con checkboxes para elegir múltiples estudiantes -->
                                 <button type="button" class="usuarios-dropdown__btn" id="instrUsuariosDropdownBtn" aria-expanded="false" aria-haspopup="listbox">
-                                    <span id="instrUsuariosDropdownTexto">Seleccionar usuarios...</span>
+                                    <span id="instrUsuariosDropdownTexto">Seleccionar usuarios...</span> <!-- JS actualiza este texto con los nombres elegidos -->
                                     <span class="usuarios-dropdown__icono">▼</span>
                                 </button>
-                                <div class="usuarios-dropdown__panel hidden" id="instrUsuariosDropdownPanel" role="listbox"></div>
+                                <div class="usuarios-dropdown__panel hidden" id="instrUsuariosDropdownPanel" role="listbox"></div> <!-- JS llena este panel con los estudiantes del sistema -->
                             </div>
                             <span class="form__error" id="instrNewTaskUsersError"></span>
                         </div>
                         <button type="submit" class="btn btn--instr-primary">
-                            <span class="btn__text">Crear Tarea</span>
+                            <span class="btn__text">Crear Tarea</span> <!-- JS cambia el texto a "Creando..." mientras procesa -->
                         </button>
                     </form>
                 </div>
             </section>
         </div><!-- fin spa-seccion crear-tarea -->
 
-        <!-- SECCIÓN: ESTUDIANTES -->
+        <!-- SECCIÓN: ESTUDIANTES — tabla con los usuarios de rol "user" del sistema -->
         <div class="spa-seccion spa-seccion--oculta" data-seccion="estudiantes">
             <section class="admin-card admin-card--full" id="instrCardUsuarios">
                 <div class="admin-card__cabecera admin-card__cabecera--toggle" id="instrToggleUsuarios">
                     <h2 class="admin-card__titulo">Estudiantes del Sistema</h2>
                     <div class="admin-card__cabecera-derecha">
-                        <button id="instrBtnExportarUsuarios" class="btn-accion-icono btn-accion--verde" type="button" title="Exportar estudiantes como JSON"><i data-lucide="download" class="icono-accion"></i></button>
-                        <span id="instrUsersCount" class="tasks-header__count">0 usuarios</span>
+                        <button id="instrBtnExportarUsuarios" class="btn-accion-icono btn-accion--verde" type="button" title="Exportar estudiantes como JSON"><i data-lucide="download" class="icono-accion"></i></button> <!-- descarga la lista en JSON -->
+                        <span id="instrUsersCount" class="tasks-header__count">0 usuarios</span> <!-- JS actualiza el contador -->
                         <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Usuarios">▼</button>
                     </div>
                 </div>
                 <div class="admin-card__cuerpo" id="instrCuerpoUsuarios">
-                    <div class="tasks-table-container">
+                    <div class="tasks-table-container"> <!-- overflow-x:auto para scroll horizontal en móvil -->
                         <table class="tasks-table tasks-table--admin">
                             <thead class="tasks-table__head">
                                 <tr>
@@ -893,34 +928,35 @@
                                     <th scope="col">Documento</th>
                                     <th scope="col">Nombre</th>
                                     <th scope="col">Correo</th>
-                                    <th scope="col">Estado</th>
-                                    <th scope="col">Calificación</th>
-                                    <th scope="col">Acciones</th>
+                                    <th scope="col">Estado</th> <!-- activo / inactivo -->
+                                    <th scope="col">Calificación</th> <!-- promedio de notas del estudiante -->
+                                    <th scope="col">Acciones</th> <!-- ver tareas / calificar -->
                                 </tr>
                             </thead>
-                            <tbody id="instrUsersTableBody"></tbody>
+                            <tbody id="instrUsersTableBody"></tbody> <!-- JS inserta aquí las filas de cada estudiante -->
                         </table>
                     </div>
                 </div>
             </section>
         </div><!-- fin spa-seccion estudiantes -->
 
-        <!-- SECCIÓN: TAREAS -->
+        <!-- SECCIÓN: TAREAS — tabla de todas las tareas del sistema con filtros (misma lógica que en admin) -->
         <div class="spa-seccion spa-seccion--oculta" data-seccion="tareas">
             <section class="admin-card admin-card--full" id="instrCardTareas">
                 <div class="admin-card__cabecera admin-card__cabecera--toggle" id="instrToggleTareas">
                     <h2 class="admin-card__titulo">Todas las Tareas del Sistema</h2>
                     <div class="admin-card__cabecera-derecha">
-                        <span id="instrTasksCount" class="tasks-header__count">0 tareas</span>
+                        <span id="instrTasksCount" class="tasks-header__count">0 tareas</span> <!-- JS actualiza el contador -->
                         <button class="btn-toggle-card" type="button" aria-label="Contraer o desplegar Tareas">▼</button>
                     </div>
                 </div>
                 <div class="admin-card__cuerpo" id="instrCuerpoTareas">
+                    <!-- Barra de filtros — JS lee estos valores al pulsar Aplicar -->
                     <div class="tasks-controls">
                         <div class="tasks-controls__grupo">
                             <label for="instrFiltroEstado" class="tasks-controls__label">Estado</label>
                             <div class="tasks-controls__select-wrapper">
-                                <select id="instrFiltroEstado" class="tasks-controls__select">
+                                <select id="instrFiltroEstado" class="tasks-controls__select"> <!-- filtra la tabla por estado -->
                                     <option value="">Todos</option>
                                     <option value="pendiente">Pendiente</option>
                                     <option value="en_progreso">En Progreso</option>
@@ -933,7 +969,7 @@
                         </div>
                         <div class="tasks-controls__grupo">
                             <label for="instrFiltroUsuario" class="tasks-controls__label">Usuario</label>
-                            <input type="text" id="instrFiltroUsuario" class="tasks-controls__input" placeholder="Nombre del usuario">
+                            <input type="text" id="instrFiltroUsuario" class="tasks-controls__input" placeholder="Nombre del usuario"> <!-- filtra por nombre del estudiante asignado -->
                         </div>
                         <div class="tasks-controls__grupo">
                             <label for="instrOrdenSelect" class="tasks-controls__label">Ordenar</label>
@@ -951,13 +987,13 @@
                         <div class="tasks-controls__grupo tasks-controls__grupo--acciones-bar">
                             <span class="tasks-controls__label">Acciones</span>
                             <div class="tasks-controls__acciones-bar">
-                                <button class="btn-accion-icono btn-accion--azul" id="instrBtnAplicarFiltros" title="Aplicar filtros"><i data-lucide="check" class="icono-accion"></i></button>
-                                <button class="btn-accion-icono btn-accion--gris" id="instrBtnLimpiarFiltros" title="Limpiar filtros"><i data-lucide="x" class="icono-accion"></i></button>
-                                <button class="btn-accion-icono btn-accion--verde" id="instrBtnExportarTareas" title="Exportar JSON"><i data-lucide="download" class="icono-accion"></i></button>
+                                <button class="btn-accion-icono btn-accion--azul" id="instrBtnAplicarFiltros" title="Aplicar filtros"><i data-lucide="check" class="icono-accion"></i></button> <!-- aplica filtro + orden -->
+                                <button class="btn-accion-icono btn-accion--gris" id="instrBtnLimpiarFiltros" title="Limpiar filtros"><i data-lucide="x" class="icono-accion"></i></button> <!-- limpia y recarga la tabla -->
+                                <button class="btn-accion-icono btn-accion--verde" id="instrBtnExportarTareas" title="Exportar JSON"><i data-lucide="download" class="icono-accion"></i></button> <!-- descarga tareas filtradas -->
                             </div>
                         </div>
                     </div>
-                    <div class="tasks-table-container">
+                    <div class="tasks-table-container"> <!-- overflow-x:auto para scroll horizontal en móvil -->
                         <table class="tasks-table tasks-table--admin">
                             <thead class="tasks-table__head">
                                 <tr>
@@ -967,10 +1003,10 @@
                                     <th scope="col">Estado</th>
                                     <th scope="col">Usuario asignado</th>
                                     <th scope="col" class="col-fecha">Creación</th>
-                                    <th scope="col">Acciones</th>
+                                    <th scope="col">Acciones</th> <!-- ver / editar / eliminar -->
                                 </tr>
                             </thead>
-                            <tbody id="instrTasksTableBody"></tbody>
+                            <tbody id="instrTasksTableBody"></tbody> <!-- JS inserta aquí las filas <tr> de cada tarea -->
                         </table>
                     </div>
                 </div>
@@ -988,57 +1024,55 @@
 </div>
 
 
-<!-- MODAL EDICIÓN DE TAREA -->
-<div class="modal-overlay hidden" id="editModal">
+<!-- MODAL EDICIÓN DE TAREA — se abre al pulsar el botón lápiz en la tabla de tareas -->
+<div class="modal-overlay hidden" id="editModal"> <!-- hidden por defecto, JS lo muestra al editar -->
     <div class="modal-admin">
         <div class="modal-admin__header">
             <div class="modal-admin__icono-wrap">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </div>
             <h2 class="modal-admin__titulo">Editar Tarea</h2>
-            <button class="modal-admin__close" id="editCloseBtn" type="button">✕</button>
+            <button class="modal-admin__close" id="editCloseBtn" type="button">✕</button> <!-- JS escucha este ID para cerrar el modal -->
         </div>
         <form id="editTaskForm" novalidate>
-            <input type="hidden" id="editTaskId">
+            <input type="hidden" id="editTaskId"> <!-- JS guarda aquí el ID de la tarea antes de abrir el modal -->
             <div class="modal-admin__body">
                 <div class="modal-admin__group">
                     <label for="editTaskTitle" class="modal-admin__label">Título</label>
-                    <input type="text" id="editTaskTitle" class="modal-admin__input" placeholder="Ingresa el título de la tarea">
+                    <input type="text" id="editTaskTitle" class="modal-admin__input" placeholder="Ingresa el título de la tarea"> <!-- JS pre-llena este campo con el título actual -->
                 </div>
                 <div class="modal-admin__group">
                     <label for="editTaskDescription" class="modal-admin__label">Descripción</label>
-                    <textarea id="editTaskDescription" class="modal-admin__textarea" rows="3" placeholder="Describe la tarea..."></textarea>
+                    <textarea id="editTaskDescription" class="modal-admin__textarea" rows="3" placeholder="Describe la tarea..."></textarea> <!-- JS pre-llena con la descripción actual -->
                 </div>
                 <div class="modal-admin__group">
                     <label for="editTaskStatus" class="modal-admin__label">Estado</label>
-                    <!-- Las opciones se filtran dinámicamente en mostrarModalEdicion() de tareasUI.js -->
-                    <!-- MODO USUARIO: solo "En Progreso" y "Por aprobar" -->
-                    <!-- MODO ADMIN:   los cuatro estados completos -->
+                    <!-- JS filtra dinámicamente las opciones según el rol: usuario ve 2, admin ve 4, instructor ve todas -->
                     <select id="editTaskStatus" class="modal-admin__select">
                         <option value="" disabled>Selecciona un estado</option>
-                        <option value="pendiente" class="opcion-admin opcion-instructor">Pendiente</option>
+                        <option value="pendiente" class="opcion-admin opcion-instructor">Pendiente</option> <!-- solo admin e instructor pueden asignar este estado -->
                         <option value="en_progreso" class="opcion-usuario opcion-admin opcion-instructor">En Progreso</option>
                         <option value="pendiente_aprobacion" class="opcion-usuario opcion-admin opcion-instructor">Por aprobar</option>
-                        <option value="completada" class="opcion-instructor">Completada</option>
-                        <option value="reprobada" class="opcion-instructor">Reprobada</option>
+                        <option value="completada" class="opcion-instructor">Completada</option> <!-- solo el instructor puede marcar como completada -->
+                        <option value="reprobada" class="opcion-instructor">Reprobada</option> <!-- solo el instructor puede reprobar -->
                     </select>
                 </div>
                 <div class="modal-admin__group" id="editCommentGrupo">
                     <label for="editTaskComment" class="modal-admin__label">Comentario <span class="modal-admin__label-opcional">(opcional)</span></label>
                     <textarea id="editTaskComment" class="modal-admin__textarea" rows="2" placeholder="Agrega o edita el comentario..."></textarea>
                 </div>
-                <!-- Label de nota solo lectura para admin -->
-                <div class="modal-admin__group" id="editGradeAdminGrupo" style="display:none;">
+                <!-- Calificación solo lectura visible para el admin (no puede editar la nota) -->
+                <div class="modal-admin__group" id="editGradeAdminGrupo" style="display:none;"> <!-- JS lo muestra si hay nota y el rol es admin -->
                     <label class="modal-admin__label">Calificación actual</label>
-                    <div id="editGradeAdminLabel" class="modal-admin__grade-label"></div>
+                    <div id="editGradeAdminLabel" class="modal-admin__grade-label"></div> <!-- JS escribe aquí la nota actual -->
                 </div>
-                <!-- Campos de nota editables solo para instructor -->
-                <div class="modal-admin__group" id="editGradeGrupo" style="display:none;">
+                <!-- Campos de nota editables — solo visibles para el instructor -->
+                <div class="modal-admin__group" id="editGradeGrupo" style="display:none;"> <!-- JS lo muestra si el rol es instructor -->
                     <label for="editTaskGrade" class="modal-admin__label">Nota <span style="color:#ef4444">*</span> <span style="color:#6b7280;font-weight:400">(0 – 100)</span></label>
-                    <input type="number" id="editTaskGrade" class="modal-admin__input" min="0" max="100" step="0.01" placeholder="Ej: 85">
+                    <input type="number" id="editTaskGrade" class="modal-admin__input" min="0" max="100" step="0.01" placeholder="Ej: 85"> <!-- JS valida que esté entre 0 y 100 -->
                     <span class="modal-admin__error" id="editGradeError"></span>
                 </div>
-                <div class="modal-admin__group" id="editGradeReasonGrupo" style="display:none;">
+                <div class="modal-admin__group" id="editGradeReasonGrupo" style="display:none;"> <!-- JS lo muestra cuando el instructor cambia una nota existente -->
                     <label for="editTaskGradeReason" class="modal-admin__label">Motivo de edición de nota <span style="color:#ef4444">*</span></label>
                     <textarea id="editTaskGradeReason" class="modal-admin__textarea" rows="2" placeholder="Explica brevemente por qué se edita la nota (mín. 10 caracteres)..."></textarea>
                     <span class="modal-admin__error" id="editGradeReasonError"></span>
@@ -1046,14 +1080,14 @@
             </div>
             <div class="modal-admin__footer">
                 <button type="button" class="modal-admin__btn-cancelar" id="editCancelBtn">Cancelar</button>
-                <button type="submit" class="modal-admin__btn-guardar">Guardar Cambios</button>
+                <button type="submit" class="modal-admin__btn-guardar">Guardar Cambios</button> <!-- JS envía el PUT al servidor y cierra el modal si tiene éxito -->
             </div>
         </form>
     </div>
 </div>
 
-<!-- MODAL VER TAREA — solo lectura, sin edición -->
-<div class="modal-overlay hidden" id="verTareaModal">
+<!-- MODAL VER TAREA — solo lectura, sin edición. Se abre al pulsar el botón ojo en la tabla -->
+<div class="modal-overlay hidden" id="verTareaModal"> <!-- hidden por defecto, JS lo muestra al ver -->
     <div class="modal-admin">
         <div class="modal-admin__header">
             <div class="modal-admin__icono-wrap">
@@ -1065,43 +1099,42 @@
         <div class="modal-admin__body">
             <div class="modal-admin__group">
                 <label class="modal-admin__label">Título</label>
-                <div class="modal-admin__campo-lectura" id="verTareaTitulo"></div>
+                <div class="modal-admin__campo-lectura" id="verTareaTitulo"></div> <!-- JS escribe aquí el título de la tarea -->
             </div>
             <div class="modal-admin__group">
                 <label class="modal-admin__label">Descripción</label>
-                <div class="modal-admin__campo-lectura" id="verTareaDescripcion" style="white-space: pre-wrap;"></div>
+                <div class="modal-admin__campo-lectura" id="verTareaDescripcion" style="white-space: pre-wrap;"></div> <!-- pre-wrap preserva los saltos de línea del texto -->
             </div>
             <div class="modal-admin__group">
                 <label class="modal-admin__label">Estado</label>
-                <div id="verTareaEstado"></div>
+                <div id="verTareaEstado"></div> <!-- JS inserta aquí el badge de color con el estado -->
             </div>
-            <div class="modal-admin__group" id="verTareaComentarioGrupo">
+            <div class="modal-admin__group" id="verTareaComentarioGrupo"> <!-- JS oculta este grupo si no hay comentario -->
                 <label class="modal-admin__label">Comentario</label>
-                <div class="modal-admin__campo-lectura" id="verTareaComentario"></div>
+                <div class="modal-admin__campo-lectura" id="verTareaComentario"></div> <!-- JS escribe el comentario de la tarea -->
             </div>
-            <div class="modal-admin__group" id="verTareaCalifGrupo">
+            <div class="modal-admin__group" id="verTareaCalifGrupo"> <!-- JS lo muestra solo si la tarea tiene nota asignada -->
                 <label class="modal-admin__label">Calificación</label>
-                <div id="verTareaCalif"></div>
+                <div id="verTareaCalif"></div> <!-- JS inserta aquí el badge con la nota numérica -->
             </div>
-            <!-- Grupo Sin calificar — visible cuando la tarea está completada pero sin nota -->
+            <!-- Grupo "Sin calificar" — JS lo muestra cuando la tarea está completada pero sin nota asignada todavía -->
             <div class="modal-admin__group" id="verTareaSinCalifGrupo">
                 <label class="modal-admin__label">Calificación</label>
                 <span class="status-badge" style="background:#f3f4f6;color:#6b7280;font-style:italic;">Sin calificar</span>
             </div>
-            <div class="modal-admin__group" id="verTareaUsuarioGrupo">
+            <div class="modal-admin__group" id="verTareaUsuarioGrupo"> <!-- JS oculta este grupo si la tarea no tiene usuario asignado -->
                 <label class="modal-admin__label">Usuario(s) asignado(s)</label>
-                <div class="modal-admin__campo-lectura" id="verTareaUsuario"></div>
+                <div class="modal-admin__campo-lectura" id="verTareaUsuario"></div> <!-- JS escribe aquí los nombres de los usuarios asignados -->
             </div>
         </div>
         <div class="modal-admin__footer">
-            <button type="button" class="modal-admin__btn-guardar" id="verTareaCerrar">Cerrar</button>
+            <button type="button" class="modal-admin__btn-guardar" id="verTareaCerrar">Cerrar</button> <!-- JS escucha este ID para cerrar el modal -->
         </div>
     </div>
 </div>
 
-<!-- MODAL DE REGISTRO — Rediseñado en M7 -->
-<!-- Conserva los mismos IDs en todos los campos para no romper la lógica de modoUI.js -->
-<!-- Solo cambia el HTML estructural y las clases CSS — la funcionalidad es idéntica -->
+<!-- MODAL DE REGISTRO — permite que un nuevo usuario cree su propia cuenta -->
+<!-- Los IDs de los campos son los mismos que modoUI.js lee para procesar el formulario -->
 <div class="modal-overlay hidden" id="registroModal">
     <div class="modal modal--registro modal--registro-v2">
 
@@ -1225,39 +1258,38 @@
     </div>
 </div>
 
-<!-- MODAL CAMBIO DE CONTRASEÑA -->
-<!-- Se abre desde el botón de perfil circular en los 3 paneles -->
-<div class="modal-overlay hidden" id="cambioPasswordModal">
+<!-- MODAL CAMBIO DE CONTRASEÑA — se abre al pulsar "Cambiar contraseña" en el sidebar de cualquier vista -->
+<div class="modal-overlay hidden" id="cambioPasswordModal"> <!-- hidden por defecto, JS lo muestra -->
     <div class="modal-admin">
         <div class="modal-admin__header">
             <div class="modal-admin__icono-wrap">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </div>
             <h2 class="modal-admin__titulo">Cambiar Contraseña</h2>
-            <button class="modal-admin__close" id="cambioPasswordClose" type="button">✕</button>
+            <button class="modal-admin__close" id="cambioPasswordClose" type="button">✕</button> <!-- JS escucha este ID para cerrar el modal -->
         </div>
         <div class="modal-admin__body">
-            <form id="cambioPasswordForm" novalidate>
+            <form id="cambioPasswordForm" novalidate> <!-- novalidate: la validación la hace JS -->
                 <div class="modal-admin__group">
                     <label for="passwordActual" class="modal-admin__label">Contraseña actual</label>
-                    <input type="password" id="passwordActual" class="modal-admin__input" placeholder="Ingresa tu contraseña actual" autocomplete="current-password">
-                    <span class="modal-admin__error" id="passwordActualError"></span>
+                    <input type="password" id="passwordActual" class="modal-admin__input" placeholder="Ingresa tu contraseña actual" autocomplete="current-password"> <!-- JS envía este valor al servidor para verificar -->
+                    <span class="modal-admin__error" id="passwordActualError"></span> <!-- JS escribe aquí si la contraseña es incorrecta -->
                 </div>
                 <div class="modal-admin__group">
                     <label for="passwordNueva" class="modal-admin__label">Nueva contraseña</label>
-                    <input type="password" id="passwordNueva" class="modal-admin__input" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                    <input type="password" id="passwordNueva" class="modal-admin__input" placeholder="Mínimo 6 caracteres" autocomplete="new-password"> <!-- JS valida mínimo 6 caracteres -->
                     <span class="modal-admin__error" id="passwordNuevaError"></span>
                 </div>
                 <div class="modal-admin__group">
                     <label for="passwordConfirmar" class="modal-admin__label">Confirmar nueva contraseña</label>
-                    <input type="password" id="passwordConfirmar" class="modal-admin__input" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+                    <input type="password" id="passwordConfirmar" class="modal-admin__input" placeholder="Repite la nueva contraseña" autocomplete="new-password"> <!-- JS valida que coincida con el campo anterior -->
                     <span class="modal-admin__error" id="passwordConfirmarError"></span>
                 </div>
             </form>
         </div>
         <div class="modal-admin__footer">
             <button type="button" class="modal-admin__btn-cancelar" id="cambioPasswordCancelar">Cancelar</button>
-            <button type="button" class="modal-admin__btn-guardar" id="cambioPasswordSubmit">Cambiar Contraseña</button>
+            <button type="button" class="modal-admin__btn-guardar" id="cambioPasswordSubmit">Cambiar Contraseña</button> <!-- JS envía el PATCH al servidor y cierra si fue exitoso -->
         </div>
     </div>
 </div>
@@ -1328,6 +1360,6 @@
     </div>
 </div>
 
-<script type="module" src="/src/main.js"></script>
+<script type="module" src="/src/main.js"></script> <!-- punto de entrada del JS — Vite resuelve todos los imports en cadena desde aquí -->
 </body>
 </html>
